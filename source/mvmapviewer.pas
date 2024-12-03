@@ -68,6 +68,7 @@ type
   TGPSTileLayer = class;
   TGPSComboLayer = class;
   TMapEditMark = class;
+  TMvCustomPluginManager = class;
 
   TPointOfInterestDrawEvent = procedure(Sender: TObject;
     ADrawer: TMvCustomDrawingEngine; APoint: TPointOfInterest) of object;
@@ -431,6 +432,16 @@ type
     mooEndDrag, mooIsDirty);
   PMapObserverCustomOperation = ^TMapObserverCustomOperation;
 
+  { TMvCustomPlugInManager }
+
+  TMvCustomPluginManager = class(TComponent)
+  private
+  protected
+  public
+    procedure MouseDown(AMapView: TMapView; AButton: TMouseButton;
+      AShift: TShiftState; X, Y: Integer; AUserEvent: TMouseEvent); virtual;
+  end;
+
   { TMapView }
 
   TMapView = class(TCustomControl)
@@ -441,6 +452,8 @@ type
       FCenter: TMapCenter;
       FDownloadEngine: TMvCustomDownloadEngine;
       FBuiltinDownloadEngine: TMvCustomDownloadEngine;
+      FBuiltinPluginManager: TMvCustomPluginManager;
+      FPluginManager: TMvCustomPluginManager;
       FOnEditDrag: TNotifyEvent;
       FOnEditEndDrag: TNotifyEvent;
       FOnEditIsDirty: TNotifyEvent;
@@ -491,6 +504,7 @@ type
       function GetOnChange: TNotifyEvent;
       function GetOnZoomChange: TNotifyEvent;
       function GetOnZoomChanging: TZoomChangingEvent;
+      function GetPluginManager: TMvCustomPluginManager;
       function GetUseThreads: boolean;
       function GetZoom: integer;
       function GetZoomToCursor: Boolean;
@@ -521,6 +535,7 @@ type
       procedure SetOnZoomChange(AValue: TNotifyEvent);
       procedure SetOnZoomChanging(AValue: TZoomChangingEvent);
       procedure SetOptions(AValue: TMapViewOptions);
+      procedure SetPluginManager(AValue: TMvCustomPluginManager);
       procedure SetPOIImage(const AValue: TCustomBitmap);
       procedure SetPOIImages(const AValue: TCustomImageList);
       procedure SetPOIImagesWidth(AValue: Integer);
@@ -639,6 +654,7 @@ type
       property InactiveColor: TColor read GetInactiveColor write SetInactiveColor default clWhite;
       property MapProvider: String read GetMapProvider write SetMapProvider;
       property MapCenter: TMapCenter read FCenter write FCenter;
+      property PluginManager: TMvCustomPluginManager read GetPluginManager write SetPluginManager;
       property POIImage: TCustomBitmap read FPOIImage write SetPOIImage;
       property POIImages: TCustomImageList read FPOIImages write SetPOIImages;
       property POIImagesWidth: Integer read FPOIImagesWidth write SetPOIImagesWidth default 0;
@@ -658,16 +674,17 @@ type
       property OnZoomChanging: TZoomChangingEvent read GetOnZoomChanging write SetOnZoomChanging;
       property OnChange: TNotifyEvent read GetOnChange write SetOnChange;
       property OnDrawGpsPoint: TDrawGpsPointEvent read FOnDrawGpsPoint write FOnDrawGpsPoint;
-      property OnMouseDown;
-      property OnMouseEnter;
-      property OnMouseLeave;
-      property OnMouseMove;
-      property OnMouseUp;
       property OnEditSelectionCompleted: TNotifyEvent read FOnEditSelectionCompleted write FOnEditSelectionCompleted;
       property OnEditStartDrag: TNotifyEvent read FOnEditStartDrag write FOnEditStartDrag;
       property OnEditDrag: TNotifyEvent read FOnEditDrag write FOnEditDrag;
       property OnEditEndDrag: TNotifyEvent read FOnEditEndDrag write FOnEditEndDrag;
       property OnEditIsDirty: TNotifyEvent read FOnEditIsDirty write FOnEditIsDirty;
+      property OnMouseDown;
+      property OnMouseEnter;
+      property OnMouseLeave;
+      property OnMouseMove;
+      property OnMouseUp;
+
   end;
 
   { TGPSTileLayerBase }
@@ -2370,6 +2387,17 @@ begin
   end;
 end;
 
+procedure TMapView.SetPluginManager(AValue: TMvCustomPluginManager);
+begin
+  if FPluginManager = AValue then exit;
+  if FPluginManager <> nil then
+    RemoveFreeNotification(FPluginManager);
+  FPluginManager := AValue;
+  //FActiveToolIndex := -1;
+  if FPluginManager <> nil then
+    FreeNotification(FPluginManager);
+end;
+
 procedure TMapView.SetPOIImage(const AValue: TCustomBitmap);
 var
   s: TStream;
@@ -2460,8 +2488,15 @@ end;
 
 procedure TMapView.MouseDown(Button: TMouseButton; Shift: TShiftState;
   X, Y: Integer);
+var
+  savedOnMouseDown: TMouseEvent;
+  handled: Boolean;
 begin
+  savedOnMouseDown := OnMouseDown;
+  OnMouseDown := nil;  // Avoid handling user OnDown before the plugin manager
   inherited MouseDown(Button, Shift, X, Y);
+  OnMouseDown := savedOnMouseDown;
+  PluginManager.MouseDown(Self, Button, Shift, X, Y, OnMouseDown);
 
   if EditingEnabled then
   begin
@@ -2557,6 +2592,8 @@ begin
       DownloadEngine := nil;
     if (AComponent = FDrawingEngine) then
       DrawingEngine := nil;
+    if (AComponent = FPluginManager) then
+      PluginManager := nil;
   end;
 end;
 
@@ -3182,6 +3219,8 @@ begin
   FBuiltinDrawingEngine.Name := 'BuiltInDE';
   FBuiltinDrawingEngine.CreateBuffer(Width, Height);
 
+  FBuiltinPluginManager := TMvCustomPluginManager.Create(Self);
+
   FFont := TFont.Create;
   FFont.Name := 'default';
   FFont.Size := 0;
@@ -3382,6 +3421,14 @@ begin
     L.Free;
   end;
 //  Engine.GetMapProviders(lstProviders);
+end;
+
+function TMapView.GetPluginManager: TMVCustomPluginManager;
+begin
+  if Assigned(FPluginManager) then
+    Result := FPluginManager
+  else
+    Result := FBuiltinPluginManager;
 end;
 
 procedure TMapView.WaitEndOfRendering;
@@ -3633,6 +3680,7 @@ begin
     Result := ACustomPath;
   end;
 end;
+
 
 { TGPSTileLayerBase }
 
@@ -4213,6 +4261,15 @@ begin
     Add(Item);
 end;
 
+
+{ TMvCustomPluginManager }
+
+procedure TMvCustomPluginManager.MouseDown(AMapView: TMapView; AButton: TMouseButton;
+  AShift: TShiftState; X, Y: Integer; AUserEvent: TMouseEvent);
+begin
+  if Assigned(AUserEvent) then
+    AUserEvent(AMapView, AButton, AShift, X, Y);
+end;
 
 end.
 

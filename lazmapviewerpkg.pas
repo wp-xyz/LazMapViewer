@@ -12,7 +12,7 @@ uses
   mvJobQueue, mvJobs, mvMapProvider, mvTypes, mvMapViewer, mvExtraData, 
   mvDLEFpc, mvMapViewerReg, mvGPX, mvDrawingEngine, mvDE_IntfGraphics, 
   mvDLEWin, mvMapViewerPropEdits, mvLayersPropEditForm, mvGeoMath, 
-  mvMapViewerPathEditForm, mvMapViewerPathEditDsgForm, mvDLECache, 
+  mvMapViewerPathEditForm, mvMapViewerPathEditDsgForm, mvDLECache, mvPlugins, 
   LazarusPackageIntf;
 
 implementation
