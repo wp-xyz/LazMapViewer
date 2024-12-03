@@ -437,9 +437,23 @@ type
   TMvCustomPluginManager = class(TComponent)
   private
   protected
-  public
+    procedure AddMapView(AMapView: TMapView); virtual;
+    procedure RemoveMapView(AMapView: TMapView); virtual;
+
+    procedure DefaultMouseEvent(AMapView: TMapView; AButton: TMouseButton;
+      AShift: TShiftState; X, Y: Integer; AMapEvent: TMouseEvent);
+    procedure DefaultNotifyEventHandler(AMapView: TMapView; AMapEvent: TNotifyEvent);
+
+    procedure AfterDrawObjects(AMapView: TMapView; AMapEvent: TNotifyEvent); virtual;
+    procedure AfterPaint(AMapView: TMapView; AMapEvent: TNotifyEvent); virtual;
+    procedure BeforeDrawObjects(AMapView: TMapView; AMapEvent: TNotifyEvent); virtual;
     procedure MouseDown(AMapView: TMapView; AButton: TMouseButton;
-      AShift: TShiftState; X, Y: Integer; AUserEvent: TMouseEvent); virtual;
+      AShift: TShiftState; X, Y: Integer; AMapEvent: TMouseEvent); virtual;
+    procedure MouseMove(AMapView: TMapView; AShift: TShiftState; X,Y: Integer;
+      AMapEvent: TMouseMoveEvent); virtual;
+    procedure MouseUp(AMapView: TMapView; AButton: TMouseButton;
+      AShift: TShiftState; X, Y: Integer; AMapEvent: TMouseEvent); virtual;
+  public
   end;
 
   { TMapView }
@@ -481,6 +495,7 @@ type
       FZoomMin: Integer;
       FBeforeDrawObjectsEvent: TNotifyEvent;
       FAfterDrawObjectsEvent: TNotifyEvent;
+      FAfterPaintEvent: TNotifyEvent;
       FEditMark: TMapEditMark;
       FDragger: TDragObj;
       procedure CallAsyncInvalidate;
@@ -667,6 +682,7 @@ type
       property ZoomMin: Integer read FZoomMin write SetZoomMin default 1;
       property ZoomToCursor: Boolean read GetZoomToCursor write SetZoomToCursor default True;
       property OnAfterDrawObjects: TNotifyEvent read FAfterDrawObjectsEvent write FAfterDrawObjectsEvent;
+      property OnAfterPaint: TNotifyEvent read FAfterPaintEvent write FAfterPaintEvent;
       property OnBeforeDrawObjects: TNotifyEvent read FBeforeDrawObjectsEvent write FBeforeDrawObjectsEvent;
       property OnCenterMove: TNotifyEvent read GetOnCenterMove write SetOnCenterMove;
       property OnCenterMoving: TCenterMovingEvent read GetOnCenterMoving write SetOnCenterMoving;
@@ -2389,13 +2405,21 @@ end;
 
 procedure TMapView.SetPluginManager(AValue: TMvCustomPluginManager);
 begin
-  if FPluginManager = AValue then exit;
+  if FPluginManager = AValue then
+    exit;
   if FPluginManager <> nil then
     RemoveFreeNotification(FPluginManager);
+  if AValue = nil then
+    FPlugInManager.RemoveMapView(Self);
+
   FPluginManager := AValue;
+
   //FActiveToolIndex := -1;
   if FPluginManager <> nil then
+  begin
     FreeNotification(FPluginManager);
+    FPluginManager.AddMapView(Self);
+  end;
 end;
 
 procedure TMapView.SetPOIImage(const AValue: TCustomBitmap);
@@ -2490,10 +2514,9 @@ procedure TMapView.MouseDown(Button: TMouseButton; Shift: TShiftState;
   X, Y: Integer);
 var
   savedOnMouseDown: TMouseEvent;
-  handled: Boolean;
 begin
   savedOnMouseDown := OnMouseDown;
-  OnMouseDown := nil;  // Avoid handling user OnDown before the plugin manager
+  OnMouseDown := nil;  // Avoid handling user OnMouseDown before the plugin manager
   inherited MouseDown(Button, Shift, X, Y);
   OnMouseDown := savedOnMouseDown;
   PluginManager.MouseDown(Self, Button, Shift, X, Y, OnMouseDown);
@@ -2521,8 +2544,14 @@ end;
 
 procedure TMapView.MouseUp(Button: TMouseButton; Shift: TShiftState;
   X, Y: Integer);
+var
+  savedOnMouseUp: TMouseEvent;
 begin
+  savedOnMouseUp := OnMouseUp;
+  OnMouseUp := nil;   // Avoid handling user OnMouseUp before the plugin manager
   inherited MouseUp(Button, Shift, X, Y);
+  OnMouseUp := savedOnMouseUp;
+  PluginManager.MouseUp(Self, Button, Shift, X, Y, OnMouseUp);
 
   if IsActive then
     if Button = mbLeft then
@@ -2568,8 +2597,14 @@ procedure TMapView.MouseMove(Shift: TShiftState; X, Y: Integer);
     end;
   end;
 
+var
+  savedOnMouseMove: TMouseMoveEvent;
 begin
+  savedOnMouseMove := OnMouseMove;
+  OnMouseMove := nil;  // Avoid handling user OnMouseMove before plugin manager
   inherited MouseMove(Shift, X, Y);
+  OnMouseMove := savedOnMouseMove;
+  PluginManager.MouseMove(Self, Shift, X, Y, OnMouseMove);
 
   if IsActive then
   begin
@@ -2653,17 +2688,15 @@ const
     if Cyclic then
       W := Min(1 shl Zoom * TileSize.CX, W);
 
-    if Assigned(FBeforeDrawObjectsEvent) then
-      FBeforeDrawObjectsEvent(Self);
-
+    PluginManager.BeforeDrawObjects(Self, FBeforeDrawObjectsEvent);
     DrawObjects(Default(TTileId), 0, 0, W - 1, FCanvasSize.CY);
-
-    if Assigned(FAfterDrawObjectsEvent) then
-      FAfterDrawObjectsEvent(Self);
+    PluginManager.AfterDrawObjects(Self, FAfterDrawObjectsEvent);
 
     DrawingEngine.PaintToCanvas(Canvas);
     if DebugTiles then
       DrawCenter;
+
+    PluginManager.AfterPaint(Self, FAfterPaintEvent);
   end;
 
   procedure DragDraw;
@@ -4264,11 +4297,65 @@ end;
 
 { TMvCustomPluginManager }
 
-procedure TMvCustomPluginManager.MouseDown(AMapView: TMapView; AButton: TMouseButton;
-  AShift: TShiftState; X, Y: Integer; AUserEvent: TMouseEvent);
+procedure TMvcustomPluginManager.AddMapView(AMapView: TMapView);
 begin
-  if Assigned(AUserEvent) then
-    AUserEvent(AMapView, AButton, AShift, X, Y);
+//
+end;
+
+procedure TMvCustomPluginManager.AfterDrawObjects(AMapView: TMapView;
+  AMapEvent: TNotifyEvent);
+begin
+  DefaultNotifyEventHandler(AMapView, AMapEvent);
+end;
+
+procedure TMvCustomPluginManager.AfterPaint(AMapView: TMapView;
+  AMapEvent: TNotifyEvent);
+begin
+  DefaultNotifyEventHandler(AMapView, AMapEvent);
+end;
+
+procedure TMvCustomPluginManager.BeforeDrawObjects(AMapView: TMapView;
+  AMapEvent: TNotifyEvent);
+begin
+  DefaultNotifyEventHandler(AMapView, AMapEvent);
+end;
+
+procedure TMvCustomPluginManager.DefaultMouseEvent(AMapView: TMapView;
+  AButton: TMouseButton; AShift: TShiftState; X, Y: Integer; AMapEvent: TMouseEvent);
+begin
+  if Assigned(AMapEvent) then
+    AMapEvent(AMapView, AButton, AShift, X, Y);
+end;
+
+procedure TMvCustomPluginManager.DefaultNotifyEventHandler(AMapView: TMapView;
+  AMapEvent: TNotifyEvent);
+begin
+  if Assigned(AMapEvent) then
+    AMapEvent(AMapView);
+end;
+
+procedure TMvCustomPluginManager.MouseDown(AMapView: TMapView; AButton: TMouseButton;
+  AShift: TShiftState; X, Y: Integer; AMapEvent: TMouseEvent);
+begin
+  DefaultMouseEvent(AMapView, AButton, AShift, X, Y, AMapEvent);
+end;
+
+procedure TMvCustomPluginManager.MouseMove(AMapView: TMapView; AShift: TShiftState;
+  X,Y: Integer; AMapEvent: TMouseMoveEvent);
+begin
+  if Assigned(AMapEvent) then
+    AMapEvent(AMapView, AShift, X, Y);
+end;
+
+procedure TMvCustomPluginManager.MouseUp(AMapView: TMapView; AButton: TMouseButton;
+  AShift: TShiftState; X, Y: Integer; AMapEvent: TMouseEvent);
+begin
+  DefaultMouseEvent(AMapView, AButton, AShift, X, Y, AMapEvent);
+end;
+
+procedure TMvCustomPluginManager.RemoveMapView(AMapView: TMapView);
+begin
+  //
 end;
 
 end.

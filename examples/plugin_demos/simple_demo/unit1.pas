@@ -68,7 +68,7 @@ begin
 end;
 
 
-procedure TForm1.MouseDownHandler(Sender: Tobject; AButton: TMouseButton;
+procedure TForm1.MouseDownHandler(Sender: TObject; AButton: TMouseButton;
   AShift: TShiftState; X, Y: Integer);
 begin
   Caption := FormatDateTime('hh:nn:ss.zzz', time);
