@@ -14,6 +14,8 @@ type
   TForm1 = class(TForm)
     Bevel1: TBevel;
     Button1: TButton;
+    CheckBox1: TCheckBox;
+    CheckBox2: TCheckBox;
     ComboBox1: TComboBox;
     Edit1: TEdit;
     Label1: TLabel;
@@ -22,6 +24,8 @@ type
     Panel2: TPanel;
     Panel3: TPanel;
     procedure Button1Click(Sender: TObject);
+    procedure CheckBox1Change(Sender: TObject);
+    procedure CheckBox2Change(Sender: TObject);
     procedure ComboBox1Change(Sender: TObject);
     procedure Edit1Change(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -41,6 +45,25 @@ implementation
 {$R *.lfm}
 
 type
+  TCenterMarkerPlugin = class(TMvPlugin)
+  private
+    const
+      DEFAULT_MARKER_SIZE = 15;
+  private
+    FPen: TPen;
+    FSize: Integer;
+    procedure SetPen(AValue: TPen);
+    procedure SetSize(AValue: Integer);
+  protected
+    procedure AfterDrawObjects(AMapView: TMapView; var Handled: Boolean); override;
+  public
+    constructor Create(APluginManager: TMvPluginManager); override;
+    destructor Destroy; override;
+  published
+    property Pen: TPen read FPen write SetPen;
+    property Size: Integer read FSize write SetSize default DEFAULT_MARKER_SIZE;
+  end;
+
   TLegalNoticePosition = (lnpTopLeft, lnpTopRight, lnpBottomLeft, lnpBottomRight);
 
   TLegalNoticePlugin = class(TMvPlugin)
@@ -82,6 +105,8 @@ type
     property LegalNoticeURL: String read FLegalNoticeURL write SetLegalNoticeURL;
     property Spacing: Integer read FSpacing write SetSpacing default DEFAULT_LEGALNOTICE_SPACING;
   end;
+
+{ TLegalNoticePlugin }
 
 constructor TLegalNoticePlugin.Create(APluginManager: TMvPluginManager);
 begin
@@ -228,6 +253,50 @@ begin
 end;
 
 
+{ TCenterMargerPlugin }
+
+constructor TCenterMarkerPlugin.Create(APluginManager: TMvPluginManager);
+begin
+  inherited;
+  FPen := TPen.Create;
+  FSize := DEFAULT_MARKER_SIZE;
+end;
+
+destructor TCenterMarkerPlugin.Destroy;
+begin
+  FPen.Free;
+  inherited;
+end;
+
+procedure TCenterMarkerPlugin.AfterDrawObjects(AMapView: TMapView;
+  var Handled: Boolean);
+var
+  C: TPoint;
+begin
+  C := Point(AMapView.ClientWidth div 2, AMapView.ClientHeight div 2);
+  AMapView.DrawingEngine.PenColor := FPen.Color;
+  AMapView.DrawingEngine.PenStyle := FPen.Style;
+  AMapView.DrawingEngine.PenWidth := FPen.Width;
+  AMapView.DrawingEngine.Line(C.X, C.Y - FSize, C.X, C.Y + FSize);
+  AMapView.DrawingEngine.Line(C.X - FSize, C.Y, C.X + FSize, C.Y);
+end;
+
+procedure TCenterMarkerPlugin.SetPen(AValue: TPen);
+begin
+  FPen.Assign(AValue);
+  Update;
+end;
+
+procedure TCenterMarkerPlugin.SetSize(AValue: Integer);
+begin
+  if FSize <> AValue then
+  begin
+    FSize := AValue;
+    Update;
+  end;
+end;
+
+
 { TForm1 }
 
 procedure TForm1.FormCreate(Sender: TObject);
@@ -267,6 +336,13 @@ begin
 
     Edit1.Text := LegalNotice;
   end;
+
+  with TCenterMarkerPlugin.Create(FPluginManager) do
+  begin
+    Size := 15;
+    Pen.Width := 3;
+    Pen.Color := clRed;
+  end;
 end;
 
 procedure TForm1.Edit1Change(Sender: TObject);
@@ -278,6 +354,16 @@ procedure TForm1.Button1Click(Sender: TObject);
 begin
   FMapView1.SaveToFile(TPortableNetworkGraphic, 'map1.png');
   FMapView2.SaveToFile(TPortableNetworkGraphic, 'map2.png');
+end;
+
+procedure TForm1.CheckBox1Change(Sender: TObject);
+begin
+  (FPluginManager.PluginList.Items[1] as TCenterMarkerPlugin).Active := Checkbox1.Checked;
+end;
+
+procedure TForm1.CheckBox2Change(Sender: TObject);
+begin
+  (FPluginManager.PluginList.Items[0] as TLegalNoticePlugin).Active := Checkbox2.Checked;
 end;
 
 procedure TForm1.ComboBox1Change(Sender: TObject);

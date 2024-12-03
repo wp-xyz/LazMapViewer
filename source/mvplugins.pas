@@ -14,6 +14,8 @@ type
   TMvPlugin = class(TComponent)
   private
     FPluginManager: TMvPluginManager;
+    FActive: Boolean;
+    procedure SetActive(AValue: Boolean);
     procedure SetPluginManager(AValue: TMvPluginManager);
   protected
     procedure AfterDrawObjects(AMapView: TMapView; var Handled: Boolean); virtual;
@@ -31,6 +33,8 @@ type
   public
     constructor Create(APluginManager: TMvPluginManager); virtual; reintroduce;
     property PluginManager: TMvPluginManager read FPluginManager write SetPluginManager;
+  published
+    property Active: Boolean read FActive write SetActive default true;
   end;
 
   TMvPluginList = class(TFPList)
@@ -79,6 +83,7 @@ constructor TMvPlugin.Create(APluginManager: TMvPluginManager);
 begin
   inherited Create(APluginManager);
   SetPluginManager(APluginManager);
+  FActive := true;
 end;
 
 procedure TMvPlugin.AfterPaint(AMapView: TMapView; var Handled: Boolean);
@@ -114,6 +119,15 @@ end;
 procedure TMvPlugin.MouseUp(AMapView: TMapView; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer; var Handled: Boolean);
 begin
+end;
+
+procedure TMvPlugin.SetActive(AValue: Boolean);
+begin
+  if AValue <> FActive then
+  begin
+    FActive := AValue;
+    Update;
+  end;
 end;
 
 procedure TMvPlugin.SetPluginManager(AValue: TMvPluginManager);
@@ -175,10 +189,15 @@ procedure TMvPluginManager.AfterDrawObjects(AMapView: TMapView; AMapEvent: TNoti
 var
   i: Integer;
   handled: Boolean;
+  plugin: TMvPlugin;
 begin
   handled := false;
   for i := 0 to FPluginList.Count-1 do
-    FPluginList[i].AfterDrawObjects(AMapView, handled);
+  begin
+    plugin := FPluginList[i];
+    if plugin.Active then
+      plugin.AfterDrawObjects(AMapView, handled);
+  end;
   if not handled then
     inherited AfterDrawObjects(AMapView, AMapEvent);
 end;
@@ -187,10 +206,15 @@ procedure TMvPluginManager.AfterPaint(AMapView: TMapView; AMapEvent: TNotifyEven
 var
   i: Integer;
   handled: Boolean;
+  plugin: TMvPlugin;
 begin
   handled := false;
   for i := 0 to FPluginList.Count-1 do
-    FPluginList[i].AfterPaint(AMapView, handled);
+  begin
+    plugin := FPluginList[i];
+    if plugin.Active then
+      plugin.AfterPaint(AMapView, handled);
+  end;
   if not handled then
     inherited AfterPaint(AMapView, AMapEvent);
 end;
@@ -199,10 +223,15 @@ procedure TMvPluginManager.BeforeDrawObjects(AMapView: TMapView; AMapEvent: TNot
 var
   i: Integer;
   handled: Boolean;
+  plugin: TMvPlugin;
 begin
   handled := false;
   for i := 0 to FPluginList.Count-1 do
-    FPluginList[i].BeforeDrawObjects(AMapView, handled);
+  begin
+    plugin := FPluginList[i];
+    if plugin.Active then
+      plugin.BeforeDrawObjects(AMapView, handled);
+  end;
   if not handled then
     inherited BeforeDrawObjects(AMapView, AMapEvent);
 end;
@@ -220,10 +249,15 @@ procedure TMvPluginManager.MouseDown(AMapView: TMapView; AButton: TMouseButton;
 var
   i: Integer;
   handled: Boolean;
+  plugin: TMvPlugin;
 begin
   handled := false;
   for i := 0 to FPluginList.Count-1 do
-    FPluginList[i].MouseDown(AMapView, AButton, AShift, X, Y, handled);
+  begin
+    plugin := FPluginList[i];
+    if plugin.Active then
+      plugin.MouseDown(AMapView, AButton, AShift, X, Y, handled);
+  end;
   if (not handled) then
     inherited MouseDown(AMapView, AButton, AShift, X, Y, AMapEvent);
 end;
@@ -232,10 +266,15 @@ procedure TMvPluginManager.MouseEnter(AMapView: TMapView; AMapEvent: TNotifyEven
 var
   i: Integer;
   handled: Boolean;
+  plugin: TMvPlugin;
 begin
   handled := false;
   for i := 0 to FPluginList.Count-1 do
-    FPluginList[i].MouseEnter(AMapView, handled);
+  begin
+    plugin := FPluginList[i];
+    if plugin.Active then
+      plugin.MouseEnter(AMapView, handled);
+  end;
   if not handled then
     inherited MouseEnter(AMapView, AMapEvent);
 end;
@@ -244,10 +283,15 @@ procedure TMvPluginManager.MouseLeave(AMapView: TMapView; AMapEvent: TNotifyEven
 var
   i: Integer;
   handled: Boolean;
+  plugin: TMvPlugin;
 begin
   handled := false;
   for i := 0 to FPluginList.Count-1 do
-    FPluginList[i].MouseLeave(AMapView, handled);
+  begin
+    plugin := FPluginList[i];
+    if plugin.Active then
+      plugin.MouseLeave(AMapView, handled);
+  end;
   if not handled then
     inherited MouseLeave(AMapView, AMapEvent);
 end;
@@ -257,10 +301,15 @@ procedure TMvPluginManager.MouseMove(AMapView: TMapView; AShift: TShiftState;
 var
   i: Integer;
   handled: Boolean;
+  plugin: TMvPlugin;
 begin
   handled := false;
   for i := 0 to FPluginList.Count-1 do
-    FPluginList[i].MouseMove(AMapView, AShift, X, Y, handled);
+  begin
+    plugin := FPluginList[i];
+    if plugin.Active then
+      plugin.MouseMove(AMapView, AShift, X, Y, handled);
+  end;
   if (not handled) then
     inherited MouseMove(AMapView, AShift, X, Y, AMapEvent);
 end;
@@ -270,10 +319,15 @@ procedure TMvPluginManager.MouseUp(AMapView: TMapView; AButton: TMouseButton;
 var
   i: Integer;
   handled: Boolean;
+  plugin: TMvPlugin;
 begin
   handled := false;
   for i := 0 to FPluginList.Count-1 do
-    FPluginList[i].MouseUp(AMapView, AButton, AShift, X, Y, handled);
+  begin
+    plugin := FPluginList[i];
+    if plugin.Active then
+      plugin.MouseUp(AMapView, AButton, AShift, X, Y, handled);
+  end;
   if not handled then
     inherited MouseUp(AMapView, AButton, AShift, X, Y, AMapEvent);
 end;
