@@ -12,19 +12,22 @@ uses
 
 type
   TForm1 = class(TForm)
+    Bevel1: TBevel;
     Button1: TButton;
-    Chart1: TChart;
-    ChartToolset1: TChartToolset;
     ComboBox1: TComboBox;
     Edit1: TEdit;
     Label1: TLabel;
+    MapView1: TMapView;
     Panel1: TPanel;
+    Panel2: TPanel;
+    Panel3: TPanel;
     procedure Button1Click(Sender: TObject);
     procedure ComboBox1Change(Sender: TObject);
     procedure Edit1Change(Sender: TObject);
     procedure FormCreate(Sender: TObject);
   private
-    FMapView: TMapView;
+    FMapView1: TMapView;
+    FMapView2: TMapView;
     FPluginManager: TMvPluginManager;
   public
 
@@ -60,9 +63,12 @@ type
     procedure SetPosition(AValue: TLegalNoticePosition);
     procedure SetSpacing(AValue: Integer);
   protected
+    procedure CalcClickableRect(AMapView: TMapView);
+  protected
     procedure AfterDrawObjects(AMapView: TMapView; var Handled: Boolean); override;
     procedure MouseDown(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
       X, Y: Integer; var Handled: Boolean); override;
+    procedure MouseEnter(AMapView: TMapView; var Handled: Boolean); override;
     procedure MouseMove(AMapView: TMapView; Shift: TShiftState; X, Y: Integer;
       var Handled: Boolean); override;
   public
@@ -98,31 +104,27 @@ end;
 
 procedure TLegalNoticePlugin.AfterDrawObjects(AMapView: TMapView; var Handled: Boolean);
 var
-  sz : TSize;
   x,y : Integer;
 begin
   if not Assigned(AMapView) then Exit;
   Handled := True;
-  {
-  AMapView.Canvas.Font := FFont;
-  AMapView.Canvas.Brush.Style := bsClear;
-  sz := AMapView.Canvas.TextExtent(FLegalNotice);
-  y := AMapView.ClientHeight - sz.cy - FSpacing;
-  case FLegalNoticePosition of
-    lnpBottomRight:
-      x := AMapView.ClientWidth - sz.cx - FSpacing;
-    else // lnpBottomLeft
-      x := FSpacing;
-  end;
-  AMapView.Canvas.TextOut(x, y, FLegalNotice);
-  }
-
   if FBackgroundColor = clNone then
     AMapView.DrawingEngine.BrushStyle := bsClear
   else begin
     AMapView.DrawingEngine.BrushStyle := bsSolid;
     AMapView.DrawingEngine.BrushColor := FBackgroundColor;
   end;
+  CalcClickableRect(AMapView);
+  x := FClickableRect.Left - FSpacing;
+  y := FClickableRect.Top - FSpacing;
+  AMapView.DrawingEngine.TextOut(x, y, FLegalNotice);
+end;
+
+procedure TLegalNoticePlugin.CalcClickableRect(AMapView: TMapView);
+var
+  sz: TSize;
+  x, y: Integer;
+begin
   AMapView.DrawingEngine.FontName := FFont.Name;
   AMapView.DrawingEngine.FontSize := FFont.Size;
   AMapView.DrawingEngine.FontStyle := FFont.Style;
@@ -140,8 +142,7 @@ begin
     lnpBottomLeft, lnpBottomRight:
       y := AMapView.Height - sz.CY - FSpacing;
   end;
-  AMapView.DrawingEngine.TextOut(x, y, FLegalNotice);
-  FClickableRect := Rect(x + FSpacing, y + FSpacing, x + sz.cx, y + sz.cy);
+  FClickableRect := Rect(x + FSpacing, y + FSpacing, x + sz.CX, y + sz.CY);
 end;
 
 procedure TLegalNoticePlugin.MouseDown(AMapView: TMapView; Button: TMouseButton;
@@ -160,6 +161,12 @@ begin
     Handled := True;
     Abort;     // No further handling of the event for dragging!
   end;
+end;
+
+procedure TLegalNoticePlugin.MouseEnter(AMapView: TMapView; var Handled: Boolean);
+begin
+  inherited;
+  CalcClickableRect(AMapView);
 end;
 
 procedure TLegalNoticePlugin.MouseMove(AMapView: TMapView; Shift: TShiftState;
@@ -227,14 +234,27 @@ procedure TForm1.FormCreate(Sender: TObject);
 begin
   FPluginManager := TMvPluginManager.Create(Self);
 
-  FMapView := TMapView.Create(self);
-  FMapView.Align := alClient;
-  FMapView.Parent := Self;
-  FMapView.MapProvider := 'OpenStreetMap Mapnik';
-  FMapView.UseThreads := true;
-  FMapView.Zoom := 4;
-  FMapView.Active := true;
-  FMapView.PluginManager := FPluginManager;
+  FMapView1 := TMapView.Create(self);
+  FMapView1.Align := alClient;
+  FMapView1.Parent := Panel2;
+  FMapView1.MapProvider := 'OpenStreetMap Mapnik';
+  FMapView1.UseThreads := true;
+  FMapView1.Zoom := 9;
+  FMapView1.MapCenter.Longitude := 0;
+  FMapView1.MapCenter.Latitude := 51.6;
+  FMapView1.Active := true;
+  FMapView1.PluginManager := FPluginManager;
+
+  FMapView2 := TMapView.Create(self);
+  FMapView2.Align := alClient;
+  FMapView2.Parent := Panel3;
+  FMapView2.MapProvider := 'OpenStreetMap Mapnik';
+  FMapView2.UseThreads := true;
+  FMapView2.Zoom := 8;
+  FMapView2.MapCenter.Longitude := 10;
+  FMapView2.MapCenter.Latitude := 48;
+  FMapView2.Active := true;
+  FMapView2.PluginManager := FPluginManager;
 
   with TLegalNoticePlugin.Create(FPluginManager) do
   begin
@@ -256,7 +276,8 @@ end;
 
 procedure TForm1.Button1Click(Sender: TObject);
 begin
-  FMapView.SaveToFile(TPortableNetworkGraphic, 'map.png');
+  FMapView1.SaveToFile(TPortableNetworkGraphic, 'map1.png');
+  FMapView2.SaveToFile(TPortableNetworkGraphic, 'map2.png');
 end;
 
 procedure TForm1.ComboBox1Change(Sender: TObject);

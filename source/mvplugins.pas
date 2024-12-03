@@ -8,6 +8,7 @@ uses
   Classes, SysUtils, contnrs, Controls, mvMapViewer;
 
 type
+  TMvPlugin = class;
   TMvPluginManager = class;
 
   TMvPlugin = class(TComponent)
@@ -20,6 +21,8 @@ type
     procedure BeforeDrawObjects(AMapView: TMapView; var Handled: Boolean); virtual;
     procedure MouseDown(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
       X, Y: Integer; var Handled: Boolean); virtual;
+    procedure MouseEnter(AMapView: TMapView; var Handled: Boolean); virtual;
+    procedure MouseLeave(AMapView: TMapView; var Handled: Boolean); virtual;
     procedure MouseMove(AMapView: TMapView; AShift: TShiftState; X,Y: Integer;
       var Handled: Boolean); virtual;
     procedure MouseUp(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
@@ -54,6 +57,8 @@ type
     procedure BeforeDrawObjects(AMapView: TMapView; AMapEvent: TNotifyEvent); override;
     procedure MouseDown(AMapView: TMapView; AButton: TMouseButton;
       AShift: TShiftState; X, Y: Integer; AMapEvent: TMouseEvent); override;
+    procedure MouseEnter(AMapView: TMapView; AMapEvent: TNotifyEvent); override;
+    procedure MouseLeave(AMapView: TMapView; AMapEvent: TNotifyEvent); override;
     procedure MouseMove(AMapView: TMapView; AShift: TShiftState; X,Y: Integer;
       AMapEvent: TMouseMoveEvent); override;
     procedure MouseUp(AMapView: TMapView; AButton: TMouseButton;
@@ -78,35 +83,37 @@ end;
 
 procedure TMvPlugin.AfterPaint(AMapView: TMapView; var Handled: Boolean);
 begin
-  Handled := false;
 end;
 
 procedure TMvPlugin.AfterDrawObjects(AMapView: TMapView; var Handled: Boolean);
 begin
-  Handled := false;
 end;
 
 procedure TMvPlugin.BeforeDrawObjects(AMapView: TMapView; var Handled: Boolean);
 begin
-  Handled := false;
 end;
 
 procedure TMvPlugin.MouseDown(AMapView: TMapView; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer; var Handled: Boolean);
 begin
-  Handled := false;
+end;
+
+procedure TMvPlugin.MouseEnter(AMapView: TMapView; var Handled: Boolean);
+begin
+end;
+
+procedure TMvPlugin.MouseLeave(AMapView: TMapView; var Handled: Boolean);
+begin
 end;
 
 procedure TMvPlugin.MouseMove(AMapView: TMapView; AShift: TShiftState;
   X, Y: Integer; var Handled: Boolean);
 begin
-  Handled := false;
 end;
 
 procedure TMvPlugin.MouseUp(AMapView: TMapView; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer; var Handled: Boolean);
 begin
-  Handled := false;
 end;
 
 procedure TMvPlugin.SetPluginManager(AValue: TMvPluginManager);
@@ -219,6 +226,30 @@ begin
     FPluginList[i].MouseDown(AMapView, AButton, AShift, X, Y, handled);
   if (not handled) then
     inherited MouseDown(AMapView, AButton, AShift, X, Y, AMapEvent);
+end;
+
+procedure TMvPluginManager.MouseEnter(AMapView: TMapView; AMapEvent: TNotifyEvent);
+var
+  i: Integer;
+  handled: Boolean;
+begin
+  handled := false;
+  for i := 0 to FPluginList.Count-1 do
+    FPluginList[i].MouseEnter(AMapView, handled);
+  if not handled then
+    inherited MouseEnter(AMapView, AMapEvent);
+end;
+
+procedure TMvPluginManager.MouseLeave(AMapView: TMapView; AMapEvent: TNotifyEvent);
+var
+  i: Integer;
+  handled: Boolean;
+begin
+  handled := false;
+  for i := 0 to FPluginList.Count-1 do
+    FPluginList[i].MouseLeave(AMapView, handled);
+  if not handled then
+    inherited MouseLeave(AMapView, AMapEvent);
 end;
 
 procedure TMvPluginManager.MouseMove(AMapView: TMapView; AShift: TShiftState;

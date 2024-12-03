@@ -449,6 +449,8 @@ type
     procedure BeforeDrawObjects(AMapView: TMapView; AMapEvent: TNotifyEvent); virtual;
     procedure MouseDown(AMapView: TMapView; AButton: TMouseButton;
       AShift: TShiftState; X, Y: Integer; AMapEvent: TMouseEvent); virtual;
+    procedure MouseEnter(AMapView: TMapView; AMapEvent: TNotifyEvent); virtual;
+    procedure MouseLeave(AMapView: TMapView; AMapEvent: TNotifyEvent); virtual;
     procedure MouseMove(AMapView: TMapView; AShift: TShiftState; X,Y: Integer;
       AMapEvent: TMouseMoveEvent); virtual;
     procedure MouseUp(AMapView: TMapView; AButton: TMouseButton;
@@ -582,6 +584,8 @@ type
       procedure MouseUp(Button: TMouseButton; Shift: TShiftState;
         X, Y: Integer); override;
       procedure MouseMove(Shift: TShiftState; X,Y: Integer); override;
+      procedure MouseEnter; override;
+      procedure MouseLeave; override;
       procedure Notification(AComponent: TComponent; Operation: TOperation); override;
       procedure Paint; override;
       procedure OnGPSItemsModified(Sender: TObject; objs: TGPSObjList;
@@ -2516,9 +2520,12 @@ var
   savedOnMouseDown: TMouseEvent;
 begin
   savedOnMouseDown := OnMouseDown;
-  OnMouseDown := nil;  // Avoid handling user OnMouseDown before the plugin manager
-  inherited MouseDown(Button, Shift, X, Y);
-  OnMouseDown := savedOnMouseDown;
+  try
+    OnMouseDown := nil;  // Avoid handling user OnMouseDown before the plugin manager
+    inherited MouseDown(Button, Shift, X, Y);
+  finally
+    OnMouseDown := savedOnMouseDown;
+  end;
   PluginManager.MouseDown(Self, Button, Shift, X, Y, OnMouseDown);
 
   if EditingEnabled then
@@ -2548,9 +2555,12 @@ var
   savedOnMouseUp: TMouseEvent;
 begin
   savedOnMouseUp := OnMouseUp;
-  OnMouseUp := nil;   // Avoid handling user OnMouseUp before the plugin manager
-  inherited MouseUp(Button, Shift, X, Y);
-  OnMouseUp := savedOnMouseUp;
+  try
+    OnMouseUp := nil;   // Avoid handling user OnMouseUp before the plugin manager
+    inherited MouseUp(Button, Shift, X, Y);
+  finally
+    OnMouseUp := savedOnMouseUp;
+  end;
   PluginManager.MouseUp(Self, Button, Shift, X, Y, OnMouseUp);
 
   if IsActive then
@@ -2601,9 +2611,12 @@ var
   savedOnMouseMove: TMouseMoveEvent;
 begin
   savedOnMouseMove := OnMouseMove;
-  OnMouseMove := nil;  // Avoid handling user OnMouseMove before plugin manager
-  inherited MouseMove(Shift, X, Y);
-  OnMouseMove := savedOnMouseMove;
+  try
+    OnMouseMove := nil;  // Avoid handling user OnMouseMove before plugin manager
+    inherited MouseMove(Shift, X, Y);
+  finally
+    OnMouseMove := savedOnMouseMove;
+  end;
   PluginManager.MouseMove(Self, Shift, X, Y, OnMouseMove);
 
   if IsActive then
@@ -2614,6 +2627,16 @@ begin
   end;
   if EditingEnabled then
     EditorMM
+end;
+
+procedure TMapView.MouseEnter;
+begin
+  PluginManager.MouseEnter(Self, OnMouseEnter);
+end;
+
+procedure TMapView.MouseLeave;
+begin
+  PluginManager.MouseLeave(Self, OnMouseLeave);
 end;
 
 procedure TMapView.Notification(AComponent: TComponent; Operation: TOperation);
@@ -4297,11 +4320,14 @@ end;
 
 { TMvCustomPluginManager }
 
-procedure TMvcustomPluginManager.AddMapView(AMapView: TMapView);
+procedure TMvCustomPluginManager.AddMapView(AMapView: TMapView);
 begin
 //
 end;
 
+{ Just executes the handler assigned to the OnAfterDrawObjects event of the
+  mapview. The descendant plugin manager will have to iterate over all plugins
+  used by it. }
 procedure TMvCustomPluginManager.AfterDrawObjects(AMapView: TMapView;
   AMapEvent: TNotifyEvent);
 begin
@@ -4338,6 +4364,16 @@ procedure TMvCustomPluginManager.MouseDown(AMapView: TMapView; AButton: TMouseBu
   AShift: TShiftState; X, Y: Integer; AMapEvent: TMouseEvent);
 begin
   DefaultMouseEvent(AMapView, AButton, AShift, X, Y, AMapEvent);
+end;
+
+procedure TMvCustomPluginManager.MouseEnter(AMapView: TMapView; AMapEvent: TNotifyEvent);
+begin
+  DefaultNotifyEventHandler(AMapView, AMapEvent);
+end;
+
+procedure TMvCustomPluginManager.MouseLeave(AMapView: TMapView; AMapEvent: TNotifyEvent);
+begin
+  DefaultNotifyEventHandler(AMapView, AMapEvent);
 end;
 
 procedure TMvCustomPluginManager.MouseMove(AMapView: TMapView; AShift: TShiftState;
