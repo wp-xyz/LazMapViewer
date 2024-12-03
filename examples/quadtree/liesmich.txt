@@ -1,0 +1,72 @@
+Das Archiv enthält eine Demo-Anwendung zur gemeinsamen Verwendung von lazQuadTree und dem lazMapViewer.
+Das Programm lädt nach dem Start die enthaltene Datei POI.csv, welche 95.000 über die Erde verteilte POIs 
+enthält. Diese werden auf der Karte entsprechend als marker dargestellt.
+Die Darstellung kann in der bisherigen Variante (alle POIs landen in der GpsList des MapView) 
+dargestellt werden.
+Inhalt der Demo ist aber die Verwendung zusammen mit dem QuadTree, welcher es erlaubt wesentlich schneller 
+die Elemente zu finden und entsprechend zu gruppieren.
+
+Hinweis: Die Anwendung zeigt die "Eieruhr" beim Laden und beim Umschalten der Betriebsmodi. Das Umschalten 
+von der Standard-MapView-Darstellung (alle 95.000 POIs werden gleichzeitig angezeigt) zur 
+QuadTreeListe dauert verhältnismäßig lange, weil das Löschen der 95.000 Objekte aus der
+GpsListe des MapView sehr lange dauert. Dies ist *kein* Problem der Demo-Anwendung!
+
+Damit das projekt kompiliert werden kann muss im lazMapViewer eine kleine Modifikation eingebaut werden.
+
+In der Datei mvmapviewer.pas
+
+muss in der Klasse
+TMapView = class(TCustomControl)
+in der Sektion
+  private
+ergänzt werden:
+      FBeforeDrawObjectsEvent : TNotifyEvent;
+und in der Sektion 
+  published
+die zugehörige property ergänzt werden
+      property OnBeforeDrawObjects : TNotifyEvent read FBeforeDrawObjectsEvent write FBeforeDrawObjectsEvent;
+
+In der implementation in der Methode
+
+procedure TMapView.Paint;
+
+und dort in der lokalen 
+
+  procedure FullRedraw;
+
+müssen die lokalen Variablen mit
+
+    i : Integer;
+    me : array of TModifiedEvent = Nil;
+
+ergänzt werden.
+Außerdem muss *vor* der Zeile
+DrawObjects(Default(TTileId), 0, 0, W - 1, Canvas.Height);
+wie folgt eingefügt werden:
+
+    // Allow the modification of the object lists prior to the paint
+    if Assigned(FBeforeDrawObjectsEvent) then
+    begin
+      SetLength(me,Length(FGPSItems));
+      // BeginUpdate set in all Lists, to prevent multiple Drawings here
+      // also remove the OnModified-Event of the lists, since everything
+      // ist up to date right here
+      for i := 0 to High(FGPSItems) do
+      begin
+        FGPSItems[i].BeginUpdate;
+        me[i] := FGPSItems[i].OnModified;
+        FGPSItems[i].OnModified := Nil;
+      end;
+      try
+        // Call the Event methode
+        FBeforeDrawObjectsEvent(Self);
+      finally
+        // EndUpdate and attach the original event method again to allow
+        // the reflection of the changing in the GPSItems while drawing
+        for i := 0 to High(FGPSItems) do
+        begin
+          FGPSItems[i].EndUpdate;
+          FGPSItems[i].OnModified := me[i];
+        end;
+      end;
+    end;

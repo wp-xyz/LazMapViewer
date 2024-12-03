@@ -1,0 +1,67 @@
+inherited LayersPropertyEditForm: TLayersPropertyEditForm
+  Left = 350
+  Height = 343
+  Top = 250
+  Width = 320
+  Caption = 'MapView Layers'
+  ClientHeight = 343
+  ClientWidth = 320
+  inherited ToolBar1: TToolBar
+    Width = 320
+    inherited DividerToolButton: TToolButton
+      Height = 40
+    end
+  end
+  inherited CollectionListBox: TListBox
+    Height = 254
+    Width = 320
+    OnClick = CollectionListBoxClick
+    TopIndex = -1
+  end
+  object Panel1: TPanel[2]
+    Left = 0
+    Height = 47
+    Top = 296
+    Width = 320
+    Align = alBottom
+    ClientHeight = 47
+    ClientWidth = 320
+    ParentColor = False
+    TabOrder = 2
+    object btnLoad: TBitBtn
+      AnchorSideLeft.Control = Panel1
+      AnchorSideTop.Control = Panel1
+      AnchorSideBottom.Control = Panel1
+      AnchorSideBottom.Side = asrBottom
+      Left = 6
+      Height = 35
+      Top = 6
+      Width = 94
+      Anchors = [akTop, akLeft, akBottom]
+      BorderSpacing.Around = 5
+      Caption = 'Load'
+      Enabled = False
+      OnClick = btnLoadClick
+      TabOrder = 0
+    end
+    object btnSave: TBitBtn
+      AnchorSideLeft.Control = btnLoad
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = Panel1
+      AnchorSideBottom.Control = Panel1
+      AnchorSideBottom.Side = asrBottom
+      Left = 105
+      Height = 35
+      Top = 6
+      Width = 94
+      Anchors = [akTop, akLeft, akBottom]
+      BorderSpacing.Around = 5
+      Caption = 'Save'
+      Enabled = False
+      OnClick = btnSaveClick
+      TabOrder = 1
+    end
+  end
+  inherited ActionList1: TActionList[3]
+  end
+end
