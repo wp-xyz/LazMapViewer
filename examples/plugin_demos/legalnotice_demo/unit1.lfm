@@ -127,6 +127,7 @@ object Form1: TForm1
       DrawingEngine = MapView1.BuiltInDE
       Layers = <>
       Font.Color = clBlack
+      PluginManager = MapView1.BuiltinPM
     end
   end
   object Panel3: TPanel

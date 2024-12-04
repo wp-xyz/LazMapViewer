@@ -12,15 +12,15 @@ uses
   mvJobQueue, mvJobs, mvMapProvider, mvTypes, mvMapViewer, mvExtraData, 
   mvDLEFpc, mvMapViewerReg, mvGPX, mvDrawingEngine, mvDE_IntfGraphics, 
   mvDLEWin, mvMapViewerPropEdits, mvLayersPropEditForm, mvGeoMath, 
-  mvMapViewerPathEditForm, mvMapViewerPathEditDsgForm, mvDLECache, mvPlugins, 
-  mvPluginRegistration, LazarusPackageIntf;
+  mvMapViewerPathEditForm, mvMapViewerPathEditDsgForm, mvDLECache, 
+  mvPluginEditors, mvClassRegistration, mvPluginCore, mvPlugins, 
+  LazarusPackageIntf;
 
 implementation
 
 procedure Register;
 begin
   RegisterUnit('mvMapViewerReg', @mvMapViewerReg.Register);
-  RegisterUnit('mvMapViewerPropEdits', @mvMapViewerPropEdits.Register);
 end;
 
 initialization

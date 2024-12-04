@@ -1,4 +1,4 @@
-unit mvPlugins;
+unit mvPluginCore;
 
 {$mode objfpc}{$H+}
 
@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, StrUtils, contnrs,
   Controls, Dialogs,
-  mvMapViewer;
+  mvMapViewer, mvClassRegistration;
 
 type
   TMvPlugin = class;
@@ -91,17 +91,18 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-    property PluginList: TMvPluginList read FPluginList;
     property MapList: TFPList read FMapList;
+  published
+    property PluginList: TMvPluginList read FPluginList;
   end;
 
 procedure RegisterPluginClass(APluginClass: TMvPluginClass; const ACaption: String);
 
+var
+  PluginClassRegistry: TMvClassRegistry = nil;
+
 
 implementation
-
-uses
-  mvPluginRegistration;
 
 { TMvIndexedComponent, borrowed from TAChart }
 
@@ -430,9 +431,6 @@ end;
 
 { Plugin registration }
 
-var
-  PluginClassRegistry: TMvClassRegistry = nil;
-
 procedure RegisterPluginClass(APluginClass: TMvPluginClass; const ACaption: String);
 begin
   RegisterClass(APluginClass);
@@ -441,7 +439,8 @@ begin
 end;
 
 initialization
-  PluginClassRegistry := TMvClassRegistry.Create;
+  if PluginClassRegistry = nil then
+    PluginClassRegistry := TMvClassRegistry.Create;
 
 finalization
   FreeAndNil(PluginClassRegistry);

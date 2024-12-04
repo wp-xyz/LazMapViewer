@@ -1,16 +1,15 @@
-{ Registration of plugins
+{ Registration of classes (plugins)
   Code was adapted from TAChart.
 }
 
-unit mvPluginRegistration;
+unit mvClassRegistration;
 
 {$mode objfpc}{$H+}
 
 interface
 
 uses
-  Classes, SysUtils,
-  mvPlugins;
+  Classes, SysUtils;
 
 type
   TMvClassRegistryItem = class
@@ -27,7 +26,6 @@ type
     function GetClass(AIndex: Integer): TClass;
     function IndexOfClass(AClass: TClass): Integer;
   end;
-
 
 implementation
 

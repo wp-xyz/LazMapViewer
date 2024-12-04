@@ -3276,6 +3276,7 @@ begin
   FBuiltinDrawingEngine.CreateBuffer(Width, Height);
 
   FBuiltinPluginManager := TMvCustomPluginManager.Create(Self);
+  FBuiltinPluginManager.Name := 'BuiltinPM';
 
   FFont := TFont.Create;
   FFont.Name := 'default';

@@ -22,7 +22,7 @@
 FPC 3.2.0 or newer required."/>
     <License Value="Modified LGPL with linking exception, like FreePascal RTL/FCL and Lazarus LCL"/>
     <Version Minor="2" Release="7"/>
-    <Files Count="26">
+    <Files Count="28">
       <Item1>
         <Filename Value="source/mvcache.pas"/>
         <UnitName Value="mvCache"/>
@@ -98,7 +98,6 @@ FPC 3.2.0 or newer required."/>
       </Item18>
       <Item19>
         <Filename Value="source/mvmapviewerpropedits.pas"/>
-        <HasRegisterProc Value="True"/>
         <UnitName Value="mvMapViewerPropEdits"/>
       </Item19>
       <Item20>
@@ -122,13 +121,21 @@ FPC 3.2.0 or newer required."/>
         <UnitName Value="mvDLECache"/>
       </Item24>
       <Item25>
-        <Filename Value="source/mvplugins.pas"/>
-        <UnitName Value="mvplugins"/>
+        <Filename Value="source/mvplugineditors.pas"/>
+        <UnitName Value="mvPluginEditors"/>
       </Item25>
       <Item26>
-        <Filename Value="source/mvpluginregistration.pas"/>
-        <UnitName Value="mvpluginregistration"/>
+        <Filename Value="source/mvclassregistration.pas"/>
+        <UnitName Value="mvClassRegistration"/>
       </Item26>
+      <Item27>
+        <Filename Value="source/mvplugincore.pas"/>
+        <UnitName Value="mvPluginCore"/>
+      </Item27>
+      <Item28>
+        <Filename Value="source/mvplugins.pas"/>
+        <UnitName Value="mvplugins"/>
+      </Item28>
     </Files>
     <CompatibilityMode Value="True"/>
     <RequiredPkgs Count="2">

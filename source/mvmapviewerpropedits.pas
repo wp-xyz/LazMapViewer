@@ -96,13 +96,12 @@ type
     procedure SetValue(const NewValue: AnsiString); override;
   end;
 
-procedure Register;
-
 implementation
 
 uses
   System.UITypes, Dialogs, IDEWindowIntf, LazIDEIntf, StrUtils, mvMapViewer,
-  mvGpsObj, mvLayersPropEditForm, mvEngine, mvMapViewerPathEditDsgForm;
+  mvGpsObj, mvLayersPropEditForm, mvEngine, mvMapViewerPathEditDsgForm,
+  mvPluginCore, mvPluginEditors;
 
 const
   sNONE = '(none)';
@@ -325,38 +324,6 @@ begin
     then inherited SetValue('')
     else inherited SetValue(NewValue);
 end;
-
-procedure Register;
-begin
-  RegisterComponentEditor(TMapView, TMapViewComponentEditor);
-
-  RegisterPropertyEditor(TypeInfo(TMapLayers),
-    TMapView, 'Layers', TMapLayersPropertyEditor);
-
-  RegisterPropertyEditor(TypeInfo(TMapTrackPoints),
-    TMapTrack, 'Points', TMapTrackPointsPropertyEditor);
-
-  RegisterPropertyEditor(TypeInfo(String),
-    TMapView,'MapProvider',TMapProviderPropertyEditor);
-  RegisterPropertyEditor(TypeInfo(String),
-    TMapLayer,'MapProvider',TMapProviderPropertyEditor);
-  RegisterPropertyEditor(TypeInfo(TImageIndex),
-    TPointOfInterest, 'ImageIndex', TPointOfInterestImageIndexPropertyEditor);
-  RegisterPropertyEditor(TypeInfo(TDateTime),
-    TMapPoint, 'DateTime', TPointDateTimePropertyEditor);
-  RegisterPropertyEditor(TypeInfo(Double),
-    TMapPoint, 'Elevation', TPointElevationPropertyEditor);
-
-  RegisterPropertyEditor(TypeInfo(Double),
-    TMapPoint,'Latitude',TLatLonDMSPropertyEditor);
-  RegisterPropertyEditor(TypeInfo(Double),
-    TMapPoint,'Longitude',TLatLonDMSPropertyEditor);
-  RegisterPropertyEditor(TypeInfo(Double),
-    TMapCenter,'Latitude',TLatLonDMSPropertyEditor);
-  RegisterPropertyEditor(TypeInfo(Double),
-    TMapCenter,'Longitude',TLatLonDMSPropertyEditor);
-end;
-
 
 end.
 
