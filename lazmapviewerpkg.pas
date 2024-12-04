@@ -13,7 +13,7 @@ uses
   mvDLEFpc, mvMapViewerReg, mvGPX, mvDrawingEngine, mvDE_IntfGraphics, 
   mvDLEWin, mvMapViewerPropEdits, mvLayersPropEditForm, mvGeoMath, 
   mvMapViewerPathEditForm, mvMapViewerPathEditDsgForm, mvDLECache, mvPlugins, 
-  LazarusPackageIntf;
+  mvPluginRegistration, LazarusPackageIntf;
 
 implementation
 

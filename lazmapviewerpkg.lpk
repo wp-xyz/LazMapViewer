@@ -22,7 +22,7 @@
 FPC 3.2.0 or newer required."/>
     <License Value="Modified LGPL with linking exception, like FreePascal RTL/FCL and Lazarus LCL"/>
     <Version Minor="2" Release="7"/>
-    <Files Count="25">
+    <Files Count="26">
       <Item1>
         <Filename Value="source/mvcache.pas"/>
         <UnitName Value="mvCache"/>
@@ -125,6 +125,10 @@ FPC 3.2.0 or newer required."/>
         <Filename Value="source/mvplugins.pas"/>
         <UnitName Value="mvplugins"/>
       </Item25>
+      <Item26>
+        <Filename Value="source/mvpluginregistration.pas"/>
+        <UnitName Value="mvpluginregistration"/>
+      </Item26>
     </Files>
     <CompatibilityMode Value="True"/>
     <RequiredPkgs Count="2">

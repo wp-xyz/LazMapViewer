@@ -5,18 +5,37 @@ unit mvPlugins;
 interface
 
 uses
-  Classes, SysUtils, contnrs, Controls, mvMapViewer;
+  Classes, SysUtils, StrUtils, contnrs,
+  Controls, Dialogs,
+  mvMapViewer;
 
 type
   TMvPlugin = class;
   TMvPluginManager = class;
 
-  TMvPlugin = class(TComponent)
+  TMvIndexedComponent = class(TComponent)
+  strict protected
+    function GetIndex: Integer; virtual; abstract;
+    procedure SetIndex(AValue: Integer); virtual; abstract;
+  public
+    procedure ChangeNamePrefix(const AOld, ANew: String; var AFailed: String);
+    property Index: Integer read GetIndex write SetIndex;
+  end;
+
+  TMvIndexedComponentList = class(TFPList)
+  public
+    procedure ChangeNamePrefix(const AOld, ANew: String);
+  end;
+
+  TMvPlugin = class(TMvIndexedComponent)
   private
     FPluginManager: TMvPluginManager;
     FActive: Boolean;
     procedure SetActive(AValue: Boolean);
     procedure SetPluginManager(AValue: TMvPluginManager);
+  protected
+    function GetIndex: Integer; override;
+    procedure SetIndex(AValue: Integer); override;
   protected
     procedure AfterDrawObjects(AMapView: TMapView; var Handled: Boolean); virtual;
     procedure AfterPaint(AMapView: TMapView; var Handled: Boolean); virtual;
@@ -37,7 +56,9 @@ type
     property Active: Boolean read FActive write SetActive default true;
   end;
 
-  TMvPluginList = class(TFPList)
+  TMvPluginClass = class of TMvPlugin;
+
+  TMvPluginList = class(TMvIndexedComponentList)
   private
     function GetItem(AIndex: Integer): TMvPlugin;
     procedure SetItem(AIndex: Integer; AValue: TMvPlugin);
@@ -74,8 +95,42 @@ type
     property MapList: TFPList read FMapList;
   end;
 
+procedure RegisterPluginClass(APluginClass: TMvPluginClass; const ACaption: String);
+
 
 implementation
+
+uses
+  mvPluginRegistration;
+
+{ TMvIndexedComponent, borrowed from TAChart }
+
+procedure TMvIndexedComponent.ChangeNamePrefix(const AOld, ANew: String;
+  var AFailed: String);
+begin
+  if AnsiStartsStr(AOld, Name) then
+    try
+      Name := ANew + Copy(Name, Length(AOld) + 1, Length(Name));
+    except on EComponentError do
+      AFailed += IfThen(AFailed = '', '', ', ') + Name;
+    end;
+end;
+
+
+{ TMvIndexedComponentList, borrowed from TAChart }
+
+procedure TMvIndexedComponentList.ChangeNamePrefix(const AOld, ANew: String);
+var
+  failed: String;
+  i: Integer;
+begin
+  failed := '';
+  for i := 0 to Count - 1 do
+    TMvIndexedComponent(Items[i]).ChangeNamePrefix(AOld, ANew, failed);
+  if (failed <> '') then
+    ShowMessage(Format('Failed to rename components: %s', [failed]));
+end;
+
 
 { TMvPlugin }
 
@@ -96,6 +151,14 @@ end;
 
 procedure TMvPlugin.BeforeDrawObjects(AMapView: TMapView; var Handled: Boolean);
 begin
+end;
+
+function TMvPlugin.GetIndex: Integer;
+begin
+  if FPluginManager = nil then
+    Result := -1
+  else
+    Result := FPluginManager.PluginList.IndexOf(Self);
 end;
 
 procedure TMvPlugin.MouseDown(AMapView: TMapView; Button: TMouseButton;
@@ -128,6 +191,16 @@ begin
     FActive := AValue;
     Update;
   end;
+end;
+
+procedure TMvPlugin.SetIndex(AValue: Integer);
+begin
+  if AValue < 0 then
+    AValue := 0
+  else
+  if AValue >= FPluginManager.PluginList.Count then
+    AValue := FPluginManager.PluginList.Count - 1;
+  FPluginManager.PluginList.Move(Index, AValue);
 end;
 
 procedure TMvPlugin.SetPluginManager(AValue: TMvPluginManager);
@@ -171,8 +244,10 @@ end;
 
 destructor TMvPluginManager.Destroy;
 begin
-  FMapList.Free;
+  while FPluginList.Count > 0 do
+    FPluginList[FPluginList.Count - 1].Free;
   FPluginList.Free;
+  FMapList.Free;
   inherited;
 end;
 
@@ -351,6 +426,25 @@ procedure TMvPluginManager.RemoveMapView(AMapView: TMapView);
 begin
   FMapList.Remove(AMapView);
 end;
+
+
+{ Plugin registration }
+
+var
+  PluginClassRegistry: TMvClassRegistry = nil;
+
+procedure RegisterPluginClass(APluginClass: TMvPluginClass; const ACaption: String);
+begin
+  RegisterClass(APluginClass);
+  if PluginClassRegistry.IndexOfClass(APluginClass) < 0 then
+    PluginClassRegistry.Add(TMvClassRegistryItem.Create(APluginClass, ACaption));
+end;
+
+initialization
+  PluginClassRegistry := TMvClassRegistry.Create;
+
+finalization
+  FreeAndNil(PluginClassRegistry);
 
 end.
 
