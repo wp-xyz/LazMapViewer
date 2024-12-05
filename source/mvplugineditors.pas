@@ -165,8 +165,6 @@ var
   propValue: TPersistent;
   editorForm: TForm;
 begin
-  DebugLn(['[TMvSubComponentListEditor.ExecuteVerb] Index = ', Index]);
-
   if Index <> 0 then exit;
   propValue := GetComponent;
   if propValue = nil then
@@ -283,7 +281,6 @@ var
   s: TComponent;
   n: String;
 begin
-  DebugLn(['[TMvComponentListEditorForm.miAddClick] Enter']);
   s := MakeSubcomponent(FParent.Owner, (Sender as TMenuItem).Tag);
   try
     n := Copy(s.ClassName, 2, Length(s.ClassName) - 1);
@@ -292,7 +289,6 @@ begin
     FDesigner.PropertyEditorHook.PersistentAdded(s, true);
     FDesigner.Modified;
     RefreshList;
-    DebugLn(['[TMvComponentListEditorForm.miAddClick] Exit']);
   except
     s.Free;
     raise;

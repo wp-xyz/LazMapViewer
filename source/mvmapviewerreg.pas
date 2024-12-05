@@ -19,6 +19,8 @@ uses
   mvMapViewerPropEdits, mvPluginEditors;
 
 procedure Register;
+var
+  i: Integer;
 begin
   RegisterComponents(PALETTE_PAGE, [TMapView]);
   RegisterComponents(PALETTE_PAGE, [TMvGeoNames]);
@@ -57,6 +59,8 @@ begin
     TMvPluginManager, 'PluginList', TMvPluginListPropertyEditor);
   RegisterComponentEditor(TMvPluginManager, TMvPluginManagerComponentEditor);
 
+  for i := 0 to PluginClassRegistry.Count - 1 do
+    RegisterNoIcon([TMvPluginClass(PluginClassRegistry.GetClass(i))]);
 end;
 
 end.
