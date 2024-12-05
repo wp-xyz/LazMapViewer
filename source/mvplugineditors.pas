@@ -8,7 +8,7 @@ unit mvPluginEditors;
 interface
 
 uses
-  SysUtils, Math, Classes,
+  SysUtils, Math, Classes, LazLoggerBase,
   PropEdits, ComponentEditors, IDEImagesIntf,
   Forms, Menus, StdCtrls, ComCtrls;
 
@@ -165,6 +165,8 @@ var
   propValue: TPersistent;
   editorForm: TForm;
 begin
+  DebugLn(['[TMvSubComponentListEditor.ExecuteVerb] Index = ', Index]);
+
   if Index <> 0 then exit;
   propValue := GetComponent;
   if propValue = nil then
@@ -184,24 +186,6 @@ end;
 
 
 { TMvComponentListEditorForm }
-
-procedure TMvComponentListEditorForm.AddSubcomponentClass(
-  const ACaption: String; ATag: Integer);
-var
-  mi: TMenuItem;
-begin
-  if ACaption = '' then exit; // Empty names denote deprecated components.
-  mi := TMenuItem.Create(Self);
-  mi.OnClick := @miAddClick;
-  mi.Caption := ACaption;
-  mi.Tag := ATag;
-  menuAddItem.Items.Add(mi);
-end;
-
-procedure TMvComponentListEditorForm.ChildrenListBoxClick(Sender: TObject);
-begin
-  SelectionChanged;
-end;
 
 constructor TMvComponentListEditorForm.Create(
   AOwner, AParent: TComponent; AComponentEditor: TMvSubComponentListEditor;
@@ -233,6 +217,24 @@ destructor TMvComponentListEditorForm.Destroy;
 begin
   UnregisterEditorForm(Self);
   inherited Destroy;
+end;
+
+procedure TMvComponentListEditorForm.AddSubcomponentClass(
+  const ACaption: String; ATag: Integer);
+var
+  mi: TMenuItem;
+begin
+  if ACaption = '' then exit; // Empty names denote deprecated components.
+  mi := TMenuItem.Create(Self);
+  mi.OnClick := @miAddClick;
+  mi.Caption := ACaption;
+  mi.Tag := ATag;
+  menuAddItem.Items.Add(mi);
+end;
+
+procedure TMvComponentListEditorForm.ChildrenListBoxClick(Sender: TObject);
+begin
+  SelectionChanged;
 end;
 
 function TMvComponentListEditorForm.FindChild(
@@ -281,6 +283,7 @@ var
   s: TComponent;
   n: String;
 begin
+  DebugLn(['[TMvComponentListEditorForm.miAddClick] Enter']);
   s := MakeSubcomponent(FParent.Owner, (Sender as TMenuItem).Tag);
   try
     n := Copy(s.ClassName, 2, Length(s.ClassName) - 1);
@@ -289,6 +292,7 @@ begin
     FDesigner.PropertyEditorHook.PersistentAdded(s, true);
     FDesigner.Modified;
     RefreshList;
+    DebugLn(['[TMvComponentListEditorForm.miAddClick] Exit']);
   except
     s.Free;
     raise;
@@ -496,8 +500,14 @@ end;
 
 function TMvPluginManagerEditorForm.MakeSubcomponent(AOwner: TComponent;
   ATag: Integer): TComponent;
+var
+  i: Integer;
 begin
-  Result := TMvPluginClass(PluginClassRegistry.GetClass(ATag)).Create(AOwner as TMvPluginManager);
+  DebugLn(['[TMvPluginManagerEditorForm.MakeSubComponent] AOwner.ClassName=', AOwner.ClassName, ', ATag=', ATag]);
+  for i := 0 to PluginClassRegistry.Count-1 do
+    DebugLn(['  [i=', i, '] PluginClassRegistry.GetCaption[i]=', PluginClassRegistry.GetCaption(i)]);
+
+  Result := TMvPluginClass(PluginClassRegistry.GetClass(ATag)).Create(AOwner);
 end;
 
 

@@ -8,7 +8,7 @@ uses
   Classes, SysUtils, Types,
   LCLIntf, Forms, Controls, Graphics, ExtCtrls, StdCtrls, Dialogs,
   TAGraph, TATools,
-  mvMapViewer, mvPlugins;
+  mvMapViewer, mvPluginCore, mvPlugins;
 
 type
   TForm1 = class(TForm)
@@ -72,7 +72,7 @@ begin
   FMapView2.Active := true;
   FMapView2.PluginManager := FPluginManager;
 
-  with TMvLegalNoticePlugin.Create(FPluginManager) do
+  with TLegalNoticePlugin.Create(self) do
   begin
     LegalNotice := '(c) OpenStreetMap and contributors';
     LegalNoticeURL := 'https://www.openstreetmap.org/copyright';
@@ -80,15 +80,17 @@ begin
     Font.Size := 8;
     Font.Color := clBlue;
     BackgroundColor := clWhite;
+    PluginManager := FPluginManager;
 
     Edit1.Text := LegalNotice;
   end;
 
-  with TMvCenterMarkerPlugin.Create(FPluginManager) do
+  with TCenterMarkerPlugin.Create(self) do
   begin
     Size := 15;
     Pen.Width := 3;
     Pen.Color := clRed;
+    PluginManager := FPluginManager;
   end;
 end;
 
@@ -105,12 +107,12 @@ end;
 
 procedure TForm1.CheckBox1Change(Sender: TObject);
 begin
-  (FPluginManager.PluginList.Items[1] as TCenterMarkerPlugin).Active := Checkbox1.Checked;
+  (FPluginManager.PluginList.Items[1] as TCenterMarkerPlugin).Enabled := Checkbox1.Checked;
 end;
 
 procedure TForm1.CheckBox2Change(Sender: TObject);
 begin
-  (FPluginManager.PluginList.Items[0] as TLegalNoticePlugin).Active := Checkbox2.Checked;
+  (FPluginManager.PluginList.Items[0] as TLegalNoticePlugin).Enabled := Checkbox2.Checked;
 end;
 
 procedure TForm1.ComboBox1Change(Sender: TObject);

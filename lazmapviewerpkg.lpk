@@ -3,6 +3,7 @@
   <Package Version="5">
     <Name Value="lazMapViewerPkg"/>
     <Type Value="RunAndDesignTime"/>
+    <AddToProjectUsesSection Value="True"/>
     <Author Value="Maciej Kaczkowski, ti_dic, Werner Pamler, Ekkehard Domning, Yuliyan Ivanov"/>
     <CompilerOptions>
       <Version Value="11"/>
