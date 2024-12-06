@@ -688,11 +688,13 @@ begin
   begin
     if AComponent is TMapView then
       RemoveMapView(TMapView(AComponent));
+      {
     if AComponent is TMvPlugin then
     begin
       AComponent.Free;
       FPluginList.Remove(AComponent);
     end;
+    }
   end;
 end;
 
