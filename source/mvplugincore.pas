@@ -52,8 +52,9 @@ type
       X, Y: Integer; var Handled: Boolean); virtual;
     procedure Update; virtual;
   public
-    constructor Create(AOwner: TComponent); virtual; reintroduce;
+    constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
+    procedure Assign(Source: TPersistent); override;
     function GetParentComponent: TComponent; override;
     function HasParent: Boolean; override;
     property PluginManager: TMvPluginManager read FPluginManager write SetPluginManager;
@@ -100,7 +101,7 @@ type
     destructor Destroy; override;
     procedure GetChildren(Proc: TGetChildProc; Root: TComponent); override;
     procedure SetChildOrder(Child: TComponent; Order: Integer); override;
-    property Items[AIndex: Integer]: TMvPlugin read GetItem; default;
+    property Item[AIndex: Integer]: TMvPlugin read GetItem; default;
     property MapList: TFPList read FMapList;
   published
     property PluginList: TMvPluginList read FPluginList;
@@ -148,6 +149,8 @@ end;
 constructor TMvPlugin.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  if AOwner is TMvPluginManager then
+    SetPluginManager(TMvPluginManager(AOwner));
   FEnabled := true;
 end;
 
@@ -155,6 +158,14 @@ destructor TMvPlugin.Destroy;
 begin
   SetPluginManager(nil);
   inherited;
+end;
+
+procedure TMvPlugin.Assign(Source: TPersistent);
+begin
+  if Source is TMvPlugin then
+    FEnabled := TMvPlugin(Source).Enabled
+  else
+    inherited Assign(Source);
 end;
 
 procedure TMvPlugin.AfterPaint(AMapView: TMapView; var Handled: Boolean);
@@ -305,7 +316,7 @@ begin
   handled := false;
   for i := 0 to FPluginList.Count-1 do
   begin
-    plugin := FPluginList[i];
+    plugin := Item[i];
     if plugin.Enabled then
       plugin.AfterDrawObjects(AMapView, handled);
   end;
@@ -322,7 +333,7 @@ begin
   handled := false;
   for i := 0 to FPluginList.Count-1 do
   begin
-    plugin := FPluginList[i];
+    plugin := Item[i];
     if plugin.Enabled then
       plugin.AfterPaint(AMapView, handled);
   end;
@@ -339,7 +350,7 @@ begin
   handled := false;
   for i := 0 to FPluginList.Count-1 do
   begin
-    plugin := FPluginList[i];
+    plugin := Item[i];
     if plugin.Enabled then
       plugin.BeforeDrawObjects(AMapView, handled);
   end;
@@ -354,7 +365,7 @@ var
 begin
   for i := 0 to FPluginList.Count-1 do
   begin
-    plugin := FPluginList[i];
+    plugin := Item[i];
     if plugin.Owner = Root then
       Proc(plugin);
   end;
@@ -383,7 +394,7 @@ begin
   handled := false;
   for i := 0 to FPluginList.Count-1 do
   begin
-    plugin := FPluginList[i];
+    plugin := Item[i];
     if plugin.Enabled then
       plugin.MouseDown(AMapView, AButton, AShift, X, Y, handled);
   end;
@@ -400,7 +411,7 @@ begin
   handled := false;
   for i := 0 to FPluginList.Count-1 do
   begin
-    plugin := FPluginList[i];
+    plugin := Item[i];
     if plugin.Enabled then
       plugin.MouseEnter(AMapView, handled);
   end;
@@ -417,7 +428,7 @@ begin
   handled := false;
   for i := 0 to FPluginList.Count-1 do
   begin
-    plugin := FPluginList[i];
+    plugin := Item[i];
     if plugin.Enabled then
       plugin.MouseLeave(AMapView, handled);
   end;
@@ -435,7 +446,7 @@ begin
   handled := false;
   for i := 0 to FPluginList.Count-1 do
   begin
-    plugin := FPluginList[i];
+    plugin := Item[i];
     if plugin.Enabled then
       plugin.MouseMove(AMapView, AShift, X, Y, handled);
   end;
@@ -453,7 +464,7 @@ begin
   handled := false;
   for i := 0 to FPluginList.Count-1 do
   begin
-    plugin := FPluginList[i];
+    plugin := Item[i];
     if plugin.Enabled then
       plugin.MouseUp(AMapView, AButton, AShift, X, Y, handled);
   end;

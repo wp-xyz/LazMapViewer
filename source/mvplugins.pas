@@ -26,6 +26,7 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
+    procedure Assign(Source: TPersistent); override;
   published
     property Pen: TPen read FPen write SetPen;
     property Size: Integer read FSize write SetSize default DEFAULT_MARKER_SIZE;
@@ -67,12 +68,13 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
+    procedure Assign(Source: TPersistent); override;
   published
     property BackgroundColor: TColor read FBackgroundColor write SetBackgroundColor default clNone;
     property Font: TFont read FFont write SetFont;
     property LegalNotice: String read FLegalNotice write SetLegalNotice;
     property LegalNoticeURL: String read FLegalNoticeURL write SetLegalNoticeURL;
-    property Position: TLegalNoticePosition read FPosition write SetPosition;
+    property Position: TLegalNoticePosition read FPosition write SetPosition default lnpBottomRight;
     property Spacing: Integer read FSpacing write SetSpacing default DEFAULT_LEGALNOTICE_SPACING;
   end;
 
@@ -94,21 +96,25 @@ begin
   inherited;
 end;
 
+procedure TCenterMarkerPlugin.Assign(Source: TPersistent);
+begin
+  if Source is TCenterMarkerPlugin then
+  begin
+    FPen.Assign(TCenterMarkerPlugin(Source).Pen);
+    FSize := TCenterMarkerPlugin(Source).Size;
+  end;
+  inherited;
+end;
+
 procedure TCenterMarkerPlugin.AfterDrawObjects(AMapView: TMapView;
   var Handled: Boolean);
 var
   C: TPoint;
 begin
-  DebugLn(['-- TCenterMarkerPlugin -- AfterDrawObjects: AMapView = ', PtrUInt(AMapView), ', AMapView.MapProvider = ', AMapView.MapProvider]);
-  DebugLn(['   .DrawingEngine = ', AMapView.DrawingEngine.ClassName]);
-  DebugLn(['   .FPen.Color = ', FPen.Color]);
-
   C := Point(AMapView.ClientWidth div 2, AMapView.ClientHeight div 2);
-  {
   AMapView.DrawingEngine.PenColor := FPen.Color;
   AMapView.DrawingEngine.PenStyle := FPen.Style;
   AMapView.DrawingEngine.PenWidth := FPen.Width;
-  }
   AMapView.DrawingEngine.Line(C.X, C.Y - FSize, C.X, C.Y + FSize);
   AMapView.DrawingEngine.Line(C.X - FSize, C.Y, C.X + FSize, C.Y);
 end;
@@ -142,6 +148,20 @@ end;
 destructor TLegalNoticePlugin.Destroy;
 begin
   FFont.Free;
+  inherited;
+end;
+
+procedure TLegalNoticePlugin.Assign(Source: TPersistent);
+begin
+  if Source is TLegalNoticePlugin then
+  begin
+    FBackgroundColor := TLegalNoticePlugin(Source).BackgroundColor;
+    FFont.Assign(TLegalNoticePlugin(Source).Font);
+    FLegalNotice := TLegalNoticePlugin(Source).LegalNotice;
+    FLegalNoticeURL := TLegalNoticePlugin(Source).LegalNoticeURL;
+    FPosition := TLegalNoticePlugin(Source).Position;
+    FSpacing := TLegalNoticePlugin(Source).Spacing;
+  end;
   inherited;
 end;
 

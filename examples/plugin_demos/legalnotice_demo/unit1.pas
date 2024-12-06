@@ -72,7 +72,7 @@ begin
   FMapView2.Active := true;
   FMapView2.PluginManager := FPluginManager;
 
-  with TLegalNoticePlugin.Create(self) do
+  with TLegalNoticePlugin.Create(FPluginManager) do
   begin
     LegalNotice := '(c) OpenStreetMap and contributors';
     LegalNoticeURL := 'https://www.openstreetmap.org/copyright';
@@ -80,23 +80,23 @@ begin
     Font.Size := 8;
     Font.Color := clBlue;
     BackgroundColor := clWhite;
-    PluginManager := FPluginManager;
+    //PluginManager := FPluginManager;
 
     Edit1.Text := LegalNotice;
   end;
 
-  with TCenterMarkerPlugin.Create(self) do
+  with TCenterMarkerPlugin.Create(FPluginManager) do
   begin
     Size := 15;
     Pen.Width := 3;
     Pen.Color := clRed;
-    PluginManager := FPluginManager;
+    //PluginManager := FPluginManager;
   end;
 end;
 
 procedure TForm1.Edit1Change(Sender: TObject);
 begin
-  (FPluginManager.PluginList.Items[0] as TLegalNoticePlugin).LegalNotice := Edit1.Text;
+  (FPluginManager.Item[0] as TLegalNoticePlugin).LegalNotice := Edit1.Text;
 end;
 
 procedure TForm1.Button1Click(Sender: TObject);
@@ -107,17 +107,17 @@ end;
 
 procedure TForm1.CheckBox1Change(Sender: TObject);
 begin
-  (FPluginManager.PluginList.Items[1] as TCenterMarkerPlugin).Enabled := Checkbox1.Checked;
+  (FPluginManager.Item[1] as TCenterMarkerPlugin).Enabled := Checkbox1.Checked;
 end;
 
 procedure TForm1.CheckBox2Change(Sender: TObject);
 begin
-  (FPluginManager.PluginList.Items[0] as TLegalNoticePlugin).Enabled := Checkbox2.Checked;
+  (FPluginManager.Item[0] as TLegalNoticePlugin).Enabled := Checkbox2.Checked;
 end;
 
 procedure TForm1.ComboBox1Change(Sender: TObject);
 begin
-  (FPluginManager.PluginList.Items[0] as TLegalNoticePlugin).Position := TLegalNoticePosition(Combobox1.ItemIndex);
+  (FPluginManager.Item[0] as TLegalNoticePlugin).Position := TLegalNoticePosition(Combobox1.ItemIndex);
 end;
 
 end.

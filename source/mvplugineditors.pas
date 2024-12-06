@@ -496,13 +496,7 @@ end;
 
 function TMvPluginManagerEditorForm.MakeSubcomponent(AOwner: TComponent;
   ATag: Integer): TComponent;
-var
-  i: Integer;
 begin
-  DebugLn(['[TMvPluginManagerEditorForm.MakeSubComponent] AOwner.ClassName=', AOwner.ClassName, ', ATag=', ATag]);
-  for i := 0 to PluginClassRegistry.Count-1 do
-    DebugLn(['  [i=', i, '] PluginClassRegistry.GetCaption[i]=', PluginClassRegistry.GetCaption(i)]);
-
   Result := TMvPluginClass(PluginClassRegistry.GetClass(ATag)).Create(AOwner);
 end;
 
