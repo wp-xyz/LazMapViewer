@@ -447,6 +447,7 @@ type
     procedure AfterDrawObjects(AMapView: TMapView; AMapEvent: TNotifyEvent); virtual;
     procedure AfterPaint(AMapView: TMapView; AMapEvent: TNotifyEvent); virtual;
     procedure BeforeDrawObjects(AMapView: TMapView; AMapEvent: TNotifyEvent); virtual;
+    procedure CenterMove(AMapView: TMapView; AMapEvent: TNotifyEvent); virtual;
     procedure MouseDown(AMapView: TMapView; AButton: TMouseButton;
       AShift: TShiftState; X, Y: Integer; AMapEvent: TMouseEvent); virtual;
     procedure MouseEnter(AMapView: TMapView; AMapEvent: TNotifyEvent); virtual;
@@ -455,6 +456,7 @@ type
       AMapEvent: TMouseMoveEvent); virtual;
     procedure MouseUp(AMapView: TMapView; AButton: TMouseButton;
       AShift: TShiftState; X, Y: Integer; AMapEvent: TMouseEvent); virtual;
+    procedure ZoomChange(AMapView: TMapView; AMapEvent: TNotifyEvent); virtual;
   public
   end;
 
@@ -495,6 +497,8 @@ type
       FCacheOnDisk: Boolean;
       FZoomMax: Integer;
       FZoomMin: Integer;
+      FOnCenterMove: TNotifyEvent;
+      FOnZoomChange: TNotifyEvent;
       FBeforeDrawObjectsEvent: TNotifyEvent;
       FAfterDrawObjectsEvent: TNotifyEvent;
       FAfterPaintEvent: TNotifyEvent;
@@ -516,10 +520,10 @@ type
       function GetInactiveColor: TColor;
       function GetLayers: TMapLayers;
       function GetMapProvider: String;
-      function GetOnCenterMove: TNotifyEvent;
+//      function GetOnCenterMove: TNotifyEvent;
       function GetOnCenterMoving: TCenterMovingEvent;
       function GetOnChange: TNotifyEvent;
-      function GetOnZoomChange: TNotifyEvent;
+//      function GetOnZoomChange: TNotifyEvent;
       function GetOnZoomChanging: TZoomChangingEvent;
       function GetPluginManager: TMvCustomPluginManager;
       function GetUseThreads: boolean;
@@ -546,10 +550,10 @@ type
       procedure SetInactiveColor(AValue: TColor);
       procedure SetLayers(const ALayers: TMapLayers);
       procedure SetMapProvider(AValue: String);
-      procedure SetOnCenterMove(AValue: TNotifyEvent);
+//      procedure SetOnCenterMove(AValue: TNotifyEvent);
       procedure SetOnCenterMoving(AValue: TCenterMovingEvent);
       procedure SetOnChange(AValue: TNotifyEvent);
-      procedure SetOnZoomChange(AValue: TNotifyEvent);
+//      procedure SetOnZoomChange(AValue: TNotifyEvent);
       procedure SetOnZoomChanging(AValue: TZoomChangingEvent);
       procedure SetOptions(AValue: TMapViewOptions);
       procedure SetPluginManager(AValue: TMvCustomPluginManager);
@@ -569,6 +573,7 @@ type
       AsyncInvalidate : boolean;
       procedure ActivateEngine;
       procedure DblClick; override;
+      procedure DoCenterMove(Sender: TObject);
       procedure DoDrawStretchedTile(const TileId: TTileID; X, Y: Integer; TileImg: TPictureCacheItem; const R: TRect);
       procedure DoDrawTile(const TileId: TTileId; X,Y: integer; TileImg: TPictureCacheItem);
       procedure DoDrawTileInfo(const {%H-}TileID: TTileID; X,Y: Integer);
@@ -577,6 +582,7 @@ type
       function DoMouseWheel(Shift: TShiftState; WheelDelta: Integer;
         MousePos: TPoint): Boolean; override;
       procedure DoOnResize; override;
+      procedure DoZoomChange(Sender: TObject);
       function FindObjsAtScreenPt(X, Y: Integer; ATolerance: Integer; AVisibleOnly: Boolean): TGPSObjArray;
       function IsActive: Boolean; inline;
       procedure MouseDown(Button: TMouseButton; Shift: TShiftState;
@@ -588,8 +594,7 @@ type
       procedure MouseLeave; override;
       procedure Notification(AComponent: TComponent; Operation: TOperation); override;
       procedure Paint; override;
-      procedure OnGPSItemsModified(Sender: TObject; objs: TGPSObjList;
-        Adding: boolean);
+      procedure OnGPSItemsModified(Sender: TObject; objs: TGPSObjList; Adding: boolean);
 
       function CreateLayers: TMapLayers; virtual;
       procedure UpdateLayers;
@@ -688,9 +693,9 @@ type
       property OnAfterDrawObjects: TNotifyEvent read FAfterDrawObjectsEvent write FAfterDrawObjectsEvent;
       property OnAfterPaint: TNotifyEvent read FAfterPaintEvent write FAfterPaintEvent;
       property OnBeforeDrawObjects: TNotifyEvent read FBeforeDrawObjectsEvent write FBeforeDrawObjectsEvent;
-      property OnCenterMove: TNotifyEvent read GetOnCenterMove write SetOnCenterMove;
+      property OnCenterMove: TNotifyEvent read {Get}FOnCenterMove write {Set}FOnCenterMove;
       property OnCenterMoving: TCenterMovingEvent read GetOnCenterMoving write SetOnCenterMoving;
-      property OnZoomChange: TNotifyEvent read GetOnZoomChange write SetOnZoomChange;
+      property OnZoomChange: TNotifyEvent read {Get}FOnZoomChange write {Set}FOnZoomChange;
       property OnZoomChanging: TZoomChangingEvent read GetOnZoomChanging write SetOnZoomChanging;
       property OnChange: TNotifyEvent read GetOnChange write SetOnChange;
       property OnDrawGpsPoint: TDrawGpsPointEvent read FOnDrawGpsPoint write FOnDrawGpsPoint;
@@ -2192,14 +2197,21 @@ begin
   result := Engine.MapProvider;
 end;
 
+{
 function TMapView.GetOnCenterMove: TNotifyEvent;
 begin
   Result := Engine.OnCenterMove;
 end;
+}
 
 function TMapView.GetOnCenterMoving: TCenterMovingEvent;
 begin
   Result := Engine.OnCenterMoving;
+end;
+
+procedure TMapView.DoZoomChange(Sender: TObject);
+begin
+  PluginManager.ZoomChange(Self, FOnZoomChange);
 end;
 
 function TMapView.GetOnChange: TNotifyEvent;
@@ -2207,10 +2219,12 @@ begin
   Result := Engine.OnChange;
 end;
 
+{
 function TMapView.GetOnZoomChange: TNotifyEvent;
 begin
   Result := Engine.OnZoomChange;
 end;
+}
 
 function TMapView.GetOnZoomChanging: TZoomChangingEvent;
 begin
@@ -2370,11 +2384,11 @@ begin
     Active := False;
   Invalidate;
 end;
-
+                                  {
 procedure TMapView.SetOnCenterMove(AValue: TNotifyEvent);
 begin
   Engine.OnCenterMove := AValue;
-end;
+end;                               }
 
 procedure TMapView.SetOnCenterMoving(AValue: TCenterMovingEvent);
 begin
@@ -2386,11 +2400,13 @@ begin
   Engine.OnChange := AValue;
 end;
 
+{
 procedure TMapView.SetOnZoomChange(AValue: TNotifyEvent);
 begin
-  Engine.OnZoomChange := AValue;
+  FOnZoomChange := AValue;
+  Engine.OnZoomChange := @DoZoomChangeHandler;
 end;
-
+ }
 procedure TMapView.SetOnZoomChanging(AValue: TZoomChangingEvent);
 begin
   Engine.OnZoomChanging := AValue;
@@ -3173,6 +3189,11 @@ Begin
   AsyncInvalidate := false;
 end;
 
+procedure TMapView.DoCenterMove(Sender: TObject);
+begin
+  PluginManager.CenterMove(Self, FOnCenterMove);
+end;
+
 procedure TMapView.DoDrawStretchedTile(const TileId: TTileID; X, Y: Integer;
   TileImg: TPictureCacheItem; const R: TRect);
 begin
@@ -3261,10 +3282,12 @@ begin
   FEngine.BkColor := colWhite;
   {FEngine.}CachePath := 'cache/';
   {FEngine.}CacheOnDisk := true;
+  FEngine.OnCenterMove := @DoCenterMove;
   FEngine.OnDrawTile := @DoDrawTile;
   FEngine.OnDrawStretchedTile := @DoDrawStretchedTile;
   FEngine.OnEraseBackground := @DoEraseBackground;
   FEngine.OnTileDownloaded := @DoTileDownloaded;
+  FEngine.OnZoomChange := @DoZoomChange;
   FEngine.DrawPreviewTiles := True;
   FEngine.DrawTitleInGuiThread := false;
   FEngine.DownloadEngine := FBuiltinDownloadEngine;
@@ -4347,6 +4370,12 @@ begin
   DefaultNotifyEventHandler(AMapView, AMapEvent);
 end;
 
+procedure TMvCustomPluginManager.CenterMove(AMapView: TMapView;
+  AMapEvent: TNotifyEvent);
+begin
+  DefaultNotifyEventHandler(AMapView, AMapEvent);
+end;
+
 procedure TMvCustomPluginManager.DefaultMouseEvent(AMapView: TMapView;
   AButton: TMouseButton; AShift: TShiftState; X, Y: Integer; AMapEvent: TMouseEvent);
 begin
@@ -4393,6 +4422,11 @@ end;
 procedure TMvCustomPluginManager.RemoveMapView(AMapView: TMapView);
 begin
   //
+end;
+
+procedure TMvCustomPluginManager.ZoomChange(AMapView: TMapView; AMapEvent: TNotifyEvent);
+begin
+  DefaultNotifyEventHandler(AMapView, AMapEvent);
 end;
 
 end.

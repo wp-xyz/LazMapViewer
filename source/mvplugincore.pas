@@ -44,6 +44,7 @@ type
     procedure AfterDrawObjects(AMapView: TMapView; var Handled: Boolean); virtual;
     procedure AfterPaint(AMapView: TMapView; var Handled: Boolean); virtual;
     procedure BeforeDrawObjects(AMapView: TMapView; var Handled: Boolean); virtual;
+    procedure CenterMove(AMapView: TMapView; var Handled: Boolean); virtual;
     procedure MouseDown(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
       X, Y: Integer; var Handled: Boolean); virtual;
     procedure MouseEnter(AMapView: TMapView; var Handled: Boolean); virtual;
@@ -52,6 +53,8 @@ type
       var Handled: Boolean); virtual;
     procedure MouseUp(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
       X, Y: Integer; var Handled: Boolean); virtual;
+    procedure ZoomChange(AMapView: TMapView; var Handled: Boolean); virtual;
+  //  procedure ZoomChanging(AMapView: TMapView; NewZoom: Integer; var Allow, Handled: Boolean); virtual;
     procedure Update; virtual;
   public
     constructor Create(AOwner: TComponent); override;
@@ -92,6 +95,7 @@ type
     procedure AfterDrawObjects(AMapView: TMapView; AMapEvent: TNotifyEvent); override;
     procedure AfterPaint(AMapView: TMapView; AMapEvent: TNotifyEvent); override;
     procedure BeforeDrawObjects(AMapView: TMapView; AMapEvent: TNotifyEvent); override;
+    procedure CenterMove(AMapView: TMapView; AMapEvent: TNotifyEvent); override;
     procedure MouseDown(AMapView: TMapView; AButton: TMouseButton;
       AShift: TShiftState; X, Y: Integer; AMapEvent: TMouseEvent); override;
     procedure MouseEnter(AMapView: TMapView; AMapEvent: TNotifyEvent); override;
@@ -100,6 +104,8 @@ type
       AMapEvent: TMouseMoveEvent); override;
     procedure MouseUp(AMapView: TMapView; AButton: TMouseButton;
       AShift: TShiftState; X, Y: Integer; AMapEvent: TMouseEvent); override;
+    procedure ZoomChange(AMapView: TMapView; AMapEvent: TNotifyEvent); override;
+//    procedure ZoomChanging(AMapView: TMapView; NewZoom: Integer; var Allow: Boolean; AMapEvent); override;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -181,6 +187,10 @@ begin
 end;
 
 procedure TMvPlugin.BeforeDrawObjects(AMapView: TMapView; var Handled: Boolean);
+begin
+end;
+
+procedure TMvPlugin.CenterMove(AMapView: TMapView; var Handled: Boolean);
 begin
 end;
 
@@ -277,6 +287,16 @@ begin
     FPluginManager.InvalidateMapViews;
 end;
 
+procedure TMvPlugin.ZoomChange(AMapView: TMapView; var Handled: Boolean);
+begin
+end;
+
+{
+procedure TMvPlugin.ZoomChanging(AMapView: TMapView; NewZoom: Integer;
+  var Allow, Handled: Boolean);
+begin
+end;
+}
 
 { TMvPluginList }
 
@@ -369,6 +389,23 @@ begin
   end;
   if not handled then
     inherited BeforeDrawObjects(AMapView, AMapEvent);
+end;
+
+procedure TMvPluginManager.CenterMove(AMapView: TMapView; AMapEvent: TNotifyEvent);
+var
+  i: Integer;
+  handled: Boolean;
+  plugin: TMvPlugin;
+begin
+  handled := false;
+  for i := 0 to FPluginList.Count-1 do
+  begin
+    plugin := Item[i];
+    if HandlePlugin(plugin, AMapView) then
+      plugin.CenterMove(AMapView, handled);
+  end;
+  if not handled then
+    inherited CenterMove(AMapView, AMapEvent);
 end;
 
 procedure TMvPluginManager.GetChildren(Proc: TGetChildProc; Root: TComponent);
@@ -529,6 +566,41 @@ begin
   if csDesigning in ComponentState then
     PluginList.ChangeNamePrefix(oldName, AValue);
 end;
+
+procedure TMvPluginManager.ZoomChange(AMapView: TMapView; AMapEvent: TNotifyEvent);
+var
+  i: Integer;
+  handled: Boolean;
+  plugin: TMvPlugin;
+begin
+  handled := false;
+  for i := 0 to FPluginList.Count-1 do
+  begin
+    plugin := Item[i];
+    if HandlePlugin(plugin, AMapView) then
+      plugin.ZoomChange(AMapView, handled);
+  end;
+  if not handled then
+    inherited ZoomChange(AMapView, AMapEvent);
+end;
+                     (*
+procedure TMvPluginManager.ZoomChanging(AMapView: TMapView; NewZoom: Integer;
+  var Allow: Boolean; AMapEvent: TNotifyEvent);
+var
+  i: Integer;
+  handled: Boolean;
+  plugin: TMvPlugin;
+begin
+  handled := false;
+  for i := 0 to FPluginList.Count-1 do
+  begin
+    plugin := Item[i];
+    if HandlePlugin(plugin, AMapView) then
+      plugin.ZoomChanging(AMapView, NewZoom, Allow, handled);
+  end;
+  if not handled then
+    inherited ZoomChanging(AMapView, NewZoom, Allow, AMapEvent);
+end;                   *)
 
 
 { Plugin registration }

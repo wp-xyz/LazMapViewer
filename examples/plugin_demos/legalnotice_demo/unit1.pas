@@ -103,6 +103,8 @@ begin
     Pen.Color := clRed;
     //PluginManager := FPluginManager;
   end;
+
+  with TLinkedMapsPlugin.Create(FPluginManager) do ;
 end;
 
 procedure TForm1.Edit1Change(Sender: TObject);

@@ -33,6 +33,17 @@ type
   end;
 
 
+  { TLinkedMapsPlugin - all linked maps use the same zoom and center point }
+
+  TLinkedMapsPlugin = class(TMvPlugin)
+  private
+    FLocked: Integer;
+  protected
+    procedure CenterMove(AMapView: TMapView; var Handled: Boolean); override;
+    procedure ZoomChange(AMapView: TMapView; var Handled: Boolean); override;
+  end;
+
+
   { TLegalNoticePlugin - displays a clickable copyright text }
 
   TLegalNoticePosition = (lnpTopLeft, lnpTopRight, lnpBottomLeft, lnpBottomRight);
@@ -133,6 +144,67 @@ begin
     Update;
   end;
 end;
+
+
+{ TLinkedMapsPlugin }
+
+procedure TLinkedMapsPlugin.CenterMove(AMapView: TMapView; var Handled: Boolean);
+var
+  i: Integer;
+  map: TMapView;
+begin
+  if FLocked > 0 then
+    exit;
+  inc(FLocked);
+  try
+    for i := 0 to PluginManager.MapList.Count-1 do
+    begin
+      map := TMapView(PluginManager.MapList[i]);
+      if AMapView <> map then
+        map.Center := AMapView.Center;
+    end;
+  finally
+    dec(FLocked);
+  end;
+end;
+
+procedure TLinkedMapsPlugin.ZoomChange(AMapView: TMapView; var Handled: Boolean);
+var
+  i: Integer;
+  map: TMapView;
+begin
+  if FLocked > 0 then
+    exit;
+  inc(FLocked);
+  try
+    for i := 0 to PluginManager.MapList.Count-1 do
+    begin
+      map := TMapView(PluginManager.MapList[i]);
+      if AMapView <> map then
+        map.Zoom := AMapView.Zoom;
+    end;
+  finally
+    dec(FLocked);
+  end;
+end;
+
+                  (*
+procedure TLinkedMapsPlugin.ZoomChanging(AMapView: TMapView;
+  var NewZoom, Handled: Boolean);
+var
+  i: integer;
+  map: TMapView;
+begin
+  if FLocked > 0 then
+    exit;
+  inc(FLocked);
+  try
+    for i := = to PluginManager.MapList.Count-1 do
+    begin
+      map := TMapView(PluginManager.MapList[i]);
+      if AMapView <> map then
+        map.ZoomChanging(NewZoom, Allow);
+        *)
 
 
 { TLegalNoticePlugin }
