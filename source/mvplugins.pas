@@ -19,6 +19,7 @@ type
   private
     FPen: TPen;
     FSize: Integer;
+    procedure Changed(Sender: TObject);
     procedure SetPen(AValue: TPen);
     procedure SetSize(AValue: Integer);
   protected
@@ -69,6 +70,7 @@ type
     procedure SetSpacing(AValue: Integer);
   protected
     procedure CalcClickableRect(AMapView: TMapView);
+    procedure Changed(Sender: TObject);
   protected
     procedure AfterDrawObjects(AMapView: TMapView; var Handled: Boolean); override;
     procedure MouseDown(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
@@ -127,6 +129,7 @@ constructor TCenterMarkerPlugin.Create(AOwner: TComponent);
 begin
   inherited;
   FPen := TPen.Create;
+  FPen.OnChange := @Changed;
   FSize := DEFAULT_MARKER_SIZE;
 end;
 
@@ -157,6 +160,11 @@ begin
   AMapView.DrawingEngine.PenWidth := FPen.Width;
   AMapView.DrawingEngine.Line(C.X, C.Y - FSize, C.X, C.Y + FSize);
   AMapView.DrawingEngine.Line(C.X - FSize, C.Y, C.X + FSize, C.Y);
+end;
+
+procedure TCenterMarkerPlugin.Changed(Sender: TObject);
+begin
+  Update;
 end;
 
 procedure TCenterMarkerPlugin.SetPen(AValue: TPen);
@@ -253,6 +261,7 @@ begin
   FBackgroundColor := clNone;
   FPosition := lnpBottomRight;
   FFont := TFont.Create;
+  FFont.OnChange := @Changed;
 end;
 
 destructor TLegalNoticePlugin.Destroy;
@@ -351,6 +360,11 @@ begin
     AMapView.DrawingEngine.FontStyle := lFontStyle;
     AMapView.DrawingEngine.FontColor := lPenColor;
   end;
+end;
+
+procedure TLegalNoticePlugin.Changed(Sender: TObject);
+begin
+  Update;
 end;
 
 procedure TLegalNoticePlugin.MouseDown(AMapView: TMapView; Button: TMouseButton;
