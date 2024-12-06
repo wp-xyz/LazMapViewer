@@ -120,17 +120,19 @@ end;
 
 procedure TForm1.CheckBox1Change(Sender: TObject);
 begin
-  (FPluginManager.Item[1] as TCenterMarkerPlugin).Enabled := Checkbox1.Checked;
+  (FPluginManager.Item[2] as TCenterMarkerPlugin).Enabled := Checkbox1.Checked;
 end;
 
 procedure TForm1.CheckBox2Change(Sender: TObject);
 begin
   (FPluginManager.Item[0] as TLegalNoticePlugin).Enabled := Checkbox2.Checked;
+  (FPluginManager.Item[1] as TLegalNoticePlugin).Enabled := Checkbox2.Checked;
 end;
 
 procedure TForm1.ComboBox1Change(Sender: TObject);
 begin
   (FPluginManager.Item[0] as TLegalNoticePlugin).Position := TLegalNoticePosition(Combobox1.ItemIndex);
+  (FPluginManager.Item[1] as TLegalNoticePlugin).Position := TLegalNoticePosition(Combobox1.ItemIndex);
 end;
 
 end.
