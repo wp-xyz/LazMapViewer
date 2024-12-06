@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, Types, LazLoggerBase,
   Graphics, Controls, LCLIntf,
-  mvMapViewer, mvPluginCore;
+  mvMapViewer, mvPluginCore, mvGPSObj, mvTypes;
 
 type
   { TCenterMarkerPlugin - draws a cross in the map center }
@@ -30,6 +30,37 @@ type
   published
     property Pen: TPen read FPen write SetPen;
     property Size: Integer read FSize write SetSize default DEFAULT_MARKER_SIZE;
+  end;
+
+
+  TDraggableMarkerPlugin = class;
+  TDraggableMarkerCanMoveEvent = function (Sender : TDraggableMarkerPlugin; AMarker : TGPSPoint) : Boolean of object;
+  TDraggableMarkerMovedEvent = procedure (Sender : TDraggableMarkerPlugin; AMarker : TGPSPoint; AOrgPosition : TRealPoint) of object;
+
+
+  { TDraggableMarkerPlugin }
+
+  TDraggableMarkerPlugin = class(TMvPlugin)
+  private
+    FDraggableMarker : TGPSPoint;
+    FOrgPosition : TRealPoint;
+    FDraggableMarkerCanMoveEvent : TDraggableMarkerCanMoveEvent;
+    FDraggableMarkerMovedEvent : TDraggableMarkerMovedEvent;
+    function GetFirstMarkerAtMousePos(const AMapView: TMapView; const AX, AY : Integer) : TGPSPoint;
+  protected
+    procedure MouseDown(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
+      X, Y: Integer; var Handled: Boolean); override;
+    procedure MouseMove(AMapView: TMapView; AShift: TShiftState; X,Y: Integer;
+      var Handled: Boolean); override;
+    procedure MouseUp(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
+      X, Y: Integer; var Handled: Boolean); override;
+  published
+    property DraggableMarkerCanMoveEvent : TDraggableMarkerCanMoveEvent read FDraggableMarkerCanMoveEvent write FDraggableMarkerCanMoveEvent;
+    property DraggableMarkerMovedEvent : TDraggableMarkerMovedEvent read FDraggableMarkerMovedEvent write FDraggableMarkerMovedEvent;
+  public
+    property DraggableMarker : TGPSPoint read FDraggableMarker;
+    property OrgPosition : TRealPoint read FOrgPosition;
+    procedure Assign(Source: TPersistent); override;
   end;
 
 
@@ -146,6 +177,118 @@ begin
 end;
 
 
+{ TDraggableMarkerPlugin }
+
+function TDraggableMarkerPlugin.GetFirstMarkerAtMousePos(const AMapView: TMapView;
+  const AX, AY: Integer): TGPSPoint;
+var
+  pt : TPoint;
+  aArea : TRealArea;
+  cs2 : Integer;
+  lGpsPt : TGpsPoint;
+  gpsList: TGpsObjList;
+  cnt : Integer;
+  i : Integer;
+begin
+  Result := Nil;
+  cs2 := 2;
+  pt.X := AX-cs2;
+  pt.Y := AY-cs2;
+  aArea.TopLeft := AMapView.ScreenToLatLon(pt);
+  pt.X := AX+cs2;
+  pt.Y := AY+cs2;
+  aArea.BottomRight := AMapView.ScreenToLatLon(pt);
+  gpsList := AMapView.GPSItems.GetObjectsInArea(aArea);
+  try
+    cnt := gpsList.Count;
+    if cnt < 1 then Exit;
+    for i:=0 to gpsList.Count-1 do
+    begin
+      if (gpsList[i] is TGpsPoint)  then
+      begin
+        lGpsPt := TGpsPoint(gpsList[i]);
+        if (not Assigned(FDraggableMarkerCanMoveEvent)) or
+           FDraggableMarkerCanMoveEvent(Self,lGpsPt) then
+        begin
+          Result := lGpsPt;
+          Exit;
+        end;
+      end;
+    end;
+  finally
+    gpsList.Free;
+  end;
+end;
+
+procedure TDraggableMarkerPlugin.MouseDown(AMapView: TMapView; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer; var Handled: Boolean);
+begin
+  if Handled then Exit;
+  FDraggableMarker := GetFirstMarkerAtMousePos(AMapView,X,Y);
+  if Assigned(FDraggableMarker) then
+  begin
+    FOrgPosition.Lon:= FDraggableMarker.Lon;
+    FOrgPosition.Lat:= FDraggableMarker.Lat;
+    Handled := True;
+  end;
+end;
+
+procedure TDraggableMarkerPlugin.MouseMove(AMapView: TMapView;
+  AShift: TShiftState; X, Y: Integer; var Handled: Boolean);
+var
+  pt : TPoint;
+  rpt : TRealPoint;
+  ele : Double;
+  dt : TDateTime;
+
+begin
+  if Assigned(FDraggableMarker) then
+  begin
+    pt.X := X;
+    pt.Y := Y;
+    rpt := AMapView.ScreenToLatLon(pt);
+    ele := FDraggableMarker.Elevation;
+    dt := FDraggableMarker.DateTime;
+    FDraggableMarker.MoveTo(rpt.Lon, rpt.Lat,ele,dt);
+    AMapView.Invalidate;
+    Handled := True; // Prevent the dragging of the map!!
+  end
+  else
+  begin
+    if Assigned(GetFirstMarkerAtMousePos(AMapView,X,Y)) then
+    begin
+      AMapView.Cursor := crHandPoint;
+      Handled := True;
+    end
+    else if not Handled then
+      AMapView.Cursor := crDefault;
+  end
+
+end;
+
+procedure TDraggableMarkerPlugin.MouseUp(AMapView: TMapView; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer; var Handled: Boolean);
+begin
+  if Assigned(FDraggableMarker) then
+  begin
+    if Assigned(FDraggableMarkerMovedEvent) then
+      FDraggableMarkerMovedEvent(Self,FDraggableMarker,FOrgPosition);
+    Handled := True;
+    FDraggableMarker := Nil;
+  end;
+end;
+
+procedure TDraggableMarkerPlugin.Assign(Source: TPersistent);
+begin
+  if Source is TDraggableMarkerPlugin then
+  begin
+    FDraggableMarkerCanMoveEvent := TDraggableMarkerPlugin(Source).DraggableMarkerCanMoveEvent;
+    FDraggableMarkerMovedEvent := TDraggableMarkerPlugin(Source).DraggableMarkerMovedEvent;
+  end;
+  inherited;
+end;
+
+
 { TLinkedMapsPlugin }
 
 procedure TLinkedMapsPlugin.CenterMove(AMapView: TMapView; var Handled: Boolean);
@@ -240,6 +383,10 @@ end;
 procedure TLegalNoticePlugin.AfterDrawObjects(AMapView: TMapView; var Handled: Boolean);
 var
   x,y : Integer;
+  lFontName: String;
+  lFontSize: Integer;
+  lFontStyle: TFontStyles;
+  lPenColor: TColor;
 begin
   if not Assigned(AMapView) then Exit;
   Handled := True;
@@ -252,32 +399,62 @@ begin
   CalcClickableRect(AMapView);
   x := FClickableRect.Left - FSpacing;
   y := FClickableRect.Top - FSpacing;
-  AMapView.DrawingEngine.TextOut(x, y, FLegalNotice);
+  lFontName := AMapView.DrawingEngine.FontName;
+  lFontSize := AMapView.DrawingEngine.FontSize;
+  lFontStyle := AMapView.DrawingEngine.FontStyle;
+  lPenColor := AMapView.DrawingEngine.FontColor;
+  try
+    AMapView.DrawingEngine.FontName := FFont.Name;
+    AMapView.DrawingEngine.FontSize := FFont.Size;
+    AMapView.DrawingEngine.FontStyle := FFont.Style;
+    AMapView.DrawingEngine.FontColor := FFont.Color;
+    AMapView.DrawingEngine.TextOut(x, y, FLegalNotice);
+  finally
+    AMapView.DrawingEngine.FontName := lFontName;
+    AMapView.DrawingEngine.FontSize := lFontSize;
+    AMapView.DrawingEngine.FontStyle := lFontStyle;
+    AMapView.DrawingEngine.FontColor := lPenColor;
+  end;
 end;
 
 procedure TLegalNoticePlugin.CalcClickableRect(AMapView: TMapView);
 var
   sz: TSize;
   x, y: Integer;
+  lFontName: String;
+  lFontSize: Integer;
+  lFontStyle: TFontStyles;
+  lPenColor: TColor;
 begin
-  AMapView.DrawingEngine.FontName := FFont.Name;
-  AMapView.DrawingEngine.FontSize := FFont.Size;
-  AMapView.DrawingEngine.FontStyle := FFont.Style;
-  AMapView.DrawingEngine.FontColor := FFont.Color;
-  sz := AMapView.DrawingEngine.TextExtent(FLegalNotice);
-  case FPosition of
-    lnpTopLeft, lnpBottomLeft:
-      x := FSpacing;
-    lnpTopRight, lnpBottomRight:
-      x := AMapView.Width - sz.CX - FSpacing;
+  lFontName := AMapView.DrawingEngine.FontName;
+  lFontSize := AMapView.DrawingEngine.FontSize;
+  lFontStyle := AMapView.DrawingEngine.FontStyle;
+  lPenColor := AMapView.DrawingEngine.FontColor;
+  try
+    AMapView.DrawingEngine.FontName := FFont.Name;
+    AMapView.DrawingEngine.FontSize := FFont.Size;
+    AMapView.DrawingEngine.FontStyle := FFont.Style;
+    AMapView.DrawingEngine.FontColor := FFont.Color;
+    sz := AMapView.DrawingEngine.TextExtent(FLegalNotice);
+    case FPosition of
+      lnpTopLeft, lnpBottomLeft:
+        x := FSpacing;
+      lnpTopRight, lnpBottomRight:
+        x := AMapView.Width - sz.CX - FSpacing;
+    end;
+    case FPosition of
+      lnpTopLeft, lnpTopRight:
+        y := FSpacing;
+      lnpBottomLeft, lnpBottomRight:
+        y := AMapView.Height - sz.CY - FSpacing;
+    end;
+    FClickableRect := Rect(x + FSpacing, y + FSpacing, x + sz.CX, y + sz.CY);
+  finally
+    AMapView.DrawingEngine.FontName := lFontName;
+    AMapView.DrawingEngine.FontSize := lFontSize;
+    AMapView.DrawingEngine.FontStyle := lFontStyle;
+    AMapView.DrawingEngine.FontColor := lPenColor;
   end;
-  case FPosition of
-    lnpTopLeft, lnpTopRight:
-      y := FSpacing;
-    lnpBottomLeft, lnpBottomRight:
-      y := AMapView.Height - sz.CY - FSpacing;
-  end;
-  FClickableRect := Rect(x + FSpacing, y + FSpacing, x + sz.CX, y + sz.CY);
 end;
 
 procedure TLegalNoticePlugin.MouseDown(AMapView: TMapView; Button: TMouseButton;
@@ -314,7 +491,8 @@ begin
   end else
   begin
     FFont.Style := [];
-    AMapView.Cursor := crDefault;
+    if not Handled then
+      AMapView.Cursor := crDefault;
   end;
   Handled := true;
   Update;
@@ -363,6 +541,8 @@ end;
 
 initialization
   RegisterPluginClass(TCenterMarkerPlugin, 'Center marker');
+  RegisterPluginClass(TDraggableMarkerPlugin, 'Draggable marker');
+  RegisterPluginClass(TLinkedMapsPlugin, 'Linked maps');
   RegisterPluginClass(TLegalNoticePlugin, 'Legal notice');
 
 end.
