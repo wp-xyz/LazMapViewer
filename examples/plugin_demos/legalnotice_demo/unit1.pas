@@ -19,7 +19,6 @@ type
     ComboBox1: TComboBox;
     Edit1: TEdit;
     Label1: TLabel;
-    MapView1: TMapView;
     Panel1: TPanel;
     Panel2: TPanel;
     Panel3: TPanel;

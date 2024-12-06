@@ -8,7 +8,7 @@
     <CompilerOptions>
       <Version Value="11"/>
       <SearchPaths>
-        <OtherUnitFiles Value="source"/>
+        <OtherUnitFiles Value="source;source/addons/plugins"/>
         <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
       </SearchPaths>
       <Other>
@@ -134,8 +134,8 @@ FPC 3.2.0 or newer required."/>
         <UnitName Value="mvPluginCore"/>
       </Item27>
       <Item28>
-        <Filename Value="source/mvplugins.pas"/>
-        <UnitName Value="mvplugins"/>
+        <Filename Value="source/addons/plugins/mvplugins.pas"/>
+        <UnitName Value="mvPlugins"/>
       </Item28>
     </Files>
     <CompatibilityMode Value="True"/>
