@@ -92,19 +92,19 @@ type
     procedure SetName(const AValue: TComponentName); override;
   protected
     // Dispatching events to be handled by the plugins
-    procedure AfterDrawObjects(AMapView: TMapView; AMapEvent: TNotifyEvent; out Handled: Boolean); override;
-    procedure AfterPaint(AMapView: TMapView; AMapEvent: TNotifyEvent; out Handled: Boolean); override;
-    procedure BeforeDrawObjects(AMapView: TMapView; AMapEvent: TNotifyEvent; out Handled: Boolean); override;
-    procedure CenterMove(AMapView: TMapView; AMapEvent: TNotifyEvent; out Handled: Boolean); override;
-    procedure MouseDown(AMapView: TMapView; AButton: TMouseButton; AShift: TShiftState;
-      X, Y: Integer; AMapEvent: TMouseEvent; out Handled: Boolean); override;
-    procedure MouseEnter(AMapView: TMapView; AMapEvent: TNotifyEvent; out Handled: Boolean); override;
-    procedure MouseLeave(AMapView: TMapView; AMapEvent: TNotifyEvent; out Handled: Boolean); override;
+    procedure AfterDrawObjects(AMapView: TMapView; AMapEvent: TNotifyEvent); override;
+    procedure AfterPaint(AMapView: TMapView; AMapEvent: TNotifyEvent); override;
+    procedure BeforeDrawObjects(AMapView: TMapView; AMapEvent: TNotifyEvent); override;
+    procedure CenterMove(AMapView: TMapView; AMapEvent: TNotifyEvent); override;
+    procedure MouseDown(AMapView: TMapView; AButton: TMouseButton;
+      AShift: TShiftState; X, Y: Integer; AMapEvent: TMouseEvent); override;
+    procedure MouseEnter(AMapView: TMapView; AMapEvent: TNotifyEvent); override;
+    procedure MouseLeave(AMapView: TMapView; AMapEvent: TNotifyEvent); override;
     procedure MouseMove(AMapView: TMapView; AShift: TShiftState; X,Y: Integer;
-      AMapEvent: TMouseMoveEvent; out Handled: Boolean); override;
+      AMapEvent: TMouseMoveEvent); override;
     procedure MouseUp(AMapView: TMapView; AButton: TMouseButton;
-      AShift: TShiftState; X, Y: Integer; AMapEvent: TMouseEvent; out Handled: Boolean); override;
-    procedure ZoomChange(AMapView: TMapView; AMapEvent: TNotifyEvent; out Handled: Boolean); override;
+      AShift: TShiftState; X, Y: Integer; AMapEvent: TMouseEvent); override;
+    procedure ZoomChange(AMapView: TMapView; AMapEvent: TNotifyEvent); override;
 //    procedure ZoomChanging(AMapView: TMapView; NewZoom: Integer; var Allow: Boolean; AMapEvent); override;
   public
     constructor Create(AOwner: TComponent); override;
@@ -340,68 +340,72 @@ begin
     FMapList.Add(AMapView);
 end;
 
-procedure TMvPluginManager.AfterDrawObjects(AMapView: TMapView;
-  AMapEvent: TNotifyEvent; out Handled: Boolean);
+procedure TMvPluginManager.AfterDrawObjects(AMapView: TMapView; AMapEvent: TNotifyEvent);
 var
   i: Integer;
+  handled: Boolean;
   plugin: TMvPlugin;
 begin
-  Handled := false;
+  handled := false;
   for i := 0 to FPluginList.Count-1 do
   begin
     plugin := Item[i];
     if HandlePlugin(plugin, AMapView) then
-      plugin.AfterDrawObjects(AMapView, Handled);
+      plugin.AfterDrawObjects(AMapView, handled);
   end;
-  inherited AfterDrawObjects(AMapView, AMapEvent, Handled);
+  if not handled then
+    inherited AfterDrawObjects(AMapView, AMapEvent);
 end;
 
-procedure TMvPluginManager.AfterPaint(AMapView: TMapView;
-  AMapEvent: TNotifyEvent; out Handled: Boolean);
+procedure TMvPluginManager.AfterPaint(AMapView: TMapView; AMapEvent: TNotifyEvent);
 var
   i: Integer;
+  handled: Boolean;
   plugin: TMvPlugin;
 begin
-  Handled := false;
+  handled := false;
   for i := 0 to FPluginList.Count-1 do
   begin
     plugin := Item[i];
     if HandlePlugin(plugin, AMapView) then
-      plugin.AfterPaint(AMapView, Handled);
+      plugin.AfterPaint(AMapView, handled);
   end;
-  inherited AfterPaint(AMapView, AMapEvent, Handled);
+  if not handled then
+    inherited AfterPaint(AMapView, AMapEvent);
 end;
 
-procedure TMvPluginManager.BeforeDrawObjects(AMapView: TMapView;
-  AMapEvent: TNotifyEvent; out Handled: Boolean);
+procedure TMvPluginManager.BeforeDrawObjects(AMapView: TMapView; AMapEvent: TNotifyEvent);
 var
   i: Integer;
+  handled: Boolean;
   plugin: TMvPlugin;
 begin
-  Handled := false;
+  handled := false;
   for i := 0 to FPluginList.Count-1 do
   begin
     plugin := Item[i];
     if HandlePlugin(plugin, AMapView) then
-      plugin.BeforeDrawObjects(AMapView, Handled);
+      plugin.BeforeDrawObjects(AMapView, handled);
   end;
-  inherited BeforeDrawObjects(AMapView, AMapEvent, Handled);
+  if not handled then
+    inherited BeforeDrawObjects(AMapView, AMapEvent);
 end;
 
-procedure TMvPluginManager.CenterMove(AMapView: TMapView;
-  AMapEvent: TNotifyEvent; out Handled: Boolean);
+procedure TMvPluginManager.CenterMove(AMapView: TMapView; AMapEvent: TNotifyEvent);
 var
   i: Integer;
+  handled: Boolean;
   plugin: TMvPlugin;
 begin
-  Handled := false;
+  handled := false;
   for i := 0 to FPluginList.Count-1 do
   begin
     plugin := Item[i];
     if HandlePlugin(plugin, AMapView) then
-      plugin.CenterMove(AMapView, Handled);
+      plugin.CenterMove(AMapView, handled);
   end;
-  inherited CenterMove(AMapView, AMapEvent, Handled);
+  if not handled then
+    inherited CenterMove(AMapView, AMapEvent);
 end;
 
 procedure TMvPluginManager.GetChildren(Proc: TGetChildProc; Root: TComponent);
@@ -436,73 +440,10 @@ begin
 end;
 
 procedure TMvPluginManager.MouseDown(AMapView: TMapView; AButton: TMouseButton;
-  AShift: TShiftState; X, Y: Integer; AMapEvent: TMouseEvent; out Handled: Boolean);
+  AShift: TShiftState; X, Y: Integer; AMapEvent: TMouseEvent);
 var
   i: Integer;
-  plugin: TMvPlugin;
-begin
-  Handled := false;
-  for i := 0 to FPluginList.Count-1 do
-  begin
-    plugin := Item[i];
-    if HandlePlugin(plugin, AMapView) then
-      plugin.MouseDown(AMapView, AButton, AShift, X, Y, Handled);
-  end;
-  inherited MouseDown(AMapView, AButton, AShift, X, Y, AMapEvent, Handled);
-end;
-
-procedure TMvPluginManager.MouseEnter(AMapView: TMapView;
-  AMapEvent: TNotifyEvent; out Handled: Boolean);
-var
-  i: Integer;
-  plugin: TMvPlugin;
-begin
-  Handled := false;
-  for i := 0 to FPluginList.Count-1 do
-  begin
-    plugin := Item[i];
-    if HandlePlugin(plugin, AMapView) then
-      plugin.MouseEnter(AMapView, Handled);
-  end;
-  inherited MouseEnter(AMapView, AMapEvent, Handled);
-end;
-
-procedure TMvPluginManager.MouseLeave(AMapView: TMapView;
-  AMapEvent: TNotifyEvent; out Handled: Boolean);
-var
-  i: Integer;
-  plugin: TMvPlugin;
-begin
-  Handled := false;
-  for i := 0 to FPluginList.Count-1 do
-  begin
-    plugin := Item[i];
-    if HandlePlugin(plugin, AMapView) then
-      plugin.MouseLeave(AMapView, Handled);
-  end;
-  inherited MouseLeave(AMapView, AMapEvent, Handled);
-end;
-
-procedure TMvPluginManager.MouseMove(AMapView: TMapView; AShift: TShiftState;
-  X,Y: Integer; AMapEvent: TMouseMoveEvent; out Handled: Boolean);
-var
-  i: Integer;
-  plugin: TMvPlugin;
-begin
-  Handled := false;
-  for i := 0 to FPluginList.Count-1 do
-  begin
-    plugin := Item[i];
-    if HandlePlugin(plugin, AMapView) then
-      plugin.MouseMove(AMapView, AShift, X, Y, Handled);
-  end;
-  inherited MouseMove(AMapView, AShift, X, Y, AMapEvent, Handled);
-end;
-
-procedure TMvPluginManager.MouseUp(AMapView: TMapView; AButton: TMouseButton;
-  AShift: TShiftState; X, Y: Integer; AMapEvent: TMouseEvent; out Handled: Boolean);
-var
-  i: Integer;
+  handled: Boolean;
   plugin: TMvPlugin;
 begin
   handled := false;
@@ -510,9 +451,80 @@ begin
   begin
     plugin := Item[i];
     if HandlePlugin(plugin, AMapView) then
-      plugin.MouseUp(AMapView, AButton, AShift, X, Y, Handled);
+      plugin.MouseDown(AMapView, AButton, AShift, X, Y, handled);
   end;
-  inherited MouseUp(AMapView, AButton, AShift, X, Y, AMapEvent, Handled);
+  if (not handled) then
+    inherited MouseDown(AMapView, AButton, AShift, X, Y, AMapEvent);
+end;
+
+procedure TMvPluginManager.MouseEnter(AMapView: TMapView; AMapEvent: TNotifyEvent);
+var
+  i: Integer;
+  handled: Boolean;
+  plugin: TMvPlugin;
+begin
+  handled := false;
+  for i := 0 to FPluginList.Count-1 do
+  begin
+    plugin := Item[i];
+    if HandlePlugin(plugin, AMapView) then
+      plugin.MouseEnter(AMapView, handled);
+  end;
+  if not handled then
+    inherited MouseEnter(AMapView, AMapEvent);
+end;
+
+procedure TMvPluginManager.MouseLeave(AMapView: TMapView; AMapEvent: TNotifyEvent);
+var
+  i: Integer;
+  handled: Boolean;
+  plugin: TMvPlugin;
+begin
+  handled := false;
+  for i := 0 to FPluginList.Count-1 do
+  begin
+    plugin := Item[i];
+    if HandlePlugin(plugin, AMapView) then
+      plugin.MouseLeave(AMapView, handled);
+  end;
+  if not handled then
+    inherited MouseLeave(AMapView, AMapEvent);
+end;
+
+procedure TMvPluginManager.MouseMove(AMapView: TMapView; AShift: TShiftState;
+  X,Y: Integer; AMapEvent: TMouseMoveEvent);
+var
+  i: Integer;
+  handled: Boolean;
+  plugin: TMvPlugin;
+begin
+  handled := false;
+  for i := 0 to FPluginList.Count-1 do
+  begin
+    plugin := Item[i];
+    if HandlePlugin(plugin, AMapView) then
+      plugin.MouseMove(AMapView, AShift, X, Y, handled);
+  end;
+  if (not handled) then
+    inherited MouseMove(AMapView, AShift, X, Y, AMapEvent);
+end;
+
+procedure TMvPluginManager.MouseUp(AMapView: TMapView; AButton: TMouseButton;
+  AShift: TShiftState; X, Y: Integer; AMapEvent: TMouseEvent);
+var
+  i: Integer;
+  handled: Boolean;
+  plugin: TMvPlugin;
+begin
+  handled := false;
+  for i := 0 to FPluginList.Count-1 do
+  begin
+    plugin := Item[i];
+    if HandlePlugin(plugin, AMapView) then
+      plugin.MouseUp(AMapView, AButton, AShift, X, Y, handled);
+  end;
+  if not handled then
+    inherited MouseUp(AMapView, AButton, AShift, X, Y, AMapEvent);
 end;
 
 procedure TMvPluginManager.Notification(AComponent: TComponent; Operation: TOperation);
@@ -555,36 +567,39 @@ begin
     PluginList.ChangeNamePrefix(oldName, AValue);
 end;
 
-procedure TMvPluginManager.ZoomChange(AMapView: TMapView;
-  AMapEvent: TNotifyEvent; out Handled: Boolean);
+procedure TMvPluginManager.ZoomChange(AMapView: TMapView; AMapEvent: TNotifyEvent);
 var
   i: Integer;
+  handled: Boolean;
   plugin: TMvPlugin;
 begin
-  Handled := false;
+  handled := false;
   for i := 0 to FPluginList.Count-1 do
   begin
     plugin := Item[i];
     if HandlePlugin(plugin, AMapView) then
-      plugin.ZoomChange(AMapView, Handled);
+      plugin.ZoomChange(AMapView, handled);
   end;
-  inherited ZoomChange(AMapView, AMapEvent, Handled);
+  if not handled then
+    inherited ZoomChange(AMapView, AMapEvent);
 end;
                      (*
 procedure TMvPluginManager.ZoomChanging(AMapView: TMapView; NewZoom: Integer;
-  var Allow: Boolean; AMapEvent: TNotifyEvent; out Handled: Boolean);
+  var Allow: Boolean; AMapEvent: TNotifyEvent);
 var
   i: Integer;
+  handled: Boolean;
   plugin: TMvPlugin;
 begin
-  Handled := false;
+  handled := false;
   for i := 0 to FPluginList.Count-1 do
   begin
     plugin := Item[i];
     if HandlePlugin(plugin, AMapView) then
-      plugin.ZoomChanging(AMapView, NewZoom, Allow, Handled);
+      plugin.ZoomChanging(AMapView, NewZoom, Allow, handled);
   end;
-  inherited ZoomChanging(AMapView, NewZoom, Allow, AMapEvent, Handled);
+  if not handled then
+    inherited ZoomChanging(AMapView, NewZoom, Allow, AMapEvent);
 end;                   *)
 
 
