@@ -56,19 +56,19 @@ begin
   FMapView1.MapProvider := 'OpenStreetMap Mapnik';
   FMapView1.UseThreads := true;
   FMapView1.Zoom := 9;
-  FMapView1.MapCenter.Longitude := 0;
-  FMapView1.MapCenter.Latitude := 51.6;
+  FMapView1.MapCenter.Longitude := 11;
+  FMapView1.MapCenter.Latitude := 46.3;
   FMapView1.Active := true;
   FMapView1.PluginManager := FPluginManager;
 
   FMapView2 := TMapView.Create(self);
   FMapView2.Align := alClient;
   FMapView2.Parent := Panel3;
-  FMapView2.MapProvider := 'OpenStreetMap Mapnik';
+  FMapView2.MapProvider := 'Maps for free';
   FMapView2.UseThreads := true;
-  FMapView2.Zoom := 8;
-  FMapView2.MapCenter.Longitude := 10;
-  FMapView2.MapCenter.Latitude := 48;
+  FMapView2.Zoom := 9;
+  FMapView2.MapCenter.Longitude := 11;
+  FMapView2.MapCenter.Latitude := 46.3;
   FMapView2.Active := true;
   FMapView2.PluginManager := FPluginManager;
 
@@ -80,9 +80,20 @@ begin
     Font.Size := 8;
     Font.Color := clBlue;
     BackgroundColor := clWhite;
-    //PluginManager := FPluginManager;
+    MapView := FMapView1;
 
     Edit1.Text := LegalNotice;
+  end;
+
+  with TLegalNoticePlugin.Create(FPluginManager) do
+  begin
+    LegalNotice := 'maps-for-free';
+    LegalNoticeURL := 'https://maps-for-free.com/html/about.html';
+    Spacing := 5;
+    Font.Size := 8;
+    Font.Color := clBlue;
+    BackgroundColor := clWhite;
+    MapView := FMapView2;
   end;
 
   with TCenterMarkerPlugin.Create(FPluginManager) do

@@ -30,8 +30,10 @@ type
   TMvPlugin = class(TMvIndexedComponent)
   private
     FPluginManager: TMvPluginManager;
+    FMapView: TMapView;
     FEnabled: Boolean;
     procedure SetEnabled(AValue: Boolean);
+    procedure SetMapView(AValue: TMapView);
     procedure SetPluginManager(AValue: TMvPluginManager);
   protected
     function GetIndex: Integer; override;
@@ -60,6 +62,7 @@ type
     property PluginManager: TMvPluginManager read FPluginManager write SetPluginManager;
   published
     property Enabled: Boolean read FEnabled write SetEnabled default true;
+    property MapView: TMapView read FMapView write SetMapView;
   end;
 
   TMvPluginClass = class of TMvPlugin;
@@ -79,6 +82,7 @@ type
     function GetItem(AIndex: Integer): TMvPlugin;
   protected
     procedure AddMapView(AMapView: TMapView); override;
+    function HandlePlugin(APlugin: TMvPlugin; AMapView: TMapView): Boolean;
     procedure InvalidateMapViews;
     procedure Notification(AComponent: TComponent; Operation: TOperation); override;
     procedure RemoveMapView(AMapView: TMapView); override;
@@ -242,6 +246,15 @@ begin
   FPluginManager.PluginList.Move(Index, EnsureRange(AValue, 0, FPluginManager.PluginList.Count-1));
 end;
 
+procedure TMvPlugin.SetMapView(AValue: TMapView);
+begin
+  if FMapView <> AValue then
+  begin
+    FMapView := AValue;
+    Update;
+  end;
+end;
+
 procedure TMvPlugin.SetParentComponent(AParent: TComponent);
 begin
   if not (csLoading in ComponentState) then
@@ -317,7 +330,7 @@ begin
   for i := 0 to FPluginList.Count-1 do
   begin
     plugin := Item[i];
-    if plugin.Enabled then
+    if HandlePlugin(plugin, AMapView) then
       plugin.AfterDrawObjects(AMapView, handled);
   end;
   if not handled then
@@ -334,7 +347,7 @@ begin
   for i := 0 to FPluginList.Count-1 do
   begin
     plugin := Item[i];
-    if plugin.Enabled then
+    if HandlePlugin(plugin, AMapView) then
       plugin.AfterPaint(AMapView, handled);
   end;
   if not handled then
@@ -351,7 +364,7 @@ begin
   for i := 0 to FPluginList.Count-1 do
   begin
     plugin := Item[i];
-    if plugin.Enabled then
+    if HandlePlugin(plugin, AMapView) then
       plugin.BeforeDrawObjects(AMapView, handled);
   end;
   if not handled then
@@ -376,6 +389,11 @@ begin
   Result := TMvPlugin(FPluginList.Items[AIndex]);
 end;
 
+function TMvPluginManager.HandlePlugin(APlugin: TMvPlugin; AMapView: TMapView): Boolean;
+begin
+  Result := APlugin.Enabled and ((APlugin.MapView = AMapView) or (APlugin.MapView = nil));
+end;
+
 procedure TMvPluginManager.InvalidateMapViews;
 var
   i: Integer;
@@ -395,7 +413,7 @@ begin
   for i := 0 to FPluginList.Count-1 do
   begin
     plugin := Item[i];
-    if plugin.Enabled then
+    if HandlePlugin(plugin, AMapView) then
       plugin.MouseDown(AMapView, AButton, AShift, X, Y, handled);
   end;
   if (not handled) then
@@ -412,7 +430,7 @@ begin
   for i := 0 to FPluginList.Count-1 do
   begin
     plugin := Item[i];
-    if plugin.Enabled then
+    if HandlePlugin(plugin, AMapView) then
       plugin.MouseEnter(AMapView, handled);
   end;
   if not handled then
@@ -429,7 +447,7 @@ begin
   for i := 0 to FPluginList.Count-1 do
   begin
     plugin := Item[i];
-    if plugin.Enabled then
+    if HandlePlugin(plugin, AMapView) then
       plugin.MouseLeave(AMapView, handled);
   end;
   if not handled then
@@ -447,7 +465,7 @@ begin
   for i := 0 to FPluginList.Count-1 do
   begin
     plugin := Item[i];
-    if plugin.Enabled then
+    if HandlePlugin(plugin, AMapView) then
       plugin.MouseMove(AMapView, AShift, X, Y, handled);
   end;
   if (not handled) then
@@ -465,7 +483,7 @@ begin
   for i := 0 to FPluginList.Count-1 do
   begin
     plugin := Item[i];
-    if plugin.Enabled then
+    if HandlePlugin(plugin, AMapView) then
       plugin.MouseUp(AMapView, AButton, AShift, X, Y, handled);
   end;
   if not handled then
