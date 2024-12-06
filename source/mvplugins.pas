@@ -201,6 +201,7 @@ procedure TLinkedMapsPlugin.ZoomChange(AMapView: TMapView; var Handled: Boolean)
 var
   i: Integer;
   map: TMapView;
+  zoomToCrs: Boolean;
 begin
   if FLocked > 0 then
     exit;
@@ -210,7 +211,15 @@ begin
     begin
       map := TMapView(PluginManager.MapList[i]);
       if AMapView <> map then
-        map.Zoom := AMapView.Zoom;
+      begin
+        zoomToCrs := map.ZoomToCursor;
+        try
+          map.ZoomToCursor := false;
+          map.Zoom := AMapView.Zoom;
+        finally
+          map.ZoomToCursor := zoomToCrs;
+        end;
+      end;
     end;
   finally
     dec(FLocked);
@@ -539,6 +548,7 @@ end;
 initialization
   RegisterPluginClass(TCenterMarkerPlugin, 'Center marker');
   RegisterPluginClass(TLegalNoticePlugin, 'Legal notice');
+  RegisterPluginClass(TLinkedMapsPlugin, 'Linked maps');
   RegisterPluginClass(TDraggableMarkerPlugin, 'Draggable marker');
 
 end.

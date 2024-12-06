@@ -606,6 +606,7 @@ begin
   if not handled then
     inherited ZoomChange(AMapView, AMapEvent);
 end;
+
                      (*
 procedure TMvPluginManager.ZoomChanging(AMapView: TMapView; NewZoom: Integer;
   var Allow: Boolean; AMapEvent: TNotifyEvent);
