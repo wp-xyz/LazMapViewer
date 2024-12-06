@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, StrUtils, Math, LazLoggerBase,
-  Controls, Dialogs,
+  Controls, Dialogs, Contnrs,
   mvMapViewer, mvClassRegistration;
 
 type
@@ -66,6 +66,36 @@ type
   published
     property Enabled: Boolean read FEnabled write SetEnabled default true;
     property MapView: TMapView read FMapView write SetMapView;
+  end;
+
+  { TMvMultiMapsPluginData }
+
+  TMvMultiMapsPluginData = class(TObject)
+  private
+    FMapView : TMapView;
+    FData : array of Byte;
+    function GetDataSize : Integer;
+  public
+    property DataSize : Integer read GetDataSize;
+    procedure SetData(const AData; const ADataSize : Integer);
+    function GetData(out AData; const AMaxDataSize : Integer) : Integer;
+    property MapView : TMapView read FMapView write FMapView;
+  end;
+
+  { TMvMultiMapsPlugin }
+
+  TMvMultiMapsPlugin = class(TMvPlugin)
+  private
+    FMapDataList : TObjectList;
+    function GetMapViewDataIndex(Value : TMapView) : Integer;
+    function GetMapViewDataSize(Value : TMapView) : Integer;
+  public
+    property MapViewDataIndex[AIndex : TMapView] : Integer read GetMapViewDataIndex;
+    property MapViewDataSize[AIndex : TMapView] : Integer read GetMapViewDataSize;
+    function GetMapViewData(const AMapView : TMapView; out AData; const AMaxDataSize : Integer) : Integer;
+    procedure SetMapViewData(const AMapView : TMapView; const AData; const ADataSize : Integer);
+    constructor Create(AOwner : TComponent);override;
+    destructor Destroy;override;
   end;
 
   TMvPluginClass = class of TMvPlugin;
@@ -306,6 +336,107 @@ procedure TMvPlugin.ZoomChanging(AMapView: TMapView; NewZoom: Integer;
 begin
 end;
 }
+
+{ TMvMultiMapsPluginData }
+
+function TMvMultiMapsPluginData.GetDataSize: Integer;
+begin
+  Result := Length(FData);
+end;
+
+procedure TMvMultiMapsPluginData.SetData(const AData; const ADataSize: Integer);
+begin
+  SetLength(FData,ADataSize);
+  if ADataSize > 0 then
+    Move(AData,FData[0],ADataSize);
+end;
+
+function TMvMultiMapsPluginData.GetData(out AData; const AMaxDataSize: Integer
+  ): Integer;
+var
+  ds : Integer;
+begin
+  Result := 0;
+  ds := DataSize;
+  if ds > AMaxDataSize then
+    ds := AMaxDataSize;
+  if ds <= 0 then Exit;
+  Move(FData[0],AData,ds);
+  Result := ds;
+end;
+
+{ TMvMultiMapsPlugin }
+function TMvMultiMapsPlugin.GetMapViewDataIndex(Value: TMapView): Integer;
+var
+  i : Integer;
+begin
+  Result := -1;
+  for i := 0 to FMapDataList.Count-1 do
+    if TMvMultiMapsPluginData(FMapDataList.Items[i]).FMapView = Value then
+      Exit(i);
+end;
+
+function TMvMultiMapsPlugin.GetMapViewDataSize(Value: TMapView): Integer;
+var
+  ndx : Integer;
+begin
+  Result := 0;
+  ndx := MapViewDataIndex[Value];
+  if ndx < 0 then Exit;
+  Result := TMvMultiMapsPluginData(FMapDataList.Items[ndx]).DataSize;
+end;
+
+function TMvMultiMapsPlugin.GetMapViewData(const AMapView: TMapView; out AData;
+  const AMaxDataSize: Integer): Integer;
+var
+  ds : Integer;
+  ndx : Integer;
+  di : TMvMultiMapsPluginData;
+begin
+  Result := 0;
+  ndx := MapViewDataIndex[AMapView];
+  if ndx < 0 then Exit;
+  di := TMvMultiMapsPluginData(FMapDataList.Items[ndx]);
+  ds := di.DataSize;
+  if ds > AMaxDataSize then
+    ds := AMaxDataSize;
+  if ds <= 0 then Exit;
+  di.GetData(AData,ds);
+  Result := ds;
+end;
+
+procedure TMvMultiMapsPlugin.SetMapViewData(const AMapView: TMapView;
+  const AData; const ADataSize: Integer);
+var
+  ds : Integer;
+  ndx : Integer;
+  di : TMvMultiMapsPluginData;
+begin
+  ndx := MapViewDataIndex[AMapView];
+  if ndx < 0 then
+  begin
+    di := TMvMultiMapsPluginData.Create;
+    di.MapView := AMapView;
+    ndx := FMapDataList.Add(di);
+  end
+  else
+    di := TMvMultiMapsPluginData(FMapDataList.Items[ndx]);
+  di.SetData(AData,ADataSize);
+end;
+
+constructor TMvMultiMapsPlugin.Create(AOwner: TComponent);
+begin
+  inherited Create(Owner);
+  FMapDataList := TObjectList.Create(True);
+end;
+
+destructor TMvMultiMapsPlugin.Destroy;
+begin
+  if Assigned(FMapDataList) then
+    FMapDataList.Free;
+  inherited Destroy;
+end;
+
 
 { TMvPluginList }
 

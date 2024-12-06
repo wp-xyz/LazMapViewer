@@ -49,12 +49,11 @@ type
 
   TLegalNoticePosition = (lnpTopLeft, lnpTopRight, lnpBottomLeft, lnpBottomRight);
 
-  TLegalNoticePlugin = class(TMvPlugin)
+  TLegalNoticePlugin = class(TMvMultiMapsPlugin)
   private
     const
       DEFAULT_LEGALNOTICE_SPACING = 4;
   private
-    FClickableRect: TRect;
     FLegalNotice: String;
     FLegalNoticeURL: String;
     FPosition: TLegalNoticePosition;
@@ -69,7 +68,7 @@ type
     procedure SetPosition(AValue: TLegalNoticePosition);
     procedure SetSpacing(AValue: Integer);
   protected
-    procedure CalcClickableRect(AMapView: TMapView);
+    procedure CalcClickableRect(AMapView: TMapView; out AClickableRect: TRect);
     procedure Changed(Sender: TObject);
   protected
     procedure AfterDrawObjects(AMapView: TMapView; var Handled: Boolean); override;
@@ -95,12 +94,15 @@ type
   TDraggableMarkerCanMoveEvent = function (Sender : TDraggableMarkerPlugin; AMarker : TGPSPoint) : Boolean of object;
   TDraggableMarkerMovedEvent = procedure (Sender : TDraggableMarkerPlugin; AMarker : TGPSPoint; AOrgPosition : TRealPoint) of object;
 
-  { TDraggableMarkerPlugin }
-
-  TDraggableMarkerPlugin = class(TMvPlugin)
-  private
+  { TLegalNoticePluginData }
+  TDraggableMarkerData = record
     FDraggableMarker : TGPSPoint;
     FOrgPosition : TRealPoint;
+  end;
+  { TDraggableMarkerPlugin }
+
+  TDraggableMarkerPlugin = class(TMvMultiMapsPlugin)
+  private
     FDraggableMarkerCanMoveEvent : TDraggableMarkerCanMoveEvent;
     FDraggableMarkerMovedEvent : TDraggableMarkerMovedEvent;
     function GetFirstMarkerAtMousePos(const AMapView: TMapView; const AX, AY : Integer) : TGPSPoint;
@@ -115,8 +117,8 @@ type
     property DraggableMarkerCanMoveEvent : TDraggableMarkerCanMoveEvent read FDraggableMarkerCanMoveEvent write FDraggableMarkerCanMoveEvent;
     property DraggableMarkerMovedEvent : TDraggableMarkerMovedEvent read FDraggableMarkerMovedEvent write FDraggableMarkerMovedEvent;
   public
-    property DraggableMarker : TGPSPoint read FDraggableMarker;
-    property OrgPosition : TRealPoint read FOrgPosition;
+//    property DraggableMarker : TGPSPoint read FDraggableMarker;
+//    property OrgPosition : TRealPoint read FOrgPosition;
     procedure Assign(Source: TPersistent); override;
   end;
 
@@ -181,7 +183,6 @@ begin
     Update;
   end;
 end;
-
 
 { TLinkedMapsPlugin }
 
@@ -291,6 +292,7 @@ var
   lFontSize: Integer;
   lFontStyle: TFontStyles;
   lPenColor: TColor;
+  lClickableRect: TRect;
 begin
   if not Assigned(AMapView) then Exit;
   Handled := True;
@@ -300,9 +302,9 @@ begin
     AMapView.DrawingEngine.BrushStyle := bsSolid;
     AMapView.DrawingEngine.BrushColor := FBackgroundColor;
   end;
-  CalcClickableRect(AMapView);
-  x := FClickableRect.Left - FSpacing;
-  y := FClickableRect.Top - FSpacing;
+  CalcClickableRect(AMapView,lClickableRect);
+  x := lClickableRect.Left - FSpacing;
+  y := lClickableRect.Top - FSpacing;
   lFontName := AMapView.DrawingEngine.FontName;
   lFontSize := AMapView.DrawingEngine.FontSize;
   lFontStyle := AMapView.DrawingEngine.FontStyle;
@@ -321,7 +323,8 @@ begin
   end;
 end;
 
-procedure TLegalNoticePlugin.CalcClickableRect(AMapView: TMapView);
+procedure TLegalNoticePlugin.CalcClickableRect(AMapView: TMapView; out
+  AClickableRect: TRect);
 var
   sz: TSize;
   x, y: Integer;
@@ -352,8 +355,8 @@ begin
       lnpBottomLeft, lnpBottomRight:
         y := AMapView.Height - sz.CY - FSpacing;
     end;
-    FClickableRect := Rect(x + FSpacing, y + FSpacing, x + sz.CX, y + sz.CY);
-
+    AClickableRect := Rect(x + FSpacing, y + FSpacing, x + sz.CX, y + sz.CY);
+    SetMapViewData(AMapView,AClickableRect,SizeOf(AClickableRect));
   finally
     AMapView.DrawingEngine.FontName := lFontName;
     AMapView.DrawingEngine.FontSize := lFontSize;
@@ -371,12 +374,15 @@ procedure TLegalNoticePlugin.MouseDown(AMapView: TMapView; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer; var Handled: Boolean);
 var
   pt: TPoint;
+  lClickableRect : TRect;
 begin
   // The button down event is consumed by a different plugin, so do nothing here
   if Handled then Exit;
   pt.X := X;
   pt.Y := Y;
-  if PtInRect(FClickableRect, pt) and (FLegalNoticeURL <> '') then
+  if GetMapViewData(AMapView,lClickableRect,SizeOf(lClickableRect)) < SizeOf(lClickableRect) then
+    CalcClickableRect(AMapView,lClickableRect);
+  if PtInRect(lClickableRect, pt) and (FLegalNoticeURL <> '') then
   begin
     // The button down event is consumed by this plugin
     OpenURL(FLegalNoticeURL);
@@ -386,15 +392,22 @@ begin
 end;
 
 procedure TLegalNoticePlugin.MouseEnter(AMapView: TMapView; var Handled: Boolean);
+var
+  lClickableRect : TRect;
 begin
   inherited;
-  CalcClickableRect(AMapView);
+  CalcClickableRect(AMapView,lClickableRect);
 end;
 
 procedure TLegalNoticePlugin.MouseMove(AMapView: TMapView; Shift: TShiftState;
   X, Y: Integer; var Handled: Boolean);
+var
+  lClickableRect : TRect;
 begin
-  if PtInRect(FClickableRect, Point(X, Y)) and (not AMapView.Engine.InDrag) then
+  if GetMapViewData(AMapView,lClickableRect,SizeOf(lClickableRect)) < SizeOf(lClickableRect) then
+    CalcClickableRect(AMapView,lClickableRect);
+
+  if PtInRect(lClickableRect, Point(X, Y)) and (not AMapView.Engine.InDrag) then
   begin
     FFont.Style := [fsUnderline];
     AMapView.Cursor := crHandPoint;
@@ -492,13 +505,16 @@ end;
 
 procedure TDraggableMarkerPlugin.MouseDown(AMapView: TMapView; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer; var Handled: Boolean);
+var
+  lDraggableMarkerData : TDraggableMarkerData;
 begin
   if Handled then Exit;
-  FDraggableMarker := GetFirstMarkerAtMousePos(AMapView,X,Y);
-  if Assigned(FDraggableMarker) then
+  lDraggableMarkerData.FDraggableMarker := GetFirstMarkerAtMousePos(AMapView,X,Y);
+  if Assigned(lDraggableMarkerData.FDraggableMarker) then
   begin
-    FOrgPosition.Lon:= FDraggableMarker.Lon;
-    FOrgPosition.Lat:= FDraggableMarker.Lat;
+    lDraggableMarkerData.FOrgPosition.Lon:= lDraggableMarkerData.FDraggableMarker.Lon;
+    lDraggableMarkerData.FOrgPosition.Lat:= lDraggableMarkerData.FDraggableMarker.Lat;
+    SetMapViewData(AMapView,lDraggableMarkerData,SizeOf(lDraggableMarkerData));
     Handled := True;
   end;
 end;
@@ -510,16 +526,19 @@ var
   rpt : TRealPoint;
   ele : Double;
   dt : TDateTime;
-
+  lDraggableMarkerData : TDraggableMarkerData;
+  cnt : Integer;
 begin
-  if Assigned(FDraggableMarker) then
+  cnt := GetMapViewData(AMapView,lDraggableMarkerData,SizeOf(lDraggableMarkerData));
+  if (cnt >= SizeOf(lDraggableMarkerData)) and
+     Assigned(lDraggableMarkerData.FDraggableMarker) then
   begin
     pt.X := X;
     pt.Y := Y;
     rpt := AMapView.ScreenToLatLon(pt);
-    ele := FDraggableMarker.Elevation;
-    dt := FDraggableMarker.DateTime;
-    FDraggableMarker.MoveTo(rpt.Lon, rpt.Lat,ele,dt);
+    ele := lDraggableMarkerData.FDraggableMarker.Elevation;
+    dt := lDraggableMarkerData.FDraggableMarker.DateTime;
+    lDraggableMarkerData.FDraggableMarker.MoveTo(rpt.Lon, rpt.Lat,ele,dt);
     AMapView.Invalidate;
     Handled := True; // Prevent the dragging of the map!!
   end
@@ -538,13 +557,19 @@ end;
 
 procedure TDraggableMarkerPlugin.MouseUp(AMapView: TMapView; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer; var Handled: Boolean);
+var
+  cnt : Integer;
+  lDraggableMarkerData : TDraggableMarkerData;
 begin
-  if Assigned(FDraggableMarker) then
+  cnt := GetMapViewData(AMapView,lDraggableMarkerData,SizeOf(lDraggableMarkerData));
+  if (cnt >= SizeOf(lDraggableMarkerData)) and
+     Assigned(lDraggableMarkerData.FDraggableMarker) then
   begin
     if Assigned(FDraggableMarkerMovedEvent) then
-      FDraggableMarkerMovedEvent(Self,FDraggableMarker,FOrgPosition);
+      FDraggableMarkerMovedEvent(Self,lDraggableMarkerData.FDraggableMarker,lDraggableMarkerData.FOrgPosition);
     Handled := True;
-    FDraggableMarker := Nil;
+    lDraggableMarkerData.FDraggableMarker := Nil;
+    SetMapViewData(AMapView,lDraggableMarkerData,SizeOf(lDraggableMarkerData));
   end;
 end;
 

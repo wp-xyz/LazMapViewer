@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs,
   mvMapViewer, mvPluginCore, mvPlugins,
-  mvGPSObj, mvTypes;
+  mvGPSObj;
 
 type
 
@@ -17,9 +17,7 @@ type
     MapView1: TMapView;
     MvPluginManager1: TMvPluginManager;
     MvPluginManager1DraggableMarkerPlugin1: TDraggableMarkerPlugin;
-    MvPluginManager1DraggableMarkerPlugin2: TDraggableMarkerPlugin;
     MvPluginManager1LegalNoticePlugin1: TLegalNoticePlugin;
-    MvPluginManager1LegalNoticePlugin2: TLegalNoticePlugin;
     procedure FormCreate(Sender: TObject);
   private
 
