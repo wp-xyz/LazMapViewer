@@ -80,6 +80,7 @@ begin
     Font.Color := clBlue;
     BackgroundColor := clWhite;
     MapView := FMapView1;
+    //PluginManager := FPluginManager;        // why is this necessary?
 
     Edit1.Text := LegalNotice;
   end;
@@ -93,6 +94,7 @@ begin
     Font.Color := clBlue;
     BackgroundColor := clWhite;
     MapView := FMapView2;
+    PluginManager := FPluginManager;       // why is this necessary?
   end;
 
   with TCenterMarkerPlugin.Create(FPluginManager) do
@@ -100,7 +102,6 @@ begin
     Size := 15;
     Pen.Width := 3;
     Pen.Color := clRed;
-    //PluginManager := FPluginManager;
   end;
 
   with TLinkedMapsPlugin.Create(FPluginManager) do ;

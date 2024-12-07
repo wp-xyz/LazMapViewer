@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, Types, LazLoggerBase,
   Graphics, Controls, LCLIntf,
-  mvMapViewer, mvPluginCore, mvGPSObj, mvTypes;
+  mvMapViewer, mvDrawingEngine, mvPluginCore, mvGPSObj, mvTypes;
 
 type
   { TCenterMarkerPlugin - draws a cross in the map center }
@@ -95,10 +95,12 @@ type
   TDraggableMarkerMovedEvent = procedure (Sender : TDraggableMarkerPlugin; AMarker : TGPSPoint; AOrgPosition : TRealPoint) of object;
 
   { TLegalNoticePluginData }
+
   TDraggableMarkerData = record
     FDraggableMarker : TGPSPoint;
     FOrgPosition : TRealPoint;
   end;
+
   { TDraggableMarkerPlugin }
 
   TDraggableMarkerPlugin = class(TMvMultiMapsPlugin)
@@ -258,7 +260,7 @@ begin
 
 constructor TLegalNoticePlugin.Create(AOwner: TComponent);
 begin
-  inherited;
+  inherited Create(AOwner);
   FBackgroundColor := clNone;
   FPosition := lnpBottomRight;
   FFont := TFont.Create;
@@ -288,10 +290,7 @@ end;
 procedure TLegalNoticePlugin.AfterDrawObjects(AMapView: TMapView; var Handled: Boolean);
 var
   x,y : Integer;
-  lFontName: String;
-  lFontSize: Integer;
-  lFontStyle: TFontStyles;
-  lPenColor: TColor;
+  lSavedFont: TMvFont;
   lClickableRect: TRect;
 begin
   if not Assigned(AMapView) then Exit;
@@ -305,21 +304,12 @@ begin
   CalcClickableRect(AMapView,lClickableRect);
   x := lClickableRect.Left - FSpacing;
   y := lClickableRect.Top - FSpacing;
-  lFontName := AMapView.DrawingEngine.FontName;
-  lFontSize := AMapView.DrawingEngine.FontSize;
-  lFontStyle := AMapView.DrawingEngine.FontStyle;
-  lPenColor := AMapView.DrawingEngine.FontColor;
+  lSavedFont := AMapView.DrawingEngine.GetFont;
   try
-    AMapView.DrawingEngine.FontName := FFont.Name;
-    AMapView.DrawingEngine.FontSize := FFont.Size;
-    AMapView.DrawingEngine.FontStyle := FFont.Style;
-    AMapView.DrawingEngine.FontColor := FFont.Color;
+    AMapView.DrawingEngine.SetFont(FFont.Name, FFont.Size, FFont.Style, FFont.Color);
     AMapView.DrawingEngine.TextOut(x, y, FLegalNotice);
   finally
-    AMapView.DrawingEngine.FontName := lFontName;
-    AMapView.DrawingEngine.FontSize := lFontSize;
-    AMapView.DrawingEngine.FontStyle := lFontStyle;
-    AMapView.DrawingEngine.FontColor := lPenColor;
+    AMapView.DrawingEngine.SetFont(lSavedFont);
   end;
 end;
 
@@ -328,20 +318,11 @@ procedure TLegalNoticePlugin.CalcClickableRect(AMapView: TMapView; out
 var
   sz: TSize;
   x, y: Integer;
-  lFontName: String;
-  lFontSize: Integer;
-  lFontStyle: TFontStyles;
-  lPenColor: TColor;
+  lSavedFont: TMvFont;
 begin
-  lFontName := AMapView.DrawingEngine.FontName;
-  lFontSize := AMapView.DrawingEngine.FontSize;
-  lFontStyle := AMapView.DrawingEngine.FontStyle;
-  lPenColor := AMapView.DrawingEngine.FontColor;
+  lSavedFont := AMapView.DrawingEngine.GetFont;
   try
-    AMapView.DrawingEngine.FontName := FFont.Name;
-    AMapView.DrawingEngine.FontSize := FFont.Size;
-    AMapView.DrawingEngine.FontStyle := FFont.Style;
-    AMapView.DrawingEngine.FontColor := FFont.Color;
+    AMapView.DrawingEngine.SetFont(FFont.Name, FFont.Size, FFont.Style, FFont.Color);
     sz := AMapView.DrawingEngine.TextExtent(FLegalNotice);
     case FPosition of
       lnpTopLeft, lnpBottomLeft:
@@ -358,10 +339,7 @@ begin
     AClickableRect := Rect(x + FSpacing, y + FSpacing, x + sz.CX, y + sz.CY);
     SetMapViewData(AMapView,AClickableRect,SizeOf(AClickableRect));
   finally
-    AMapView.DrawingEngine.FontName := lFontName;
-    AMapView.DrawingEngine.FontSize := lFontSize;
-    AMapView.DrawingEngine.FontStyle := lFontStyle;
-    AMapView.DrawingEngine.FontColor := lPenColor;
+    AMapView.DrawingEngine.SetFont(lSavedFont);
   end;
 end;
 
@@ -387,7 +365,6 @@ begin
     // The button down event is consumed by this plugin
     OpenURL(FLegalNoticeURL);
     Handled := True;
-//    Abort;     // No further handling of the event for dragging!
   end;
 end;
 
