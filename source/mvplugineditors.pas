@@ -468,7 +468,7 @@ end;
 
 procedure TMvPluginManagerEditorForm.AddSubcomponent(AParent, AChild: TComponent);
 begin
-  (AChild as TMvPlugin).PluginManager := (AParent as TMvPluginManager);
+  (AChild as TMvCustomPlugin).PluginManager := (AParent as TMvPluginManager);
 end;
 
 procedure TMvPluginManagerEditorForm.BuildCaption;
@@ -478,7 +478,7 @@ end;
 
 function TMvPluginManagerEditorForm.ChildClass: TComponentClass;
 begin
-  Result := TMvPlugin;
+  Result := TMvCustomPlugin;
 end;
 
 procedure TMvPluginManagerEditorForm.EnumerateSubcomponentClasses;
@@ -497,7 +497,7 @@ end;
 function TMvPluginManagerEditorForm.MakeSubcomponent(AOwner: TComponent;
   ATag: Integer): TComponent;
 begin
-  Result := TMvPluginClass(PluginClassRegistry.GetClass(ATag)).Create(AOwner);
+  Result := TMvCustomPluginClass(PluginClassRegistry.GetClass(ATag)).Create(AOwner);
 end;
 
 

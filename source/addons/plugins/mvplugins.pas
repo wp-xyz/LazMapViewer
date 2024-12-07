@@ -88,6 +88,8 @@ type
     property LegalNoticeURL: String read FLegalNoticeURL write SetLegalNoticeURL;
     property Position: TLegalNoticePosition read FPosition write SetPosition default lnpBottomRight;
     property Spacing: Integer read FSpacing write SetSpacing default DEFAULT_LEGALNOTICE_SPACING;
+    // inherited properties
+    property MapView;
   end;
 
   TDraggableMarkerPlugin = class;

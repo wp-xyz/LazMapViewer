@@ -10,7 +10,7 @@ uses
   mvMapViewer, mvClassRegistration;
 
 type
-  TMvPlugin = class;
+  TMvCustomPlugin = class;
   TMvPluginManager = class;
 
   TMvIndexedComponent = class(TComponent)
@@ -27,7 +27,7 @@ type
     procedure ChangeNamePrefix(const AOld, ANew: String);
   end;
 
-  TMvPlugin = class(TMvIndexedComponent)
+  TMvCustomPlugin = class(TMvIndexedComponent)
   private
     FPluginManager: TMvPluginManager;
     FMapView: TMapView;
@@ -56,6 +56,9 @@ type
     procedure ZoomChange(AMapView: TMapView; var Handled: Boolean); virtual;
   //  procedure ZoomChanging(AMapView: TMapView; NewZoom: Integer; var Allow, Handled: Boolean); virtual;
     procedure Update; virtual;
+  protected
+    property MapView: TMapView read FMapView write SetMapView;
+    property Enabled: Boolean read FEnabled write SetEnabled default true;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -64,8 +67,14 @@ type
     function HasParent: Boolean; override;
     property PluginManager: TMvPluginManager read FPluginManager write SetPluginManager;
   published
-    property Enabled: Boolean read FEnabled write SetEnabled default true;
-    property MapView: TMapView read FMapView write SetMapView;
+  end;
+
+  { TMvPlugin }
+
+  TMvPlugin = class(TMvCustomPlugin)
+  published
+    property Enabled;
+    property MapView;
   end;
 
   { TMvMultiMapsPluginData }
@@ -85,7 +94,7 @@ type
 
   { TMvMultiMapsPlugin }
 
-  TMvMultiMapsPlugin = class(TMvPlugin)
+  TMvMultiMapsPlugin = class(TMvCustomPlugin)
   private
     FMapDataList : TObjectList;
     function GetMapViewDataIndex(Value : TMapView) : Integer;
@@ -105,16 +114,18 @@ type
     procedure SetMapViewData(const AMapView : TMapView; const AData; const ADataSize : Integer);
     constructor Create(AOwner : TComponent);override;
     destructor Destroy;override;
+  published
+    property Enabled;
   end;
 
-  TMvPluginClass = class of TMvPlugin;
+  TMvCustomPluginClass = class of TMvCustomPlugin;
 
   TMvPluginList = class(TMvIndexedComponentList)
   private
-    function GetItem(AIndex: Integer): TMvPlugin;
-    procedure SetItem(AIndex: Integer; AValue: TMvPlugin);
+    function GetItem(AIndex: Integer): TMvCustomPlugin;
+    procedure SetItem(AIndex: Integer; AValue: TMvCustomPlugin);
   public
-    property Items[AIndex: Integer]: TMvPlugin read GetItem write SetItem; default;
+    property Items[AIndex: Integer]: TMvCustomPlugin read GetItem write SetItem; default;
   end;
 
   { TMvPluginManager }
@@ -123,10 +134,10 @@ type
   private
     FPluginList: TMvPluginList;
     FMapList: TFPList;
-    function GetItem(AIndex: Integer): TMvPlugin;
+    function GetItem(AIndex: Integer): TMvCustomPlugin;
   protected
     procedure AddMapView(AMapView: TMapView); override;
-    function HandlePlugin(APlugin: TMvPlugin; AMapView: TMapView): Boolean;
+    function HandlePlugin(APlugin: TMvCustomPlugin; AMapView: TMapView): Boolean;
     procedure InvalidateMapViews;
     procedure Notification(AComponent: TComponent; Operation: TOperation); override;
     procedure RemoveMapView(AMapView: TMapView); override;
@@ -159,13 +170,13 @@ type
     destructor Destroy; override;
     procedure GetChildren(Proc: TGetChildProc; Root: TComponent); override;
     procedure SetChildOrder(Child: TComponent; Order: Integer); override;
-    property Item[AIndex: Integer]: TMvPlugin read GetItem; default;
+    property Item[AIndex: Integer]: TMvCustomPlugin read GetItem; default;
     property MapList: TFPList read FMapList;
   published
     property PluginList: TMvPluginList read FPluginList;
   end;
 
-procedure RegisterPluginClass(APluginClass: TMvPluginClass; const ACaption: String);
+procedure RegisterPluginClass(APluginClass: TMvCustomPluginClass; const ACaption: String);
 
 var
   PluginClassRegistry: TMvClassRegistry = nil;
@@ -202,9 +213,9 @@ begin
 end;
 
 
-{ TMvPlugin }
+{ TMvCustomPlugin }
 
-constructor TMvPlugin.Create(AOwner: TComponent);
+constructor TMvCustomPlugin.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
   if AOwner is TMvPluginManager then
@@ -212,37 +223,37 @@ begin
   FEnabled := true;
 end;
 
-destructor TMvPlugin.Destroy;
+destructor TMvCustomPlugin.Destroy;
 begin
   SetPluginManager(nil);
   inherited;
 end;
 
-procedure TMvPlugin.Assign(Source: TPersistent);
+procedure TMvCustomPlugin.Assign(Source: TPersistent);
 begin
-  if Source is TMvPlugin then
-    FEnabled := TMvPlugin(Source).Enabled
+  if Source is TMvCustomPlugin then
+    FEnabled := TMvCustomPlugin(Source).Enabled
   else
     inherited Assign(Source);
 end;
 
-procedure TMvPlugin.AfterPaint(AMapView: TMapView; var Handled: Boolean);
+procedure TMvCustomPlugin.AfterPaint(AMapView: TMapView; var Handled: Boolean);
 begin
 end;
 
-procedure TMvPlugin.AfterDrawObjects(AMapView: TMapView; var Handled: Boolean);
+procedure TMvCustomPlugin.AfterDrawObjects(AMapView: TMapView; var Handled: Boolean);
 begin
 end;
 
-procedure TMvPlugin.BeforeDrawObjects(AMapView: TMapView; var Handled: Boolean);
+procedure TMvCustomPlugin.BeforeDrawObjects(AMapView: TMapView; var Handled: Boolean);
 begin
 end;
 
-procedure TMvPlugin.CenterMove(AMapView: TMapView; var Handled: Boolean);
+procedure TMvCustomPlugin.CenterMove(AMapView: TMapView; var Handled: Boolean);
 begin
 end;
 
-function TMvPlugin.GetIndex: Integer;
+function TMvCustomPlugin.GetIndex: Integer;
 begin
   if FPluginManager = nil then
     Result := -1
@@ -250,47 +261,47 @@ begin
     Result := FPluginManager.PluginList.IndexOf(Self);
 end;
 
-function TMvPlugin.GetParentComponent: TComponent;
+function TMvCustomPlugin.GetParentComponent: TComponent;
 begin
   Result := FPluginManager;
 end;
 
-function TMvPlugin.HasParent: Boolean;
+function TMvCustomPlugin.HasParent: Boolean;
 begin
   Result := true;
 end;
 
-procedure TMvPlugin.MouseDown(AMapView: TMapView; Button: TMouseButton;
+procedure TMvcustomPlugin.MouseDown(AMapView: TMapView; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer; var Handled: Boolean);
 begin
 end;
 
-procedure TMvPlugin.MouseEnter(AMapView: TMapView; var Handled: Boolean);
+procedure TMvCustomPlugin.MouseEnter(AMapView: TMapView; var Handled: Boolean);
 begin
 end;
 
-procedure TMvPlugin.MouseLeave(AMapView: TMapView; var Handled: Boolean);
+procedure TMvCustomPlugin.MouseLeave(AMapView: TMapView; var Handled: Boolean);
 begin
 end;
 
-procedure TMvPlugin.MouseMove(AMapView: TMapView; AShift: TShiftState;
+procedure TMvCustomPlugin.MouseMove(AMapView: TMapView; AShift: TShiftState;
   X, Y: Integer; var Handled: Boolean);
 begin
 end;
 
-procedure TMvPlugin.MouseUp(AMapView: TMapView; Button: TMouseButton;
+procedure TMvCustomPlugin.MouseUp(AMapView: TMapView; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer; var Handled: Boolean);
 begin
 end;
 
-procedure TMvPlugin.ReadState(Reader: TReader);
+procedure TMvCustomPlugin.ReadState(Reader: TReader);
 begin
   inherited ReadState(Reader);
   if Reader.Parent is TMvPluginManager then
     SetPluginManager(TMvPluginManager(Reader.Parent));
 end;
 
-procedure TMvPlugin.SetEnabled(AValue: Boolean);
+procedure TMvCustomPlugin.SetEnabled(AValue: Boolean);
 begin
   if AValue <> FEnabled then
   begin
@@ -299,12 +310,12 @@ begin
   end;
 end;
 
-procedure TMvPlugin.SetIndex(AValue: Integer);
+procedure TMvCustomPlugin.SetIndex(AValue: Integer);
 begin
   FPluginManager.PluginList.Move(Index, EnsureRange(AValue, 0, FPluginManager.PluginList.Count-1));
 end;
 
-procedure TMvPlugin.SetMapView(AValue: TMapView);
+procedure TMvCustomPlugin.SetMapView(AValue: TMapView);
 begin
   if FMapView <> AValue then
   begin
@@ -313,13 +324,13 @@ begin
   end;
 end;
 
-procedure TMvPlugin.SetParentComponent(AParent: TComponent);
+procedure TMvCustomPlugin.SetParentComponent(AParent: TComponent);
 begin
   if not (csLoading in ComponentState) then
     SetPluginManager(AParent as TMvPluginManager);
 end;
 
-procedure TMvPlugin.SetPluginManager(AValue: TMvPluginManager);
+procedure TMvCustomPlugin.SetPluginManager(AValue: TMvPluginManager);
 begin
   if FPluginManager = AValue then exit;
   if FPluginManager <> nil then
@@ -329,18 +340,18 @@ begin
     FPluginManager.PluginList.Add(Self);
 end;
 
-procedure TMvPlugin.Update;
+procedure TMvCustomPlugin.Update;
 begin
   if Assigned(FPluginManager) then
     FPluginManager.InvalidateMapViews;
 end;
 
-procedure TMvPlugin.ZoomChange(AMapView: TMapView; var Handled: Boolean);
+procedure TMvCustomPlugin.ZoomChange(AMapView: TMapView; var Handled: Boolean);
 begin
 end;
 
 {
-procedure TMvPlugin.ZoomChanging(AMapView: TMapView; NewZoom: Integer;
+procedure TMvCustomPlugin.ZoomChanging(AMapView: TMapView; NewZoom: Integer;
   var Allow, Handled: Boolean);
 begin
 end;
@@ -480,12 +491,12 @@ end;
 
 { TMvPluginList }
 
-function TMvPluginList.GetItem(AIndex: Integer): TMvPlugin;
+function TMvPluginList.GetItem(AIndex: Integer): TMvCustomPlugin;
 begin
-  Result := TMvPlugin(inherited Items[AIndex]);
+  Result := TMvCustomPlugin(inherited Items[AIndex]);
 end;
 
-procedure TMvPluginList.SetItem(AIndex: Integer; AValue: TMvPlugin);
+procedure TMvPluginList.SetItem(AIndex: Integer; AValue: TMvcustomPlugin);
 begin
   inherited Items[AIndex] := AValue;
 end;
@@ -524,9 +535,8 @@ procedure TMvPluginManager.AfterDrawObjects(AMapView: TMapView;
   AMapEvent: TNotifyEvent; out Handled: Boolean);
 var
   i: Integer;
-  plugin: TMvPlugin;
+  plugin: TMvCustomPlugin;
   lHandled : Boolean;
-
 begin
   Handled := False;
   for i := 0 to FPluginList.Count-1 do
@@ -535,17 +545,15 @@ begin
     if HandlePlugin(plugin, AMapView) then
       plugin.AfterDrawObjects(AMapView, Handled);
   end;
-  // EDo muss weg, geht sonst nicht!!   if not handled then
-    inherited AfterDrawObjects(AMapView, AMapEvent, lHandled);
+  inherited AfterDrawObjects(AMapView, AMapEvent, lHandled);
 end;
 
 procedure TMvPluginManager.AfterPaint(AMapView: TMapView;
   AMapEvent: TNotifyEvent; out Handled: Boolean);
 var
   i: Integer;
-  plugin: TMvPlugin;
+  plugin: TMvCustomPlugin;
   lHandled : Boolean;
-
 begin
   Handled := False;
   for i := 0 to FPluginList.Count-1 do
@@ -554,17 +562,15 @@ begin
     if HandlePlugin(plugin, AMapView) then
       plugin.AfterPaint(AMapView, Handled);
   end;
-  // EDo muss weg, geht sonst nicht!!   if not handled then
-    inherited AfterPaint(AMapView, AMapEvent, lHandled);
+  inherited AfterPaint(AMapView, AMapEvent, lHandled);
 end;
 
 procedure TMvPluginManager.BeforeDrawObjects(AMapView: TMapView;
   AMapEvent: TNotifyEvent; out Handled: Boolean);
 var
   i: Integer;
-  plugin: TMvPlugin;
+  plugin: TMvCustomPlugin;
   lHandled : Boolean;
-
 begin
   handled := false;
   for i := 0 to FPluginList.Count-1 do
@@ -573,15 +579,14 @@ begin
     if HandlePlugin(plugin, AMapView) then
       plugin.BeforeDrawObjects(AMapView, Handled);
   end;
-  // EDo muss weg, geht sonst nicht!!   if not handled then
-    inherited BeforeDrawObjects(AMapView, AMapEvent, lHandled);
+  inherited BeforeDrawObjects(AMapView, AMapEvent, lHandled);
 end;
 
 procedure TMvPluginManager.CenterMove(AMapView: TMapView; AMapEvent: TNotifyEvent);
 var
   i: Integer;
   handled: Boolean;
-  plugin: TMvPlugin;
+  plugin: TMvCustomPlugin;
 begin
   handled := false;
   for i := 0 to FPluginList.Count-1 do
@@ -596,7 +601,7 @@ end;
 
 procedure TMvPluginManager.GetChildren(Proc: TGetChildProc; Root: TComponent);
 var
-  plugin: TMvPlugin;
+  plugin: TMvCustomPlugin;
   i: Integer;
 begin
   for i := 0 to FPluginList.Count-1 do
@@ -607,12 +612,12 @@ begin
   end;
 end;
 
-function TMvPluginManager.GetItem(AIndex: Integer): TMvPlugin;
+function TMvPluginManager.GetItem(AIndex: Integer): TMvCustomPlugin;
 begin
-  Result := TMvPlugin(FPluginList.Items[AIndex]);
+  Result := TMvCustomPlugin(FPluginList.Items[AIndex]);
 end;
 
-function TMvPluginManager.HandlePlugin(APlugin: TMvPlugin; AMapView: TMapView): Boolean;
+function TMvPluginManager.HandlePlugin(APlugin: TMvCustomPlugin; AMapView: TMapView): Boolean;
 begin
   Result := APlugin.Enabled and ((APlugin.MapView = AMapView) or (APlugin.MapView = nil));
 end;
@@ -630,9 +635,8 @@ procedure TMvPluginManager.MouseDown(AMapView: TMapView; AButton: TMouseButton;
   Handled: Boolean);
 var
   i: Integer;
-  plugin: TMvPlugin;
+  plugin: TMvCustomPlugin;
   lHandled : Boolean;
-
 begin
   Handled := false;
   for i := 0 to FPluginList.Count-1 do
@@ -641,17 +645,15 @@ begin
     if HandlePlugin(plugin, AMapView) then
       plugin.MouseDown(AMapView, AButton, AShift, X, Y, Handled);
   end;
-// EDo muss weg, geht sonst nicht!!     if (not handled) then
-    inherited MouseDown(AMapView, AButton, AShift, X, Y, AMapEvent, lHandled);
+  inherited MouseDown(AMapView, AButton, AShift, X, Y, AMapEvent, lHandled);
 end;
 
 procedure TMvPluginManager.MouseEnter(AMapView: TMapView;
   AMapEvent: TNotifyEvent; out Handled: Boolean);
 var
   i: Integer;
-  plugin: TMvPlugin;
+  plugin: TMvCustomPlugin;
   lHandled : Boolean;
-
 begin
   Handled := false;
   for i := 0 to FPluginList.Count-1 do
@@ -660,17 +662,15 @@ begin
     if HandlePlugin(plugin, AMapView) then
       plugin.MouseEnter(AMapView, handled);
   end;
-  // EDo muss weg, geht sonst nicht!!   if not handled then
-    inherited MouseEnter(AMapView, AMapEvent, lHandled);
+  inherited MouseEnter(AMapView, AMapEvent, lHandled);
 end;
 
 procedure TMvPluginManager.MouseLeave(AMapView: TMapView;
   AMapEvent: TNotifyEvent; out Handled: Boolean);
 var
   i: Integer;
-  plugin: TMvPlugin;
+  plugin: TMvCustomPlugin;
   lHandled : Boolean;
-
 begin
   handled := false;
   for i := 0 to FPluginList.Count-1 do
@@ -679,15 +679,14 @@ begin
     if HandlePlugin(plugin, AMapView) then
       plugin.MouseLeave(AMapView, Handled);
   end;
-  // EDo muss weg, geht sonst nicht!!   if not handled then
-    inherited MouseLeave(AMapView, AMapEvent, lHandled);
+  inherited MouseLeave(AMapView, AMapEvent, lHandled);
 end;
 
 procedure TMvPluginManager.MouseMove(AMapView: TMapView; AShift: TShiftState;
   X, Y: Integer; AMapEvent: TMouseMoveEvent; out Handled: Boolean);
 var
   i: Integer;
-  plugin: TMvPlugin;
+  plugin: TMvCustomPlugin;
   lHandled : Boolean;
 begin
   Handled := false;
@@ -697,8 +696,7 @@ begin
     if HandlePlugin(plugin, AMapView) then
       plugin.MouseMove(AMapView, AShift, X, Y, Handled);
   end;
-// EDo muss weg, geht sonst nicht!!     if (not handled) then
-    inherited MouseMove(AMapView, AShift, X, Y, AMapEvent, lHandled);
+  inherited MouseMove(AMapView, AShift, X, Y, AMapEvent, lHandled);
 end;
 
 procedure TMvPluginManager.MouseUp(AMapView: TMapView; AButton: TMouseButton;
@@ -706,9 +704,8 @@ procedure TMvPluginManager.MouseUp(AMapView: TMapView; AButton: TMouseButton;
   Handled: Boolean);
 var
   i: Integer;
-  plugin: TMvPlugin;
+  plugin: TMvCustomPlugin;
   lHandled : Boolean;
-
 begin
   Handled := false;
   for i := 0 to FPluginList.Count-1 do
@@ -717,8 +714,7 @@ begin
     if HandlePlugin(plugin, AMapView) then
       plugin.MouseUp(AMapView, AButton, AShift, X, Y, Handled);
   end;
-  // EDo muss weg, geht sonst nicht!!   if not handled then
-    inherited MouseUp(AMapView, AButton, AShift, X, Y, AMapEvent, lHandled);
+  inherited MouseUp(AMapView, AButton, AShift, X, Y, AMapEvent, lHandled);
 end;
 
 procedure TMvPluginManager.Notification(AComponent: TComponent; Operation: TOperation);
@@ -728,13 +724,7 @@ begin
   begin
     if AComponent is TMapView then
       RemoveMapView(TMapView(AComponent));
-      {
-    if AComponent is TMvPlugin then
-    begin
-      AComponent.Free;
-      FPluginList.Remove(AComponent);
-    end;
-    }
+    // Do no handle deleted plugins here -- will crash
   end;
 end;
 
@@ -767,7 +757,7 @@ procedure TMvPluginManager.ZoomChange(AMapView: TMapView; AMapEvent: TNotifyEven
 var
   i: Integer;
   handled: Boolean;
-  plugin: TMvPlugin;
+  plugin: TMvCustomPlugin;
 begin
   handled := false;
   for i := 0 to FPluginList.Count-1 do
@@ -776,8 +766,7 @@ begin
     if HandlePlugin(plugin, AMapView) then
       plugin.ZoomChange(AMapView, handled);
   end;
-  if not handled then
-    inherited ZoomChange(AMapView, AMapEvent);
+  inherited ZoomChange(AMapView, AMapEvent);
 end;
 
                      (*
@@ -802,7 +791,7 @@ end;                   *)
 
 { Plugin registration }
 
-procedure RegisterPluginClass(APluginClass: TMvPluginClass; const ACaption: String);
+procedure RegisterPluginClass(APluginClass: TMvCustomPluginClass; const ACaption: String);
 begin
   RegisterClass(APluginClass);
   if PluginClassRegistry.IndexOfClass(APluginClass) < 0 then
