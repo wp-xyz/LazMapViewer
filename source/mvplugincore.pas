@@ -365,7 +365,9 @@ begin
   Result := ds;
 end;
 
+
 { TMvMultiMapsPlugin }
+
 function TMvMultiMapsPlugin.GetMapViewDataIndex(Value: TMapView): Integer;
 var
   i : Integer;

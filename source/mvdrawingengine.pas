@@ -24,6 +24,13 @@ type
   TLineDrawProc = procedure(X1, Y1, X2, Y2: Integer) of Object;
   TPointArray = array of TPoint;
 
+  TMvFont = record
+    FontName: String;
+    Size: Integer;
+    Style: TFontStyles;
+    Color: TColor;
+  end;
+
   { TMvCustomDrawingEngine }
 
   TMvCustomDrawingEngine = class(TComponent)
@@ -61,6 +68,7 @@ type
     procedure Ellipse(X1, Y1, X2, Y2: Integer); virtual; abstract;
     procedure FillPixels(X1, Y1, X2, Y2: Integer; AColor: TColor); virtual; abstract;
     procedure FillRect(X1, Y1, X2, Y2: Integer); virtual; abstract;
+    function GetFont: TMvFont;
     procedure Line(X1, Y1, X2, Y2: Integer); virtual; abstract;
     procedure Polyline(const Points: array of TPoint); virtual; abstract;
     procedure Polygon(const Points: array of TPoint); virtual; abstract;
@@ -70,6 +78,8 @@ type
     procedure PaintToCanvas(ACanvas: TCanvas; Origin: TPoint); overload; virtual; abstract;
     procedure Rectangle(X1, Y1, X2, Y2: Integer); virtual; abstract;
     function SaveToImage(AClass: TRasterImageClass): TRasterImage; virtual; abstract;
+    procedure SetFont(AFont: TMvFont);
+    procedure SetFont(AFontName: String; AFontSize: Integer; AFontStyle: TFontStyles; AFontColor: TColor);
     function TextExtent(const AText: String): TSize; virtual; abstract;
     function TextHeight(const AText: String): Integer;
     procedure TextOut(X, Y: Integer; const AText: String); virtual; abstract;
@@ -572,9 +582,31 @@ begin
   end;
 end;
 
+function TMvCustomDrawingEngine.GetFont: TMvFont;
+begin
+  Result.FontName := FontName;
+  Result.Size := FontSize;
+  Result.Style := FontStyle;
+  Result.Color := FontColor;
+end;
+
 procedure TMvCustomDrawingEngine.PaintToCanvas(ACanvas: TCanvas);
 begin
   PaintToCanvas(ACanvas, Point(0, 0));
+end;
+
+procedure TMvCustomDrawingEngine.SetFont(AFont: TMvFont);
+begin
+  SetFont(AFont.FontName, AFont.Size, AFont.Style, AFont.Color);
+end;
+
+procedure TMvCustomDrawingEngine.SetFont(AFontName: String; AFontSize: Integer;
+  AFontStyle: TFontStyles; AFontColor: TColor);
+begin
+  FontName := AFontName;
+  FontSize := AFontSize;
+  FontStyle := AFontStyle;
+  FontColor := AFontColor;
 end;
 
 function TMvCustomDrawingEngine.TextHeight(const AText: String): Integer;
