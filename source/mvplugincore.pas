@@ -428,7 +428,7 @@ end;
 
 constructor TMvMultiMapsPlugin.Create(AOwner: TComponent);
 begin
-  inherited Create(Owner);
+  inherited Create(AOwner);
   FMapDataList := TObjectList.Create(True);
 end;
 
