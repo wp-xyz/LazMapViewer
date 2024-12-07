@@ -95,7 +95,7 @@ type
   TDraggableMarkerMovedEvent = procedure (Sender : TDraggableMarkerPlugin; AMarker : TGPSPoint; AOrgPosition : TRealPoint) of object;
 
   { TLegalNoticePluginData }
-
+  PDraggableMarkerData = ^TDraggableMarkerData;
   TDraggableMarkerData = record
     FDraggableMarker : TGPSPoint;
     FOrgPosition : TRealPoint;
@@ -535,18 +535,15 @@ end;
 procedure TDraggableMarkerPlugin.MouseUp(AMapView: TMapView; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer; var Handled: Boolean);
 var
-  cnt : Integer;
-  lDraggableMarkerData : TDraggableMarkerData;
+  lpDraggableMarkerData : PDraggableMarkerData;
 begin
-  cnt := GetMapViewData(AMapView,lDraggableMarkerData,SizeOf(lDraggableMarkerData));
-  if (cnt >= SizeOf(lDraggableMarkerData)) and
-     Assigned(lDraggableMarkerData.FDraggableMarker) then
+  lpDraggableMarkerData := MapViewDataPtr[AMapView];
+  if Assigned(lpDraggableMarkerData) and Assigned(lpDraggableMarkerData^.FDraggableMarker) then
   begin
     if Assigned(FDraggableMarkerMovedEvent) then
-      FDraggableMarkerMovedEvent(Self,lDraggableMarkerData.FDraggableMarker,lDraggableMarkerData.FOrgPosition);
+      FDraggableMarkerMovedEvent(Self,lpDraggableMarkerData^.FDraggableMarker,lpDraggableMarkerData^.FOrgPosition);
     Handled := True;
-    lDraggableMarkerData.FDraggableMarker := Nil;
-    SetMapViewData(AMapView,lDraggableMarkerData,SizeOf(lDraggableMarkerData));
+    lpDraggableMarkerData^.FDraggableMarker := Nil;
   end;
 end;
 

@@ -79,6 +79,7 @@ type
     property DataSize : Integer read GetDataSize;
     procedure SetData(const AData; const ADataSize : Integer);
     function GetData(out AData; const AMaxDataSize : Integer) : Integer;
+    function GetDataPtr : Pointer;
     property MapView : TMapView read FMapView write FMapView;
   end;
 
@@ -89,9 +90,13 @@ type
     FMapDataList : TObjectList;
     function GetMapViewDataIndex(Value : TMapView) : Integer;
     function GetMapViewDataSize(Value : TMapView) : Integer;
+    function GetMapViewDataPtr(Value : TMapView) : Pointer;
+  protected
+    function CreateMultiMapsPluginData : TMvMultiMapsPluginData;virtual;
   public
     property MapViewDataIndex[AIndex : TMapView] : Integer read GetMapViewDataIndex;
     property MapViewDataSize[AIndex : TMapView] : Integer read GetMapViewDataSize;
+    property MapViewDataPtr[AIndex : TMapView] : Pointer read GetMapViewDataPtr;
     function GetMapViewData(const AMapView : TMapView; out AData; const AMaxDataSize : Integer) : Integer;
     procedure SetMapViewData(const AMapView : TMapView; const AData; const ADataSize : Integer);
     constructor Create(AOwner : TComponent);override;
@@ -361,8 +366,16 @@ begin
   if ds > AMaxDataSize then
     ds := AMaxDataSize;
   if ds <= 0 then Exit;
+  Byte(AData) := 0; // Keep the compiler calm
   Move(FData[0],AData,ds);
   Result := ds;
+end;
+
+function TMvMultiMapsPluginData.GetDataPtr: Pointer;
+begin
+  Result := Nil;
+  if Length(FData) > 0 then
+    Result := @FData[0];
 end;
 
 
@@ -388,6 +401,23 @@ begin
   Result := TMvMultiMapsPluginData(FMapDataList.Items[ndx]).DataSize;
 end;
 
+function TMvMultiMapsPlugin.GetMapViewDataPtr(Value: TMapView): Pointer;
+var
+  ndx : Integer;
+  di : TMvMultiMapsPluginData;
+begin
+  Result := Nil;
+  ndx := MapViewDataIndex[Value];
+  if (ndx < 0) then Exit;
+  di := TMvMultiMapsPluginData(FMapDataList.Items[ndx]);
+  Result := di.GetDataPtr;
+end;
+
+function TMvMultiMapsPlugin.CreateMultiMapsPluginData: TMvMultiMapsPluginData;
+begin
+  Result := TMvMultiMapsPluginData.Create;
+end;
+
 function TMvMultiMapsPlugin.GetMapViewData(const AMapView: TMapView; out AData;
   const AMaxDataSize: Integer): Integer;
 var
@@ -410,14 +440,13 @@ end;
 procedure TMvMultiMapsPlugin.SetMapViewData(const AMapView: TMapView;
   const AData; const ADataSize: Integer);
 var
-  ds : Integer;
   ndx : Integer;
   di : TMvMultiMapsPluginData;
 begin
   ndx := MapViewDataIndex[AMapView];
   if ndx < 0 then
   begin
-    di := TMvMultiMapsPluginData.Create;
+    di := CreateMultiMapsPluginData;
     di.MapView := AMapView;
     ndx := FMapDataList.Add(di);
   end
