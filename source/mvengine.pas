@@ -112,9 +112,10 @@ type
       procedure SetZoom(AValue: Integer); overload;
       procedure SetZoom(AValue: integer; AZoomToCursor: Boolean); overload;
       function DegreesToMapPixels(const AWin: TMapWindow; APt: TRealPoint): TPoint;
-      function MapPixelsToDegrees(const AWin: TMapWindow; APoint: TPoint): TRealPoint;
-      function PixelsToDegreesEPSG3395(APoint: TPoint; Zoom: Integer): TRealPoint;
-      function PixelsToDegreesEPSG3857(APoint: TPoint; Zoom: Integer): TRealPoint;
+      function MapPixelsToDegrees(const AWin: TMapWindow; APoint: TPoint): TRealPoint; overload; inline;
+      function MapPixelsToDegrees(const AWin: TMapWindow; AX, AY: Double): TRealPoint; overload;
+      function PixelsToDegreesEPSG3395(AX, AY: Double; Zoom: Integer): TRealPoint;
+      function PixelsToDegreesEPSG3857(AX, AY: Double; Zoom: Integer): TRealPoint;
       procedure CalculateWin(var AWin: TMapWindow);
       function DegreesToPixelsEPSG3395(const AWin: TMapWindow; APt: TRealPoint): TPoint;
       function DegreesToPixelsEPSG3857(const AWin: TMapWindow; APt: TRealPoint): TPoint;
@@ -156,6 +157,7 @@ type
       function ReadProvidersFromXML(AFileName: String; out AMsg: String): Boolean;
       procedure Redraw;
       Procedure RegisterProviders;
+      function ScreenRectToRealArea(ARect: TRect): TRealArea;
       function ScreenToLatLon(aPt: TPoint): TRealPoint;
       function ScreenToLonLat(aPt: TPoint): TRealPoint; deprecated 'Use ScreenToLatLon';
       procedure SetSize(aWidth, aHeight: integer);
@@ -764,33 +766,41 @@ end;
 
 function TMapViewerEngine.MapPixelsToDegrees(const AWin: TMapWindow;
   APoint: TPoint): TRealPoint;
+begin
+  Result := MapPixelsToDegrees(AWin, APoint.X, APoint.Y);
+end;
+
+function TMapViewerEngine.MapPixelsToDegrees(const AWin: TMapWindow; AX,
+  AY: Double): TRealPoint;
 var
-  mapWidth: Int64;
-  mPoint : TPoint;
+  mapWidth: Double;
+  mPointX, mPointY : Double;
   PType: TProjectionType;
 begin
-  mapWidth := round(mvGeoMath.ZoomFactor(AWin.Zoom) * TileSize.CX);
+  mapWidth := mvGeoMath.ZoomFactor(AWin.Zoom) * TileSize.CX;
 
   if FCyclic then
   begin
-    mPoint.X := (APoint.X - AWin.X) mod mapWidth;
-    while mPoint.X < 0 do
-      mPoint.X := mPoint.X + mapWidth;
-    while mPoint.X >= mapWidth do
-      mPoint.X := mPoint.X - mapWidth;
+    AX := AX - AWin.X;
+    mPointX := AX - mapWidth * Int(AX / mapWidth); // FPC 3.0.x compatible FMod()
+    while mPointX < 0 do
+      mPointX := mPointX + mapWidth;
+    while mPointX >= mapWidth do
+      mPointX := mPointX - mapWidth;
   end else
-    mPoint.X := EnsureRange(APoint.X - AWin.X, 0, mapWidth);
-  mPoint.Y := EnsureRange(APoint.Y - AWin.Y, 0, mapWidth);
+    mPointX := EnsureRange(AX - AWin.X, 0, mapWidth);
+  mPointY := EnsureRange(AY - AWin.Y, 0, mapWidth);
 
   PType := GetProjectionType(AWin);
   case PType of
-    ptEPSG3857: Result := PixelsToDegreesEPSG3857(mPoint, AWin.Zoom);
-    ptEPSG3395: Result := PixelsToDegreesEPSG3395(mPoint, AWin.Zoom);
-    else        Result := PixelsToDegreesEPSG3857(mPoint, AWin.Zoom);
+    ptEPSG3857: Result := PixelsToDegreesEPSG3857(mPointX, mPointY, AWin.Zoom);
+    ptEPSG3395: Result := PixelsToDegreesEPSG3395(mPointX, mPointY, AWin.Zoom);
+    else        Result := PixelsToDegreesEPSG3857(mPointX, mPointY, AWin.Zoom);
   end;
 end;
 
-function TMapViewerEngine.PixelsToDegreesEPSG3857(APoint: TPoint; Zoom: Integer): TRealPoint;
+function TMapViewerEngine.PixelsToDegreesEPSG3857(AX, AY: Double; Zoom: Integer
+  ): TRealPoint;
 const
   MIN_LATITUDE = -85.05112878;
   MAX_LATITUDE = 85.05112878;
@@ -806,14 +816,14 @@ begin
   // Result.LonRad := ( APoints.X / (( TILE_SIZE / (2*pi)) * 2**Zoom) ) - pi;
   // Result.LatRad := arctan( sinh(pi - (APoints.Y/TILE_SIZE) / 2**Zoom * pi*2) );
   zoomFac := mvGeoMath.ZoomFactor(Zoom);
-  Result.LonRad := ( APoint.X / (( TileSize.CX / (2*pi)) * zoomFac) ) - pi;
-  Result.LatRad := arctan( sinh(pi - (APoint.Y / TileSize.CY) / zoomFac * pi*2) );
+  Result.LonRad := ( AX / (( TileSize.CX / (2*pi)) * zoomFac) ) - pi;
+  Result.LatRad := arctan( sinh(pi - (AY / TileSize.CY) / zoomFac * pi*2) );
 
   Result.Lat := Math.EnsureRange(Result.Lat, MIN_LATITUDE, MAX_LATITUDE);
   Result.Lon := Math.EnsureRange(Result.Lon, MIN_LONGITUDE, MAX_LONGITUDE);
 end;
 
-function TMapViewerEngine.PixelsToDegreesEPSG3395(APoint: TPoint; Zoom: Integer
+function TMapViewerEngine.PixelsToDegreesEPSG3395(AX, AY: Double; Zoom: Integer
   ): TRealPoint;
 
   function PhiIteration(y, phi: Extended): Extended;
@@ -851,8 +861,8 @@ begin
   WorldSize := mvGeoMath.ZoomFactor(31);
   Cpm :=  WorldSize / EARTH_CIRCUMFERENCE;
 
-  LonRad := (APoint.x / (Cpm/zoomFac) - EARTH_CIRCUMFERENCE/2) / EARTH_EQUATORIAL_RADIUS;
-  LatRad := (APoint.y / (Cpm/zoomFac) - EARTH_CIRCUMFERENCE/2);
+  LonRad := (AX / (Cpm/zoomFac) - EARTH_CIRCUMFERENCE/2) / EARTH_EQUATORIAL_RADIUS;
+  LatRad := (AY / (Cpm/zoomFac) - EARTH_CIRCUMFERENCE/2);
 
   t := pi/2 - 2*arctan(exp(-LatRad/EARTH_EQUATORIAL_RADIUS));
 
@@ -1188,6 +1198,14 @@ begin
   MapWin.MapProvider := Nil; // Undo the OSM Mapnik default selection
 end;
 
+function TMapViewerEngine.ScreenRectToRealArea(ARect: TRect): TRealArea;
+begin
+  Result.TopLeft := MapPixelsToDegrees(MapWin, ARect.TopLeft);
+  // Extend the area to include the BottomRight row/column
+  Result.BottomRight := MapPixelsToDegrees(MapWin,
+    ARect.BottomRight.X + 0.9999999, ARect.BottomRight.Y + 0.9999999);
+end;
+
 function TMapViewerEngine.ScreenToLatLon(aPt: TPoint): TRealPoint;
 begin
   Result := MapPixelsToDegrees(MapWin, aPt);
@@ -1415,7 +1433,7 @@ begin
   end;
 end;
 
-function TMapViewerengine.WorldScreenToLatLon(aPt: TPoint): TRealPoint;
+function TMapViewerEngine.WorldScreenToLatLon(aPt: TPoint): TRealPoint;
 begin
   aPt.X := aPt.X - MapWin.X;
   aPt.Y := aPt.Y - MapWin.Y;

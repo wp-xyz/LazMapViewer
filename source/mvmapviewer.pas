@@ -473,7 +473,6 @@ type
     private
       FCacheLocation: TCacheLocation;
       FCachePath, FCacheFullPath: String;
-      FCanvasSize: TSize;         // Needed for calculation of cyclic points
       FCenter: TMapCenter;
       FDownloadEngine: TMvCustomDownloadEngine;
       FBuiltinDownloadEngine: TMvCustomDownloadEngine;
@@ -2709,8 +2708,6 @@ begin
     Engine.SetSize(ClientWidth, ClientHeight);
     Invalidate;
   end;
-  if (FCanvasSize.CX = 0) and (FCanvasSize.CY = 0) then
-    FCanvasSize := Size(ClientWidth + 100, ClientHeight);   // will be updated correctly in Paint
 end;
 
 procedure TMapView.Paint;
@@ -2743,12 +2740,12 @@ const
     W: Integer;
   begin
     Engine.Redraw;
-    W := FCanvasSize.CX;
+    W := ClientWidth;
     if Cyclic then
       W := Min(1 shl Zoom * TileSize.CX, W);
 
     PluginManager.BeforeDrawObjects(Self, FBeforeDrawObjectsEvent,lHandled);
-    DrawObjects(Default(TTileId), 0, 0, W - 1, FCanvasSize.CY);
+    DrawObjects(Default(TTileId), 0, 0, W - 1, ClientHeight);
     PluginManager.AfterDrawObjects(Self, FAfterDrawObjectsEvent,lHandled);
 
     DrawingEngine.PaintToCanvas(Canvas);
@@ -2777,7 +2774,6 @@ const
 
 begin
   inherited Paint;
-  FCanvasSize := Size(Canvas.Width, Canvas.Height);
   if IsActive then
   begin
     if Engine.InDrag then
@@ -3183,8 +3179,7 @@ var
   lst: TGPSObjList;
   I, J: Integer;
 begin
-  Area.TopLeft := Engine.ScreenToLatLon(Point(aLeft, aTop));
-  Area.BottomRight := Engine.ScreenToLatLon(Point(aRight, aBottom));
+  Area := Engine.ScreenRectToRealArea(Rect(ALeft, ATop, ARight, ABottom));
 
   for J := 0 to High(FGPSItems) do
     if FGPSItems[J].Visible and (FGPSItems[J].Count > 0) then
@@ -3429,12 +3424,12 @@ begin
   else
   begin
     WorldSize := mvGeoMath.ZoomFactor(Zoom) * TileSize.CX;
-    SetLength(Result, 1{APoint} + (1{Round} + FCanvasSize.CX div WorldSize));
+    SetLength(Result, 1{APoint} + (1{Round} + ClientWidth div WorldSize));
     Result[0] := APoint;
     I := 1; R := APoint.X + WorldSize; L := APoint.X - WorldSize;
-    while (R < FCanvasSize.CX) or (L >= 0) do
+    while (R < ClientWidth) or (L >= 0) do
     begin
-      if R < FCanvasSize.CX then
+      if R < ClientWidth then
       begin
         Result[I].Y := APoint.Y;
         Result[I].X := R;
