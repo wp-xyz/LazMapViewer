@@ -60,7 +60,7 @@ begin
   RegisterComponentEditor(TMvPluginManager, TMvPluginManagerComponentEditor);
 
   for i := 0 to PluginClassRegistry.Count - 1 do
-    RegisterNoIcon([TMvPluginClass(PluginClassRegistry.GetClass(i))]);
+    RegisterNoIcon([TMvCustomPluginClass(PluginClassRegistry.GetClass(i))]);
 end;
 
 end.

@@ -432,7 +432,7 @@ type
     mooEndDrag, mooIsDirty);
   PMapObserverCustomOperation = ^TMapObserverCustomOperation;
 
-  { TMvCustomPlugInManager }
+  { TMvCustomPluginManager }
 
   TMvCustomPluginManager = class(TComponent)
   private
@@ -3523,7 +3523,7 @@ begin
 //  Engine.GetMapProviders(lstProviders);
 end;
 
-function TMapView.GetPluginManager: TMVCustomPluginManager;
+function TMapView.GetPluginManager: TMvCustomPluginManager;
 begin
   if Assigned(FPluginManager) then
     Result := FPluginManager
