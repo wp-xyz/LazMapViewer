@@ -17,8 +17,8 @@ unit mvspreadmarker_plugin;
 interface
 
 uses
-  Classes, SysUtils, Controls,
-  mvMapViewer, mvTypes, mvGpsObj,mvPluginCore,
+  Classes, SysUtils, Controls, Graphics,
+  mvMapViewer, mvTypes, mvGpsObj,mvPluginCore,mvDrawingEngine,mvGeoMath,
   uInactivityAlarmTimer;
 
 type
@@ -39,7 +39,7 @@ type
   PSpreadMarkerData = ^TSpreadMarkerData;
   TSpreadMarkerData = record
     FLastMouseX, FLastMouseY : Integer;
-    FMouseButtonIsDown : Boolean;
+//    FMouseButtonIsDown : Boolean;
     FSpreadModeActive : Boolean;
     FSpreadMarkerArr : TSpreadMarkerArr;
   end;
@@ -82,6 +82,17 @@ type
   TSpreadMarkerActiveLayer = (smaLayer0,       smaLayer1, smaLayer2, smaLayer3, smaLayer4,
                               smaDefaultLayer, smaLayer6, smaLayer7, smaLayer8, smaLayer9);
   TSpreadMarkerActiveLayers = set of TSpreadMarkerActiveLayer;
+  TSpreadMarkerOption = (smoDrawLine);
+  TSpreadMarkerOptions = set of TSpreadMarkerOption;
+
+const
+  DefaultSpreadMarkerActiveLayers = [smaDefaultLayer];
+  DefaultSpreadMarkerLinePenStyle = psSolid;
+  DefaultSpreadMarkerLinePenColor = clLime;
+  DefaultSpreadMarkerLinePenWidth = 1;
+  DefaultSpreadMarkerOptions = [smoDrawLine];
+
+type
   { TSpreadMarkerPlugin
     The central helper class.
     The instance must be attached to a MapView instance and several Events must be declared
@@ -104,6 +115,10 @@ type
     FSpreadByPixel : Integer;
     FMarkerSpreadDelayMS : Integer;
     FMarkerCollapseDelayMS : Integer;
+    FLinePenStyle : TPenStyle;
+    FLinePenColor : TColor;
+    FLinePenWidth : Integer;
+    FOptions : TSpreadMarkerOptions;
     function GetSpreadMarkerCount(AMapView : TMapView) : Integer;
     function GetSpreadMarkerOfsCenterX(AMapView : TMapView; AIndex : Integer): Integer;
     function GetSpreadMarkerOfsCenterY(AMapView : TMapView; AIndex : Integer): Integer;
@@ -114,15 +129,25 @@ type
     function  GetPluginDataFromTimer(const AMouseInactivity : TInactivityAlarmTimer) : TSpreadMarkerPluginData;
     procedure OnMouseInactive(Sender : TObject);
     procedure SetActiveLayers(Value : TSpreadMarkerActiveLayers);
+    procedure DrawGpsPointLine(const AMapView : TMapView;
+      const AMarkerPos: TRealPoint;
+      const OfsCenterX, OfsCenterY: Integer);
+    procedure SetOptions(Value : TSpreadMarkerOptions);
+    procedure SetLinePenStyle(Value : TPenStyle);
+    procedure SetLinePenColor(Value : TColor);
+    procedure SetLinePenWidth(Value : Integer);
 
   protected
-    procedure MouseDown(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
-      X, Y: Integer; var Handled: Boolean); override;
+//    procedure MouseDown(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
+//      X, Y: Integer; var Handled: Boolean); override;
     procedure MouseMove(AMapView: TMapView; AShift: TShiftState; X,Y: Integer;
       var Handled: Boolean); override;
-    procedure MouseUp(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
-      X, Y: Integer; var Handled: Boolean); override;
+//    procedure MouseUp(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
+//      X, Y: Integer; var Handled: Boolean); override;
     procedure ZoomChange(AMapView: TMapView; var Handled: Boolean); override;
+    procedure AfterPaint(AMapView: TMapView; var Handled: Boolean); override;
+    procedure AfterDrawObjects(AMapView: TMapView; var Handled: Boolean); override;
+
     function CreateMultiMapsPluginData : TMvMultiMapsPluginData;override;
 
   published
@@ -152,7 +177,12 @@ type
     { MarkerCollapseDelayMS the time in millisecond after the last mouse move when the markers
        are returning to their original position }
     property MarkerCollapseDelayMS : Integer read FMarkerCollapseDelayMS write SetMarkerCollapseDelayMS;
-    property ActiveLayers : TSpreadMarkerActiveLayers read FActiveLayers write SetActiveLayers default [smaDefaultLayer];
+    property ActiveLayers : TSpreadMarkerActiveLayers read FActiveLayers write SetActiveLayers default DefaultSpreadMarkerActiveLayers;
+    property Options : TSpreadMarkerOptions read FOptions write SetOptions default DefaultSpreadMarkerOptions;
+    property LinePenStyle : TPenStyle read FLinePenStyle write SetLinePenStyle default DefaultSpreadMarkerLinePenStyle;
+    property LinePenColor : TColor read FLinePenColor write SetLinePenColor default DefaultSpreadMarkerLinePenColor;
+    property LinePenWidth : Integer read FLinePenWidth write SetLinePenWidth default DefaultSpreadMarkerLinePenWidth;
+
   public
     { SpreadMarkerCount the count of spreaded markers. Will be only <> 0 if SpreadModeActive is true }
     property SpreadMarkerCount[AMapView : TMapView] : Integer read GetSpreadMarkerCount;
@@ -278,7 +308,6 @@ procedure TSpreadMarkerPlugin.SetMarkerSpreadDelayMS(Value: Integer);
 var
   i : Integer;
   sd : TSpreadMarkerPluginData;
-  pd : PSpreadMarkerData;
 begin
   FMarkerSpreadDelayMS := Value;
   if not Enabled then
@@ -286,7 +315,6 @@ begin
     for i := 0 to MapDataList.Count-1 do
     begin
       sd := TSpreadMarkerPluginData(MapDataList.Items[i]);
-      pd := PSpreadMarkerData(sd.GetDataPtr);
       sd.FMouseInactivity.InactivityTimeOutMS := FMarkerSpreadDelayMS;
     end;
   end;
@@ -296,7 +324,6 @@ procedure TSpreadMarkerPlugin.SetMarkerCollapseDelayMS(Value: Integer);
 var
   i : Integer;
   sd : TSpreadMarkerPluginData;
-  pd : PSpreadMarkerData;
 begin
   FMarkerCollapseDelayMS := Value;
   if not Enabled then
@@ -304,7 +331,6 @@ begin
     for i := 0 to MapDataList.Count-1 do
     begin
       sd := TSpreadMarkerPluginData(MapDataList.Items[i]);
-      pd := PSpreadMarkerData(sd.GetDataPtr);
       sd.FMouseInactivity.InactivityTimeOutMS := FMarkerCollapseDelayMS;
     end;
   end;
@@ -315,13 +341,11 @@ function TSpreadMarkerPlugin.GetPluginDataFromTimer(
 var
   i : Integer;
   sd : TSpreadMarkerPluginData;
-  pd : PSpreadMarkerData;
 begin
   Result := Nil;
   for i := 0 to MapDataList.Count-1 do
   begin
     sd := TSpreadMarkerPluginData(MapDataList.Items[i]);
-    pd := PSpreadMarkerData(sd.GetDataPtr);
     if sd.FMouseInactivity = AMouseInactivity then
       Exit(sd);
   end;
@@ -357,7 +381,7 @@ begin
   FActiveLayersEx[8] := (smaLayer8 in Value);
   FActiveLayersEx[9] := (smaLayer9 in Value);
 end;
-
+{
 procedure TSpreadMarkerPlugin.MouseDown(AMapView: TMapView;
   Button: TMouseButton; Shift: TShiftState; X, Y: Integer; var Handled: Boolean
   );
@@ -379,15 +403,16 @@ begin
   // Store the last Mouse position for later use
   pd^.FLastMouseX := X;
   pd^.FLastMouseY := Y;
-
+(*
   if pd^.FSpreadModeActive then
-    sd.LeaveSpreadMode
-  else
-    sd.EnterSpreadMode;
-  pd^.FMouseButtonIsDown := True;
-  Handled := True;
+  begin
+    sd.LeaveSpreadMode;
+    pd^.FMouseButtonIsDown := True;
+    Handled := True;
+  end;
+*)
 end;
-
+}
 procedure TSpreadMarkerPlugin.MouseMove(AMapView: TMapView;
   AShift: TShiftState; X, Y: Integer; var Handled: Boolean);
 var
@@ -407,13 +432,15 @@ begin
   // (Re-)Activate the timer
   if sd.FMouseInactivity.Active then
     sd.FMouseInactivity.AliveTrigger // Trigger
-  else if (not pd^.FMouseButtonIsDown) then
+  else
     sd.FMouseInactivity.Active := True; // Activate (will set the timer)
+//  else if (not pd^.FMouseButtonIsDown) then
+//    sd.FMouseInactivity.Active := True; // Activate (will set the timer)
   // Store the last Mouse position for later use
   pd^.FLastMouseX := X;
   pd^.FLastMouseY := Y;
 end;
-
+{
 procedure TSpreadMarkerPlugin.MouseUp(AMapView: TMapView; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer; var Handled: Boolean);
 var
@@ -433,10 +460,10 @@ begin
   // Store the last Mouse position for later use
   pd^.FLastMouseX := X;
   pd^.FLastMouseY := Y;
-  pd^.FMouseButtonIsDown := False;
+//  pd^.FMouseButtonIsDown := False;
   Handled := True;
 end;
-
+}
 procedure TSpreadMarkerPlugin.ZoomChange(AMapView: TMapView;
   var Handled: Boolean);
 var
@@ -461,6 +488,118 @@ begin
     sd.LeaveSpreadMode;
     sd.EnterSpreadMode;
   end;
+end;
+
+procedure TSpreadMarkerPlugin.DrawGpsPointLine(const AMapView : TMapView;
+  const AMarkerPos: TRealPoint;
+  const OfsCenterX, OfsCenterY: Integer);
+var
+  lDrawer : TMvCustomDrawingEngine;
+  pt, ptMarker, ptCenter : TPoint;
+  ptCyc : TPointArray;
+  lWorldSize : Int64;
+  lOldPenColor : TColor;
+  lOldPenWidth : Integer;
+  lOldPenStyle : TPenStyle;
+begin
+  lWorldSize := mvGeoMath.ZoomFactor(AMapView.Zoom) * TileSize.CX;
+  lDrawer := AMapView.DrawingEngine;
+  // Preserve settings
+  lOldPenColor := lDrawer.PenColor;
+  lOldPenWidth := lDrawer.PenWidth;
+  lOldPenStyle := lDrawer.PenStyle;
+  try
+    // Presetting
+    lDrawer.PenColor := FLinePenColor;
+    lDrawer.PenWidth := FLinePenWidth;
+    lDrawer.PenStyle := FLinePenStyle;
+    ptMarker := AMapView.LatLonToScreen(AMarkerPos);
+    ptCyc := AMapView.CyclicPointsOf(ptMarker);
+    for pt in ptCyc do
+    begin
+      ptMarker := pt;
+      ptCenter.X := ptMarker.X - OfsCenterX;
+      ptCenter.Y := ptMarker.Y - OfsCenterY;
+      lDrawer.Line(ptMarker.X, ptMarker.Y, ptCenter.X, ptCenter.Y);
+      if (ptCenter.X < 0) then
+      begin
+        ptCenter.X := ptCenter.X + lWorldSize;
+        ptMarker.X := ptMarker.X + lWorldSize;
+        lDrawer.Line(ptMarker.X, ptMarker.Y, ptCenter.X, ptCenter.Y);
+      end
+      else if (ptCenter.X > AMapView.Width) then
+      begin
+        ptCenter.X := ptCenter.X - lWorldSize;
+        ptMarker.X := ptMarker.X - lWorldSize;
+        lDrawer.Line(ptMarker.X, ptMarker.Y, ptCenter.X, ptCenter.Y);
+      end;
+    end;
+  finally
+    // Return the original setting
+    lDrawer.PenColor := lOldPenColor;
+    lDrawer.PenWidth := lOldPenWidth;
+    lDrawer.PenStyle := lOldPenStyle;
+  end;
+end;
+
+procedure TSpreadMarkerPlugin.SetOptions(Value: TSpreadMarkerOptions);
+begin
+  if FOptions = Value then Exit;
+  FOptions := Value;
+  // Invalidate??
+end;
+
+procedure TSpreadMarkerPlugin.SetLinePenStyle(Value: TPenStyle);
+begin
+  if FLinePenStyle = Value then Exit;
+  FLinePenStyle := Value;
+  // Invalidate??
+end;
+
+procedure TSpreadMarkerPlugin.SetLinePenColor(Value: TColor);
+begin
+  if FLinePenColor = Value then Exit;
+  FLinePenColor := Value;
+  // Invalidate??
+end;
+
+procedure TSpreadMarkerPlugin.SetLinePenWidth(Value: Integer);
+begin
+  if FLinePenWidth = Value then Exit;
+  FLinePenWidth := Value;
+  // Invalidate??
+end;
+
+procedure TSpreadMarkerPlugin.AfterPaint(AMapView: TMapView;
+  var Handled: Boolean);
+begin
+  inherited;
+end;
+
+procedure TSpreadMarkerPlugin.AfterDrawObjects(AMapView: TMapView;
+  var Handled: Boolean);
+var
+  i : Integer;
+  sd : TSpreadMarkerPluginData;
+  pd : PSpreadMarkerData;
+  lArea: TRealArea;
+begin
+  sd := TSpreadMarkerPluginData(MapViewDataItem[AMapView]);
+  if not Assigned(sd) then Exit;
+  pd := PSpreadMarkerData(sd.GetDataPtr);
+  if smoDrawLine in FOptions then
+  begin
+    for i := 0 to High(pd^.FSpreadMarkerArr) do
+    begin
+      DrawGpsPointLine(AMapView,
+                       pd^.FSpreadMarkerArr[i].OrgRealPt,
+                       pd^.FSpreadMarkerArr[i].OfsCenterX,
+                       pd^.FSpreadMarkerArr[i].OfsCenterY);
+    end;
+  end;
+  lArea.Init(-180.0,90.0,180.0,-90.0);
+  for i := 0 to High(pd^.FSpreadMarkerArr) do
+    pd^.FSpreadMarkerArr[i].GPSPoint.Draw(AMapView,lArea);
 end;
 
 
@@ -527,7 +666,7 @@ begin
       pt.X := Round(lXd * circlendx * FSpreadByPixel);
       pt.Y := Round(lYd * circlendx * FSpreadByPixel);
       pd^.FSpreadMarkerArr[ndx].OfsCenterX := pt.X;
-      pd^.FSpreadMarkerArr[ndx].OfsCenterY := pt.Y;
+      pd^.FSpreadMarkerArr[ndx].OfsCenterY := -pt.Y;
       pt.X := pt.X + pd^.FLastMouseX;
       pt.Y := pt.Y + pd^.FLastMouseY;
       rPoint := AMapView.ScreenToLatLon(pt);
@@ -598,11 +737,15 @@ end;
 constructor TSpreadMarkerPlugin.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
-  ActiveLayers := [smaDefaultLayer];
+  ActiveLayers := DefaultSpreadMarkerActiveLayers;
   FMarkerCatchSize := DefaultMarkerCatchSize;
   FSpreadByPixel := DefaultSpreadByPixel;
   FMarkerSpreadDelayMS := DefaultMarkerSpreadDelayMS;
   FMarkerCollapseDelayMS := DefaultMarkerCollapseDelayMS;
+  FOptions := DefaultSpreadMarkerOptions;
+  FLinePenStyle := DefaultSpreadMarkerLinePenStyle;
+  FLinePenColor := DefaultSpreadMarkerLinePenColor;
+  FLinePenWidth := DefaultSpreadMarkerLinePenWidth;
 end;
 
 destructor TSpreadMarkerPlugin.Destroy;
