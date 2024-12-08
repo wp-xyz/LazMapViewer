@@ -20,6 +20,7 @@ type
     MvPluginManager1DraggableMarkerPlugin2: TDraggableMarkerPlugin;
     MvPluginManager1LegalNoticePlugin1: TLegalNoticePlugin;
     MvPluginManager1LegalNoticePlugin2: TLegalNoticePlugin;
+    MvPluginManager1SpreadMarkerPlugin1: TSpreadMarkerPlugin;
     procedure FormCreate(Sender: TObject);
   private
 
@@ -53,7 +54,6 @@ procedure TForm1.FormCreate(Sender: TObject);
     end;
   end;
 var
-  smp : TSpreadMarkerPlugin;
   i : Integer;
 begin
   AddTraditionalMarker(0.0, 51.4825766,'Greenwich');
@@ -69,9 +69,6 @@ begin
   begin
     AddTraditionalMarker(0.0,0.0,'Test '+IntToStr(i));
   end;
-
-  smp := TSpreadMarkerPlugin.Create(Self);
-  MvPluginManager1.PluginList.Add(smp);
 end;
 
 end.
