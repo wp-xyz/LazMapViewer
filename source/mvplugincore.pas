@@ -393,7 +393,6 @@ begin
     Result := @FData[0];
 end;
 
-
 { TMvMultiMapsPlugin }
 
 function TMvMultiMapsPlugin.GetMapViewDataIndex(Value: TMapView): Integer;
@@ -471,6 +470,7 @@ begin
   begin
     di := CreateMultiMapsPluginData;
     di.MapView := AMapView;
+    FMapDataList.Add(di);
   end;
   di.SetData(AData,ADataSize);
 end;
