@@ -33,3 +33,4 @@ lib/
 # Application bundle for Mac OS
 *.app/
 
+/examples/plugin_demos/userdefined_demo/project1.ico

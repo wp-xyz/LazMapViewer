@@ -6,8 +6,8 @@ object Form1: TForm1
   Caption = 'Form1'
   ClientHeight = 307
   ClientWidth = 451
+  LCLVersion = '4.99.0.0'
   OnCreate = FormCreate
-  LCLVersion = '3.4.0.0'
   object MapView1: TMapView
     Left = 0
     Height = 257
@@ -35,15 +35,18 @@ object Form1: TForm1
       Left = 16
       Height = 15
       Top = 16
-      Width = 98
-      Caption = 'NullPlugi Message'
+      Width = 146
+      Caption = 'UserdefinedPlugin Message'
     end
-    object lblNullPluginMessage: TLabel
-      Left = 128
+    object lblUserdefinedPluginMessage: TLabel
+      AnchorSideLeft.Control = Label1
+      AnchorSideLeft.Side = asrBottom
+      Left = 170
       Height = 15
       Top = 16
-      Width = 115
-      Caption = 'lblNullPluginMessage'
+      Width = 38
+      BorderSpacing.Left = 8
+      Caption = ' (none)'
     end
   end
   object MvPluginManager1: TMvPluginManager
