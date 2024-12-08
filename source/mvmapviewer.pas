@@ -232,18 +232,22 @@ type
 
   { TMapScale }
 
+  TScaleAlignSet = set of alTop..alRight;
+
   TMapScale = class(TPersistent)
   private
+    FSpaceY: Integer;
     FView: TMapView;
-    FAlignSet: TAlignSet;
+    FAlignSet: TScaleAlignSet;
     FImperial: Boolean;
-    FSpace: Integer;
+    FSpaceX: Integer;
     FVisible: Boolean;
     FWidthMax: Integer;
     FZoomMin: Integer;
-    procedure SetAlignSet(AValue: TAlignSet);
+    procedure SetAlignSet(AValue: TScaleAlignSet);
     procedure SetImperial(AValue: Boolean);
-    procedure SetSpace(AValue: Integer);
+    procedure SetSpaceX(AValue: Integer);
+    procedure SetSpaceY(AValue: Integer);
     procedure SetVisible(AValue: Boolean);
     procedure SetWidthMax(AValue: Integer);
     procedure SetZoomMin(AValue: Integer);
@@ -253,9 +257,10 @@ type
     property Visible: Boolean read FVisible write SetVisible default False;
     property ZoomMin: Integer read FZoomMin write SetZoomMin default 8;
     property WidthMax: Integer read FWidthMax write SetWidthMax default 250;
-    property Space: Integer read FSpace write SetSpace default 10;
+    property SpaceX: Integer read FSpaceX write SetSpaceX default 10;
+    property SpaceY: Integer read FSpaceY write SetSpaceY default 10;
     property Imperial: Boolean read FImperial write SetImperial default False;
-    property AlignSet: TAlignSet read FAlignSet write SetAlignSet default [alRight, alBottom];
+    property AlignSet: TScaleAlignSet read FAlignSet write SetAlignSet default [alRight, alBottom];
   end;
 
   { TMapPoint }
@@ -981,7 +986,7 @@ type
 
 { TMapScale }
 
-procedure TMapScale.SetAlignSet(AValue: TAlignSet);
+procedure TMapScale.SetAlignSet(AValue: TScaleAlignSet);
 begin
   if FAlignSet = AValue then Exit;
   FAlignSet := AValue;
@@ -995,10 +1000,17 @@ begin
   FView.Invalidate;
 end;
 
-procedure TMapScale.SetSpace(AValue: Integer);
+procedure TMapScale.SetSpaceX(AValue: Integer);
 begin
-  if FSpace = AValue then Exit;
-  FSpace := AValue;
+  if FSpaceX = AValue then Exit;
+  FSpaceX := AValue;
+  FView.Invalidate;
+end;
+
+procedure TMapScale.SetSpaceY(AValue: Integer);
+begin
+  if FSpaceY = AValue then Exit;
+  FSpaceY := AValue;
   FView.Invalidate;
 end;
 
@@ -1028,7 +1040,8 @@ begin
   FView := AView;
   FAlignSet := [alRight, alBottom];
   FImperial := False;
-  FSpace := 10;
+  FSpaceX := 10;
+  FSpaceY := 10;
   FVisible := False;
   FWidthMax := 250;
   FZoomMin := 8;
@@ -2782,15 +2795,16 @@ var
   OldPenStyle: TPenStyle;
   Capt: String;
   Extent: TSize;
-  W, H, Spc: Integer;
+  W, H, SpcX, SpcY: Integer;
   MaxW: Integer;
   Imperial: Boolean;
   AlignSet: TAlignSet;
 begin
-  Spc := Scale.Space;
+  SpcX := Scale.SpaceX;
+  SpcY := Scale.SpaceY;
   AlignSet := Scale.AlignSet;
-  MaxW := Scale.WidthMax;
   Imperial := Scale.Imperial;
+  MaxW := Min(Scale.WidthMax, ClientWidth);
 
   with Engine.ScreenRectToRealArea(Rect(0, Height div 2, MaxW, Height div 2)) do
     Dist := mvGeoMath.CalcGeoDistance(TopLeft.Lat, TopLeft.Lon,
@@ -2835,6 +2849,11 @@ begin
   W := Round(MaxW * (V / Dist));
   H := Extent.Height + 3 + 3;
 
+  if W + SpcX >= ClientWidth then
+    SpcX := Max(1, ClientWidth - W - 1);
+  if H + SpcY > ClientHeight then
+    SpcY := Max(1, ClientHeight - H - 1);
+
   R := Rect(0, 0, W, H);
 
   // Fix align set
@@ -2846,20 +2865,20 @@ begin
   // Horizontal position
   if alLeft in AlignSet then
     if alRight in AlignSet then
-      R.Offset((Width - W) div 2, 0) // Both alLeft+alRight=Center
+      R.Offset((ClientWidth - W) div 2, 0) // Both alLeft+alRight=Center
     else
-      R.Offset(Spc, 0) // to the left
+      R.Offset(SpcX, 0) // to the left
   else if alRight in AlignSet then
-      R.Offset((Width - W) - Spc, 0); // to the right
+      R.Offset((ClientWidth - W) - SpcX, 0); // to the right
 
   // Vertical position
   if alTop in AlignSet then
     if alBottom in AlignSet then
-      R.Offset(0, (Height - H) div 2) // Both alTop+alBottom=Middle
+      R.Offset(0, (ClientHeight - H) div 2) // Both alTop+alBottom=Middle
     else
-      R.Offset(0, Spc) // to the top
+      R.Offset(0, SpcY) // to the top
   else if alBottom in AlignSet then
-    R.Offset(0, (Height - H) - Spc); // to the bottom
+    R.Offset(0, (ClientHeight - H) - SpcY); // to the bottom
 
   OldOpacity := DrawingEngine.Opacity;
   OldPenStyle := DrawingEngine.PenStyle;
