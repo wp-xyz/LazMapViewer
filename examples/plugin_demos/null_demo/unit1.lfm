@@ -1,0 +1,53 @@
+object Form1: TForm1
+  Left = 324
+  Height = 307
+  Top = 119
+  Width = 451
+  Caption = 'Form1'
+  ClientHeight = 307
+  ClientWidth = 451
+  OnCreate = FormCreate
+  LCLVersion = '3.4.0.0'
+  object MapView1: TMapView
+    Left = 0
+    Height = 257
+    Top = 0
+    Width = 451
+    Active = True
+    Align = alClient
+    DownloadEngine = MapView1.BuiltInDLE
+    DrawingEngine = MapView1.BuiltInDE
+    Layers = <>
+    Font.Color = clBlack
+    MapProvider = 'OpenStreetMap Mapnik'
+    PluginManager = MvPluginManager1
+  end
+  object Panel1: TPanel
+    Left = 0
+    Height = 50
+    Top = 257
+    Width = 451
+    Align = alBottom
+    ClientHeight = 50
+    ClientWidth = 451
+    TabOrder = 1
+    object Label1: TLabel
+      Left = 16
+      Height = 15
+      Top = 16
+      Width = 98
+      Caption = 'NullPlugi Message'
+    end
+    object lblNullPluginMessage: TLabel
+      Left = 128
+      Height = 15
+      Top = 16
+      Width = 115
+      Caption = 'lblNullPluginMessage'
+    end
+  end
+  object MvPluginManager1: TMvPluginManager
+    Left = 262
+    Top = 31
+  end
+end
