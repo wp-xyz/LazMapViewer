@@ -14,7 +14,7 @@ uses
   mvDLEWin, mvMapViewerPropEdits, mvLayersPropEditForm, mvGeoMath, 
   mvMapViewerPathEditForm, mvMapViewerPathEditDsgForm, mvDLECache, 
   mvPluginEditors, mvClassRegistration, mvPluginCore, mvPlugins, 
-  LazarusPackageIntf;
+  mvspreadmarker_plugin, uInactivityAlarmTimer, LazarusPackageIntf;
 
 implementation
 

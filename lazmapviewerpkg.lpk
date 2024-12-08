@@ -7,7 +7,7 @@
     <CompilerOptions>
       <Version Value="11"/>
       <SearchPaths>
-        <OtherUnitFiles Value="source"/>
+        <OtherUnitFiles Value="source;source/addons/plugins;source/addons/plugins/spreadmarkers"/>
         <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
       </SearchPaths>
       <Other>
@@ -22,7 +22,7 @@
 FPC 3.2.0 or newer required."/>
     <License Value="Modified LGPL with linking exception, like FreePascal RTL/FCL and Lazarus LCL"/>
     <Version Minor="2" Release="7"/>
-    <Files Count="28">
+    <Files Count="30">
       <Item1>
         <Filename Value="source/mvcache.pas"/>
         <UnitName Value="mvCache"/>
@@ -136,6 +136,14 @@ FPC 3.2.0 or newer required."/>
         <Filename Value="source/addons/plugins/mvplugins.pas"/>
         <UnitName Value="mvPlugins"/>
       </Item28>
+      <Item29>
+        <Filename Value="source/addons/plugins/spreadmarkers/mvspreadmarker_plugin.pas"/>
+        <UnitName Value="mvspreadmarker_plugin"/>
+      </Item29>
+      <Item30>
+        <Filename Value="source/addons/plugins/spreadmarkers/uinactivityalarmtimer.pas"/>
+        <UnitName Value="uInactivityAlarmTimer"/>
+      </Item30>
     </Files>
     <CompatibilityMode Value="True"/>
     <RequiredPkgs Count="2">
