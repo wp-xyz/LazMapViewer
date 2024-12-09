@@ -319,6 +319,7 @@ begin
   FPosition := lnpBottomRight;
   FFont := TFont.Create;
   FFont.OnChange := @Changed;
+  FSpacing := DEFAULT_LEGALNOTICE_SPACING;
 end;
 
 destructor TLegalNoticePlugin.Destroy;
