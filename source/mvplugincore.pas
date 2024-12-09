@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, StrUtils, Math, LazLoggerBase,
   Controls, Dialogs, Contnrs,
-  mvMapViewer, mvClassRegistration;
+  mvMapViewer, mvGpsObj, mvClassRegistration;
 
 type
   TMvCustomPlugin = class;
@@ -26,6 +26,8 @@ type
   public
     procedure ChangeNamePrefix(const AOld, ANew: String);
   end;
+
+  { TMvCustomPlugin }
 
   TMvCustomPlugin = class(TMvIndexedComponent)
   private
@@ -55,6 +57,11 @@ type
       X, Y: Integer; var Handled: Boolean); virtual;
     procedure ZoomChange(AMapView: TMapView; var Handled: Boolean); virtual;
   //  procedure ZoomChanging(AMapView: TMapView; NewZoom: Integer; var Allow, Handled: Boolean); virtual;
+    { GPSItemsModified is called if one of the GPSList of the MapView changed their content.
+      ActualObjs contains the affected objs, but may nil }
+    procedure GPSItemsModified(AMapView: TMapView; ModifiedList: TGPSObjectList;
+                               ActualObjs: TGPSObjList; Adding: Boolean;
+                               var Handled : Boolean);virtual;
     procedure Update; virtual;
   protected
     property MapView: TMapView read FMapView write SetMapView;
@@ -165,6 +172,10 @@ type
                       out Handled : Boolean); override;
     procedure ZoomChange(AMapView: TMapView; AMapEvent: TNotifyEvent); override;
 //    procedure ZoomChanging(AMapView: TMapView; NewZoom: Integer; var Allow: Boolean; AMapEvent); override;
+    procedure GPSItemsModified(AMapView: TMapView; ModifiedList: TGPSObjectList;
+                               ActualObjs: TGPSObjList; Adding: Boolean;
+                               out Handled : Boolean);override;
+
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -271,7 +282,7 @@ begin
   Result := true;
 end;
 
-procedure TMvcustomPlugin.MouseDown(AMapView: TMapView; Button: TMouseButton;
+procedure TMvCustomPlugin.MouseDown(AMapView: TMapView; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer; var Handled: Boolean);
 begin
 end;
@@ -347,6 +358,12 @@ begin
 end;
 
 procedure TMvCustomPlugin.ZoomChange(AMapView: TMapView; var Handled: Boolean);
+begin
+end;
+
+procedure TMvCustomPlugin.GPSItemsModified(AMapView: TMapView;
+  ModifiedList: TGPSObjectList; ActualObjs: TGPSObjList; Adding: Boolean;
+  var Handled: Boolean);
 begin
 end;
 
@@ -767,6 +784,24 @@ begin
       plugin.ZoomChange(AMapView, handled);
   end;
   inherited ZoomChange(AMapView, AMapEvent);
+end;
+
+procedure TMvPluginManager.GPSItemsModified(AMapView: TMapView;
+  ModifiedList: TGPSObjectList; ActualObjs: TGPSObjList; Adding: Boolean;
+  out Handled: Boolean);
+var
+  i: Integer;
+  lHandled: Boolean;
+  plugin: TMvCustomPlugin;
+begin
+  lHandled := false;
+  for i := 0 to FPluginList.Count-1 do
+  begin
+    plugin := Item[i];
+    if HandlePlugin(plugin, AMapView) then
+      plugin.GPSItemsModified(AMapView,ModifiedList,ActualObjs,Adding, Handled);
+  end;
+  inherited GPSItemsModified(AMapView,ModifiedList,ActualObjs,Adding, lHandled);
 end;
 
                      (*

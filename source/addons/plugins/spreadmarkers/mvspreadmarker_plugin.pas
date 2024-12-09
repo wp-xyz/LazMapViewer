@@ -119,6 +119,7 @@ type
     FLinePenColor : TColor;
     FLinePenWidth : Integer;
     FOptions : TSpreadMarkerOptions;
+    function GetSpreadModeActive(AMapView : TMapView) : Boolean;
     function GetSpreadMarkerCount(AMapView : TMapView) : Integer;
     function GetSpreadMarkerOfsCenterX(AMapView : TMapView; AIndex : Integer): Integer;
     function GetSpreadMarkerOfsCenterY(AMapView : TMapView; AIndex : Integer): Integer;
@@ -147,6 +148,9 @@ type
     procedure ZoomChange(AMapView: TMapView; var Handled: Boolean); override;
     procedure AfterPaint(AMapView: TMapView; var Handled: Boolean); override;
     procedure AfterDrawObjects(AMapView: TMapView; var Handled: Boolean); override;
+    procedure GPSItemsModified(AMapView: TMapView; ChangedList: TGPSObjectList;
+                               ActualObjs: TGPSObjList; Adding: Boolean;
+                               var Handled : Boolean);override;
 
     function CreateMultiMapsPluginData : TMvMultiMapsPluginData;override;
 
@@ -184,6 +188,8 @@ type
     property LinePenWidth : Integer read FLinePenWidth write SetLinePenWidth default DefaultSpreadMarkerLinePenWidth;
 
   public
+    property SpreadModeActive[AMapView : TMapView] : Boolean read GetSpreadModeActive;
+
     { SpreadMarkerCount the count of spreaded markers. Will be only <> 0 if SpreadModeActive is true }
     property SpreadMarkerCount[AMapView : TMapView] : Integer read GetSpreadMarkerCount;
     { SpreadMarkers the spreaded markers. Index must be between 0 and SpreadMarkerCount-1 }
@@ -235,6 +241,20 @@ const
 implementation
 
 { TSpreadMarkerPlugin }
+
+function TSpreadMarkerPlugin.GetSpreadModeActive(AMapView: TMapView): Boolean;
+var
+  sd : TSpreadMarkerPluginData;
+  pd : PSpreadMarkerData;
+begin
+  Result := False;
+  sd := TSpreadMarkerPluginData(MapViewDataItem[AMapView]);
+  if Assigned(sd) then
+  begin
+    pd := sd.GetDataPtr;
+    Result := pd^.FSpreadModeActive;
+  end;
+end;
 
 function TSpreadMarkerPlugin.GetSpreadMarkerCount(AMapView: TMapView): Integer;
 var
@@ -600,6 +620,73 @@ begin
   lArea.Init(-180.0,90.0,180.0,-90.0);
   for i := 0 to High(pd^.FSpreadMarkerArr) do
     pd^.FSpreadMarkerArr[i].GPSPoint.Draw(AMapView,lArea);
+end;
+
+procedure TSpreadMarkerPlugin.GPSItemsModified(AMapView: TMapView;
+  ChangedList: TGPSObjectList; ActualObjs: TGPSObjList; Adding: Boolean;
+  var Handled: Boolean);
+var
+  i : Integer;
+  sd : TSpreadMarkerPluginData;
+  pd : PSpreadMarkerData;
+  ndx : Integer;
+  cnt : Integer;
+  chg : Boolean;
+begin
+  sd := TSpreadMarkerPluginData(MapViewDataItem[AMapView]);
+  if not Assigned(sd) then Exit;
+  pd := PSpreadMarkerData(sd.GetDataPtr);
+  cnt := 0;
+  if ChangedList.Count <= 0 then
+  begin
+    sd.Reset(False);  // The list is empty, reset the markers, if any, without resetting their positions
+    Exit;
+  end;
+  if not Adding then
+  begin  // If items removed, we need to remove them from the list
+    for i := 0 to High(pd^.FSpreadMarkerArr) do
+    begin
+      ndx := ActualObjs.IndexOf(pd^.FSpreadMarkerArr[i].GPSPoint);
+      if ndx < 0 then Continue;
+      pd^.FSpreadMarkerArr[i].GPSPoint := Nil;
+      Inc(cnt);
+    end;
+  end
+  else if not Assigned(ActualObjs) then
+  begin // Maybe items where removed (unkonwn if BeginUpdate/EndUpdate) was used
+    for i := 0 to High(pd^.FSpreadMarkerArr) do
+    begin
+      ndx := ChangedList.IndexOf(pd^.FSpreadMarkerArr[i].GPSPoint);
+      if ndx < 0 then
+      begin
+        pd^.FSpreadMarkerArr[i].GPSPoint := Nil;
+        Inc(cnt);
+      end;
+    end;
+  end;
+  if cnt > 0 then
+  begin // At least one item has been removed, compact the array
+    if cnt = Length(pd^.FSpreadMarkerArr) then
+    begin
+      sd.Reset(False);
+      Exit;
+    end;
+    repeat
+      chg := False;
+      for i := 1 to High(pd^.FSpreadMarkerArr) do
+      begin
+        if (not Assigned(pd^.FSpreadMarkerArr[i-1].GPSPoint)) and
+           Assigned(pd^.FSpreadMarkerArr[i].GPSPoint) then
+        begin
+          pd^.FSpreadMarkerArr[i-1] := pd^.FSpreadMarkerArr[i];
+          pd^.FSpreadMarkerArr[i].GPSPoint := Nil;
+          chg := True;
+        end;
+      end;
+    until not chg;
+    SetLength(pd^.FSpreadMarkerArr,Length(pd^.FSpreadMarkerArr)-cnt);
+  end;
+
 end;
 
 

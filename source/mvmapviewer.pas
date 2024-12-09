@@ -497,6 +497,9 @@ type
                       AShift: TShiftState; X, Y: Integer; AMapEvent: TMouseEvent;
                       out Handled : Boolean); virtual;
     procedure ZoomChange(AMapView: TMapView; AMapEvent: TNotifyEvent); virtual;
+    procedure GPSItemsModified(AMapView: TMapView; ModifiedList: TGPSObjectList;
+                               ActualObjs: TGPSObjList; Adding: Boolean;
+                               out Handled : Boolean);virtual;
   public
   end;
 
@@ -3012,7 +3015,9 @@ procedure TMapView.OnGPSItemsModified(Sender: TObject; objs: TGPSObjList;
   Adding: boolean);
 var
   {%H-}Area, objArea, visArea: TRealArea;
+  lHandled : Boolean;
 begin
+  PluginManager.GPSItemsModified(Self,TGPSObjectList(Sender),objs,Adding,lHandled);
   if Adding and Assigned(Objs) then
   begin
     objArea := GetAreaOf(Objs);
@@ -4681,6 +4686,13 @@ end;
 procedure TMvCustomPluginManager.ZoomChange(AMapView: TMapView; AMapEvent: TNotifyEvent);
 begin
   DefaultNotifyEventHandler(AMapView, AMapEvent);
+end;
+
+procedure TMvCustomPluginManager.GPSItemsModified(AMapView: TMapView;
+  ModifiedList: TGPSObjectList; ActualObjs: TGPSObjList; Adding: Boolean; out
+  Handled: Boolean);
+begin
+  //
 end;
 
 end.
