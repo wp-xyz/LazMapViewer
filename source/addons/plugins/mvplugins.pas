@@ -229,6 +229,7 @@ begin
   AMapView.DrawingEngine.PenColor := FPen.Color;
   AMapView.DrawingEngine.PenStyle := FPen.Style;
   AMapView.DrawingEngine.PenWidth := FPen.Width;
+  AMapView.DrawingEngine.Opacity := 1.0;
   AMapView.DrawingEngine.Line(C.X, C.Y - FSize, C.X, C.Y + FSize);
   AMapView.DrawingEngine.Line(C.X - FSize, C.Y, C.X + FSize, C.Y);
 end;
