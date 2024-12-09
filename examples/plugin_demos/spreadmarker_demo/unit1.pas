@@ -21,7 +21,11 @@ type
     MvPluginManager1LegalNoticePlugin1: TLegalNoticePlugin;
     MvPluginManager1LegalNoticePlugin2: TLegalNoticePlugin;
     MvPluginManager1SpreadMarkerPlugin1: TSpreadMarkerPlugin;
+    MvPluginManager1UserDefinedPlugin1: TUserDefinedPlugin;
     procedure FormCreate(Sender: TObject);
+    procedure MvPluginManager1UserDefinedPlugin1MouseDown(Sender: TObject;
+      AMapView: TMapView; Button: TMouseButton; Shift: TShiftState; X,
+      Y: Integer; var Handled: Boolean);
   private
 
   public
@@ -70,6 +74,53 @@ begin
     AddTraditionalMarker(0.0,0.0,'Test '+IntToStr(i));
   end;
 end;
+{ MvPluginManager1UserDefinedPlugin1MouseDown is used to delete some markers where
+  the SpreadMarker-Plugin is in the SpreadMode.
+  The deletion of the markers will be messaged to the SpreadMarker-plugin, so
+  that the stored information of the spreaded markers are updated and no
+  access violations on invalid memory occours.
+  You can debug this in the deletion or EndUpdate Method. }
+procedure TForm1.MvPluginManager1UserDefinedPlugin1MouseDown(Sender: TObject;
+  AMapView: TMapView; Button: TMouseButton; Shift: TShiftState; X, Y: Integer;
+  var Handled: Boolean);
+var
+  delcnt : Integer;
+  lstcnt : Integer;
+  ndx : Integer;
+  i : Integer;
+begin
+  if Button <> mbLeft then Exit;
+  if (not Handled) and MvPluginManager1SpreadMarkerPlugin1.SpreadModeActive[AMapView] then
+  begin
+    Handled := True; // Reserve this event for us, prohibit the dragging of the map
+    lstcnt := MapView1.GPSItems.Count;
+    delcnt := Random(5)+1;
+    if delcnt > lstcnt then
+      delcnt := lstcnt;
+    if delcnt <= 0 then Exit;
+    if delcnt = 1 then
+    begin
+      ndx := Random(lstcnt);
+      MapView1.GPSItems.Delete(MapView1.GPSItems.Items[ndx]);
+    end
+    else
+    begin
+      MapView1.GPSItems.BeginUpdate;
+      try
+        for i := 0 to delcnt-1 do
+        begin
+          if lstcnt <= 0 then Break;
+          ndx := Random(lstcnt);
+          MapView1.GPSItems.Delete(MapView1.GPSItems.Items[ndx]);
+          Dec(lstcnt);
+        end;
+      finally
+        MapView1.GPSItems.EndUpdate;
+      end;
+    end;
+  end;
+end;
+
 
 end.
 

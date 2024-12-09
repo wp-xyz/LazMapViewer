@@ -28,6 +28,9 @@ object Form1: TForm1
     Top = 104
     object MvPluginManager1DraggableMarkerPlugin1: TDraggableMarkerPlugin
     end
+    object MvPluginManager1UserDefinedPlugin1: TUserDefinedPlugin
+      OnMouseDown = MvPluginManager1UserDefinedPlugin1MouseDown
+    end
     object MvPluginManager1SpreadMarkerPlugin1: TSpreadMarkerPlugin
       SpreadByPixel = 16
       MarkerCatchSize = 6
