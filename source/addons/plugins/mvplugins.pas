@@ -52,10 +52,12 @@ type
   TLegalNoticePlugin = class(TMvMultiMapsPlugin)
   private
     const
+      DEFAULT_LEGALNOTICE_OPACITY = 0.55;
       DEFAULT_LEGALNOTICE_SPACING = 4;
   private
     FLegalNotice: String;
     FLegalNoticeURL: String;
+    FOpacity: Single;
     FPosition: TLegalNoticePosition;
     FFont: TFont;
     FSpacing: Integer;
@@ -65,6 +67,7 @@ type
     procedure SetFont(AValue: TFont);
     procedure SetLegalNotice(AValue: String);
     procedure SetLegalNoticeURL(AValue: String);
+    procedure SetOpacity(AValue: Single);
     procedure SetPosition(AValue: TLegalNoticePosition);
     procedure SetSpacing(AValue: Integer);
   protected
@@ -86,6 +89,7 @@ type
     property Font: TFont read FFont write SetFont;
     property LegalNotice: String read FLegalNotice write SetLegalNotice;
     property LegalNoticeURL: String read FLegalNoticeURL write SetLegalNoticeURL;
+    property Opacity: Single read FOpacity write SetOpacity default DEFAULT_LEGALNOTICE_OPACITY;
     property Position: TLegalNoticePosition read FPosition write SetPosition default lnpBottomRight;
     property Spacing: Integer read FSpacing write SetSpacing default DEFAULT_LEGALNOTICE_SPACING;
     // inherited properties
@@ -319,6 +323,7 @@ begin
   FPosition := lnpBottomRight;
   FFont := TFont.Create;
   FFont.OnChange := @Changed;
+  FOpacity := DEFAULT_LEGALNOTICE_OPACITY;
   FSpacing := DEFAULT_LEGALNOTICE_SPACING;
 end;
 
@@ -336,6 +341,7 @@ begin
     FFont.Assign(TLegalNoticePlugin(Source).Font);
     FLegalNotice := TLegalNoticePlugin(Source).LegalNotice;
     FLegalNoticeURL := TLegalNoticePlugin(Source).LegalNoticeURL;
+    FOpacity := TLegalNoticePlugin(Source).Opacity;
     FPosition := TLegalNoticePlugin(Source).Position;
     FSpacing := TLegalNoticePlugin(Source).Spacing;
   end;
@@ -344,26 +350,32 @@ end;
 
 procedure TLegalNoticePlugin.AfterDrawObjects(AMapView: TMapView; var Handled: Boolean);
 var
-  x,y : Integer;
-  lSavedFont: TMvFont;
+  x, y: Integer;
   lClickableRect: TRect;
+  lSavedFont: TMvFont;
+  lSavedOpacity: Single;
 begin
   if not Assigned(AMapView) then Exit;
   Handled := True;
-  if FBackgroundColor = clNone then
-    AMapView.DrawingEngine.BrushStyle := bsClear
-  else begin
-    AMapView.DrawingEngine.BrushStyle := bsSolid;
-    AMapView.DrawingEngine.BrushColor := FBackgroundColor;
-  end;
   CalcClickableRect(AMapView,lClickableRect);
-  x := lClickableRect.Left - FSpacing;
-  y := lClickableRect.Top - FSpacing;
+  x := lClickableRect.Left;
+  y := lClickableRect.Top;
   lSavedFont := AMapView.DrawingEngine.GetFont;
+  lSavedOpacity := AMapView.DrawingEngine.Opacity;
   try
+    if FBackgroundColor <> clNone then
+    begin
+      AMapView.DrawingEngine.Opacity := FOpacity;
+      AMapView.DrawingEngine.BrushStyle := bsSolid;
+      AMapView.DrawingEngine.BrushColor := ColorToRGB(FBackgroundColor);
+      with lClickableRect do
+        AMapView.DrawingEngine.FillRect(Left, Top, Right, Bottom);
+    end;
+    AMapView.DrawingEngine.BrushStyle := bsClear;
     AMapView.DrawingEngine.SetFont(FFont.Name, FFont.Size, FFont.Style, FFont.Color);
     AMapView.DrawingEngine.TextOut(x, y, FLegalNotice);
   finally
+    AMapView.DrawingEngine.Opacity := lSavedOpacity;
     AMapView.DrawingEngine.SetFont(lSavedFont);
   end;
 end;
@@ -391,7 +403,7 @@ begin
       lnpBottomLeft, lnpBottomRight:
         y := AMapView.Height - sz.CY - FSpacing;
     end;
-    AClickableRect := Rect(x + FSpacing, y + FSpacing, x + sz.CX, y + sz.CY);
+    AClickableRect := Rect(x, y, x + sz.CX, y + sz.CY);
     SetMapViewData(AMapView,AClickableRect,SizeOf(AClickableRect));
   finally
     AMapView.DrawingEngine.SetFont(lSavedFont);
@@ -450,6 +462,13 @@ begin
     if not Handled then
       AMapView.Cursor := crDefault;
   end;
+  Update;
+end;
+
+procedure TLegalNoticePlugin.SetOpacity(AValue: Single);
+begin
+  if FOpacity = AValue then Exit;
+  FOpacity := AValue;
   Update;
 end;
 

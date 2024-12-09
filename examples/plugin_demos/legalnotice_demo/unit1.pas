@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Types,
-  LCLIntf, Forms, Controls, Graphics, ExtCtrls, StdCtrls, Dialogs,
+  LCLIntf, Forms, Controls, Graphics, ExtCtrls, StdCtrls, Dialogs, Spin,
   TAGraph, TATools,
   mvMapViewer, mvPluginCore, mvPlugins;
 
@@ -18,7 +18,9 @@ type
     CheckBox2: TCheckBox;
     ComboBox1: TComboBox;
     Edit1: TEdit;
+    SpinEdit1: TSpinEdit;
     Label1: TLabel;
+    Label2: TLabel;
     Panel1: TPanel;
     Panel2: TPanel;
     Panel3: TPanel;
@@ -27,6 +29,7 @@ type
     procedure CheckBox2Change(Sender: TObject);
     procedure ComboBox1Change(Sender: TObject);
     procedure Edit1Change(Sender: TObject);
+    procedure FloatSpinEdit1Change(Sender: TObject);
     procedure FormCreate(Sender: TObject);
   private
     FMapView1: TMapView;
@@ -80,9 +83,9 @@ begin
     Font.Color := clBlue;
     BackgroundColor := clWhite;
     MapView := FMapView1;
-    //PluginManager := FPluginManager;        // why is this necessary?
 
     Edit1.Text := LegalNotice;
+    SpinEdit1.Value := round(Opacity * 100);
   end;
 
   with TLegalNoticePlugin.Create(FPluginManager) do
@@ -94,7 +97,6 @@ begin
     Font.Color := clBlue;
     BackgroundColor := clWhite;
     MapView := FMapView2;
-    PluginManager := FPluginManager;       // why is this necessary?
   end;
 
   with TCenterMarkerPlugin.Create(FPluginManager) do
@@ -110,6 +112,13 @@ end;
 procedure TForm1.Edit1Change(Sender: TObject);
 begin
   (FPluginManager.Item[0] as TLegalNoticePlugin).LegalNotice := Edit1.Text;
+end;
+
+procedure TForm1.FloatSpinEdit1Change(Sender: TObject);
+begin
+  (FPluginManager.Item[0] as TLegalNoticePlugin).Opacity := SpinEdit1.Value / 100;
+  if FPluginManager.PluginList.Count > 1 then
+    (FPluginManager.Item[1] as TLegalNoticePlugin).Opacity := SpinEdit1.Value / 100;
 end;
 
 procedure TForm1.Button1Click(Sender: TObject);
