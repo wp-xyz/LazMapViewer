@@ -637,13 +637,15 @@ begin
   if not Assigned(sd) then Exit;
   pd := PSpreadMarkerData(sd.GetDataPtr);
   cnt := 0;
-  if ChangedList.Count <= 0 then
+  if (not Assigned(ChangedList)) or (ChangedList.Count <= 0) then
   begin
     sd.Reset(False);  // The list is empty, reset the markers, if any, without resetting their positions
     Exit;
   end;
-  if not Adding then
-  begin  // If items removed, we need to remove them from the list
+  if Adding and Assigned(ActualObjs) then Exit; // Items are added, so no change here necesarry
+
+  if Assigned(ActualObjs) then
+  begin  // Removed Items are summarized in Objs
     for i := 0 to High(pd^.FSpreadMarkerArr) do
     begin
       ndx := ActualObjs.IndexOf(pd^.FSpreadMarkerArr[i].GPSPoint);
@@ -652,8 +654,8 @@ begin
       Inc(cnt);
     end;
   end
-  else if not Assigned(ActualObjs) then
-  begin // Maybe items where removed (unkonwn if BeginUpdate/EndUpdate) was used
+  else
+  begin // Items could be removed (is unkonwn due to BeginUpdate/EndUpdate usage)
     for i := 0 to High(pd^.FSpreadMarkerArr) do
     begin
       ndx := ChangedList.IndexOf(pd^.FSpreadMarkerArr[i].GPSPoint);
@@ -664,29 +666,29 @@ begin
       end;
     end;
   end;
-  if cnt > 0 then
-  begin // At least one item has been removed, compact the array
-    if cnt = Length(pd^.FSpreadMarkerArr) then
-    begin
-      sd.Reset(False);
-      Exit;
-    end;
-    repeat
-      chg := False;
-      for i := 1 to High(pd^.FSpreadMarkerArr) do
-      begin
-        if (not Assigned(pd^.FSpreadMarkerArr[i-1].GPSPoint)) and
-           Assigned(pd^.FSpreadMarkerArr[i].GPSPoint) then
-        begin
-          pd^.FSpreadMarkerArr[i-1] := pd^.FSpreadMarkerArr[i];
-          pd^.FSpreadMarkerArr[i].GPSPoint := Nil;
-          chg := True;
-        end;
-      end;
-    until not chg;
-    SetLength(pd^.FSpreadMarkerArr,Length(pd^.FSpreadMarkerArr)-cnt);
+  if cnt <= 0 then Exit; // no change
+  if cnt = Length(pd^.FSpreadMarkerArr) then
+  begin
+    sd.Reset(False);
+    Exit;
   end;
-
+  // At least one item has been removed, compact the array
+  repeat
+    chg := False;
+    for i := 1 to High(pd^.FSpreadMarkerArr) do
+    begin
+      if (not Assigned(pd^.FSpreadMarkerArr[i-1].GPSPoint)) and
+         Assigned(pd^.FSpreadMarkerArr[i].GPSPoint) then
+      begin
+        pd^.FSpreadMarkerArr[i-1] := pd^.FSpreadMarkerArr[i];
+        pd^.FSpreadMarkerArr[i].GPSPoint := Nil;
+        chg := True;
+      end;
+    end;
+  until not chg;
+  SetLength(pd^.FSpreadMarkerArr,Length(pd^.FSpreadMarkerArr)-cnt);
+  // Update the marker positions will fail, since the mouse has been moved
+  // Not working: RecalculatePositions(AMapView);
 end;
 
 
