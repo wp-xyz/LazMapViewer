@@ -39,6 +39,7 @@ type
     procedure SetPluginManager(AValue: TMvPluginManager);
   protected
     function GetIndex: Integer; override;
+    procedure Notification(AComponent: TComponent; Operation: TOperation); override;
     procedure ReadState(Reader: TReader); override;
     procedure SetIndex(AValue: Integer); override;
     procedure SetParentComponent(AParent: TComponent); override;
@@ -305,6 +306,16 @@ procedure TMvCustomPlugin.MouseUp(AMapView: TMapView; Button: TMouseButton;
 begin
 end;
 
+procedure TMvCustomPlugin.Notification(AComponent: TComponent; Operation: TOperation);
+begin
+  inherited;
+  if Operation=opRemove then
+  begin
+    if FMapView = AComponent then
+      FMapView := nil;
+  end;
+end;
+
 procedure TMvCustomPlugin.ReadState(Reader: TReader);
 begin
   inherited ReadState(Reader);
@@ -331,7 +342,10 @@ begin
   if FMapView <> AValue then
   begin
     FMapView := AValue;
-    Update;
+    if FMapView <> nil then begin
+      FreeNotification(FMapView);
+      Update;
+    end;
   end;
 end;
 
