@@ -5,9 +5,9 @@ unit mvPlugins;
 interface
 
 uses
-  Classes, SysUtils, Types, LazLoggerBase,
-  Graphics, Controls, LCLIntf,
-  mvMapViewer, mvDrawingEngine, mvPluginCore, mvGPSObj, mvTypes;
+  Classes, SysUtils, Contnrs, Math,
+  Graphics, Controls, LCLIntf, LazLoggerBase,
+  mvMapViewer, mvDrawingEngine, mvPluginCore, mvGPSObj, mvGeoMath, mvTypes;
 
 type
   { TCenterMarkerPlugin - draws a cross in the map center }
@@ -23,7 +23,7 @@ type
     procedure SetPen(AValue: TPen);
     procedure SetSize(AValue: Integer);
   protected
-    procedure AfterDrawObjects(AMapView: TMapView; var Handled: Boolean); override;
+    procedure AfterDrawObjects(AMapView: TMapView; var {%H-}Handled: Boolean); override;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -34,14 +34,63 @@ type
   end;
 
 
+  { TGridPlugin - draws a degrees grid }
+
+  TGridPlugin = class(TMvPlugin)
+  private
+    const
+      DEFAULT_MAX_DISTANCE = 200;
+      DEFAULT_MIN_DISTANCE = 80;
+    type
+      TGridCoordType = (gctLatitude, gctLongitude);
+  private
+    FBackgroundColor: TColor;
+    FFont: TFont;
+    FIncrement: Double;
+    FOpacity: Single;
+    FPen: TPen;
+    FMaxDistance: Integer;
+    FMinDistance: Integer;
+    procedure SetBackgroundColor(AValue: TColor);
+    procedure SetFont(AValue: TFont);
+    procedure SetIncrement(AValue: Double);
+    procedure SetMaxDistance(AValue: Integer);
+    procedure SetMinDistance(AValue: Integer);
+    procedure SetOpacity(AValue: Single);
+    procedure SetPen(AValue: TPen);
+  private
+    procedure Changed(Sender: TObject);
+  protected
+    procedure AfterDrawObjects(AMapView: TMapView; var {%H-}Handled: Boolean); override;
+    function CalcIncrement(AMapView: TMapView; Area: TRealArea): Double;
+    function CalcVisibleArea(AMapView: TMapView): TRealArea;
+    procedure DrawGridLine(ADrawingEngine: TMvCustomDrawingEngine;
+      RealP1, RealP2: TRealPoint; P1, P2: TPoint; AMapRect: TRect);
+    procedure DrawHorGridLines(AMapView: TMapView; Area: TRealArea; AMapRect: TRect; AIncrement: Double);
+    procedure DrawVertGridlines(AMapView: TMapView; Area: TRealArea; AMapRect: TRect; AIncrement: Double);
+    function GetLatLonAsString(AValue: Double; ACoordType: TGridCoordType): String; virtual;
+  public
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
+  published
+    property BackgroundColor: TColor read FBackgroundColor write SetBackgroundColor default clWhite;
+    property Font: TFont read FFont write SetFont;
+    property Increment: Double read FIncrement write SetIncrement; // 0 = automatic increment detection
+    property MaxDistance: Integer read FMaxDistance write SetMaxDistance default DEFAULT_MAX_DISTANCE;
+    property MinDistance: Integer read FMinDistance write SetMinDistance default DEFAULT_MIN_DISTANCE;
+    property Opacity: Single read FOpacity write SetOpacity;
+    property Pen: TPen read FPen write SetPen;
+  end;
+
+
   { TLinkedMapsPlugin - all linked maps use the same zoom and center point }
 
   TLinkedMapsPlugin = class(TMvPlugin)
   private
     FLocked: Integer;
   protected
-    procedure CenterMove(AMapView: TMapView; var Handled: Boolean); override;
-    procedure ZoomChange(AMapView: TMapView; var Handled: Boolean); override;
+    procedure CenterMove(AMapView: TMapView; var {%H-}Handled: Boolean); override;
+    procedure ZoomChange(AMapView: TMapView; var {%H-}Handled: Boolean); override;
   end;
 
 
@@ -75,10 +124,10 @@ type
     procedure Changed(Sender: TObject);
   protected
     procedure AfterDrawObjects(AMapView: TMapView; var Handled: Boolean); override;
-    procedure MouseDown(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
+    procedure MouseDown(AMapView: TMapView; {%H-}Button: TMouseButton; {%H-}Shift: TShiftState;
       X, Y: Integer; var Handled: Boolean); override;
     procedure MouseEnter(AMapView: TMapView; var Handled: Boolean); override;
-    procedure MouseMove(AMapView: TMapView; Shift: TShiftState; X, Y: Integer;
+    procedure MouseMove(AMapView: TMapView; {%H-}Shift: TShiftState; X, Y: Integer;
       var Handled: Boolean); override;
   public
     constructor Create(AOwner: TComponent); override;
@@ -115,12 +164,12 @@ type
     FDraggableMarkerMovedEvent : TDraggableMarkerMovedEvent;
     function GetFirstMarkerAtMousePos(const AMapView: TMapView; const AX, AY : Integer) : TGPSPoint;
   protected
-    procedure MouseDown(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
+    procedure MouseDown(AMapView: TMapView; {%H-}Button: TMouseButton; {%H-}Shift: TShiftState;
       X, Y: Integer; var Handled: Boolean); override;
-    procedure MouseMove(AMapView: TMapView; AShift: TShiftState; X,Y: Integer;
+    procedure MouseMove(AMapView: TMapView; {%H-}AShift: TShiftState; X,Y: Integer;
       var Handled: Boolean); override;
-    procedure MouseUp(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
-      X, Y: Integer; var Handled: Boolean); override;
+    procedure MouseUp(AMapView: TMapView; {%H-}Button: TMouseButton; {%H-}Shift: TShiftState;
+      {%H-}X, {%H-}Y: Integer; var Handled: Boolean); override;
   published
     property DraggableMarkerCanMoveEvent : TDraggableMarkerCanMoveEvent read FDraggableMarkerCanMoveEvent write FDraggableMarkerCanMoveEvent;
     property DraggableMarkerMovedEvent : TDraggableMarkerMovedEvent read FDraggableMarkerMovedEvent write FDraggableMarkerMovedEvent;
@@ -141,6 +190,7 @@ type
                                        ChangedList: TGPSObjectList;
                                        ActualObjs: TGPSObjList; Adding: Boolean;
                                        var Handled : Boolean) of Object;
+
   { TUserDefinedPlugin }
 
   TUserDefinedPlugin = class(TMvCustomPlugin)
@@ -193,6 +243,9 @@ type
   end;
 
 implementation
+
+uses
+  Types;
 
 { TCenterMargerPlugin }
 
@@ -253,6 +306,375 @@ begin
     Update;
   end;
 end;
+
+
+{ TGridPlugin }
+
+constructor TGridPlugin.Create(AOwner: TComponent);
+begin
+  inherited;
+  FBackgroundColor := clWhite;
+  FOpacity := 0.55;
+  FFont := TFont.Create;
+  FFont.OnChange := @Changed;
+  FPen := TPen.Create;
+  FPen.OnChange := @Changed;
+  FMaxDistance := DEFAULT_MAX_DISTANCE;
+  FMinDistance := DEFAULT_MIN_DISTANCE;
+end;
+
+destructor TGridPlugin.Destroy;
+begin
+  FPen.Free;
+  FFont.Free;
+  inherited;
+end;
+
+procedure TGridPlugin.AfterDrawObjects(AMapView: TMapView; var Handled: Boolean);
+var
+  area: TRealArea;
+  coordType: TGridCoordType;
+  incr: Double;
+  mapRectPx: TRect;
+begin
+  area := CalcVisibleArea(AMapView);
+
+  mapRectPx.TopLeft := AMapView.Engine.LatLonToScreen(area.TopLeft);
+  mapRectPx.BottomRight := AMapView.Engine.LatLonToScreen(area.BottomRight);
+  if AMapView.Cyclic then begin
+    mapRectPx.Left := 0;
+    mapRectPx.Right := AMapView.Width;
+  end;
+
+  if FIncrement <= 0.0 then
+    incr := CalcIncrement(AMapView, area)
+  else
+    incr := FIncrement;
+
+  AMapView.DrawingEngine.PenStyle := FPen.Style;
+  AMapView.DrawingEngine.PenWidth := FPen.Width;
+  AMapView.DrawingEngine.PenColor := FPen.Color;
+  AMapView.DrawingEngine.BrushColor := FBackgroundColor;
+  AMapView.DrawingEngine.FontName := FFont.Name;
+  AMapView.DrawingEngine.FontSize := FFont.Size;
+  AMapView.DrawingEngine.FontStyle := FFont.Style;
+  AMapView.DrawingEngine.FontColor := FFont.Color;
+
+  for coordType in TGridCoordType do
+  begin
+    case coordType of
+      gctLatitude: DrawHorGridLines(AMapView, area, mapRectPx, incr);
+      gctLongitude: DrawVertGridLines(AMapView, area, mapRectPx, incr);
+    end;
+  end;
+end;
+
+{ Calculates the increment of the grid lines. Since, due to the projection, the
+  latitude lines have a non-constant spacing, their increment is taken from
+  the equator value, i.e. is assumed to be equal to the longitude lines spacing. }
+function TGridPlugin.CalcIncrement(AMapView: TMapView; Area: TRealArea): Double;
+type
+  TIncrement = (deg180, deg90, deg45, deg30, deg10, deg5, deg2, deg1,
+    min30, min20, min10, min5, min2, min1,
+    sec30, sec20, sec10, sec5, sec2, sec1);
+const
+  IncrementValues: array[TIncrement] of double = (
+    180.0, 90.0, 45.0, 30.0, 10.0, 5.0, 2.5, 1.0,
+    30.0/60, 20.0/60, 10.0/60, 5.0/60, 2.5/60, 1.0/60,
+    30.0/3600, 20.0/3600, 10.0/3600, 5.0/3600, 2.5/3600, 1.0/3600);
+var
+  fullRange: Double;
+  deg2px: Double;
+  incr: TIncrement;
+  incrementPx: Integer;
+begin
+  Result := 1E6;
+  fullRange := abs(Area.BottomRight.Lon - Area.TopLeft.Lon);
+  deg2px := fullRange / AMapView.ClientWidth;
+
+  for incr in TIncrement do
+  begin
+    incrementPx := trunc(IncrementValues[incr] / deg2px);
+    if (incrementPx >= MinDistance) and (incrementPx <= MaxDistance) then
+    begin
+      Result := IncrementValues[incr];
+      break;
+    end;
+  end;
+end;
+
+{ Calculates the corner coordinates (in degrees) for the displayed map.
+  The longitude values are expanded such that they increase monotonously
+  from left to right. }
+function TGridPlugin.CalcVisibleArea(AMapView: TMapView): TRealArea;
+var
+  worldWidth: Integer;
+  numWorlds: Integer;
+begin
+  Result := AMapView.Engine.ScreenRectToRealArea(Rect(0, 0, AMapView.ClientWidth, AMapView.ClientHeight));
+  if AMapView.Engine.CrossesDateline then
+  begin
+    if Result.BottomRight.Lon < Result.TopLeft.Lon then
+      Result.BottomRight.Lon := Result.BottomRight.Lon + 360;
+    worldWidth := mvGeoMath.ZoomFactor(AMapView.Zoom) * TileSize.CX;
+    numWorlds := trunc(AMapView.ClientWidth / worldWidth);
+    Result.BottomRight.Lon := Result.BottomRight.Lon + numWorlds * 360;
+  end;
+end;
+
+procedure TGridPlugin.Changed(Sender: TObject);
+begin
+  Update;
+end;
+
+procedure TGridPlugin.DrawGridLine(ADrawingEngine: TMvCustomDrawingEngine;
+  RealP1, RealP2: TRealPoint; P1, P2: TPoint; AMapRect: TRect);
+var
+  s: String;
+  value: Double;
+  txtSize: TSize;
+  txtRect: TRect;
+  coordType: TGridCoordType;
+begin
+  if RealP1.Lat = RealP2.Lat then
+  begin
+    value := RealP1.Lat;
+    coordType := gctLatitude;
+  end else
+  if RealP1.Lon = RealP2.Lon then
+  begin
+    value := NormalizeLon(RealP1.Lon);
+    coordType := gctLongitude;
+  end else
+    exit;
+
+  s := GetLatLonAsString(value, coordType);
+  txtSize := ADrawingEngine.TextExtent(s);
+  txtRect := Rect(0, 0, txtSize.CX, txtSize.CY);
+
+  ADrawingEngine.Opacity := 1.0;
+  case coordType of
+    gctLatitude:  // horizontal lines
+      begin
+        OffsetRect(txtRect, P1.X, P1.Y - txtSize.CY div 2);
+        if txtRect.Top < AMapRect.Top then P1.Y := AMapRect.Top;
+        if txtRect.Right > AMapRect.Bottom then P1.Y := AMapRect.Bottom - txtSize.CY;
+        ADrawingEngine.Line(txtRect.Right, P1.Y, P2.X, P2.Y);
+      end;
+    gctLongitude:  // vertical lines
+      begin
+        OffsetRect(txtRect, P1.X - txtSize.CX div 2, P1.Y);
+        ADrawingEngine.Line(P1.X, txtRect.Bottom, P2.X, P2.Y);
+      end;
+  end;
+
+  // Semi-transparent background
+  if FBackgroundColor <> clNone then
+  begin
+    ADrawingEngine.Opacity := FOpacity;
+    ADrawingEngine.BrushStyle := bsSolid;
+    ADrawingEngine.FillRect(txtRect.Left, txtRect.Top, txtRect.Right, txtRect.Bottom);
+  end;
+
+  // Draw grid coordinate as text
+  ADrawingEngine.BrushStyle := bsClear;
+  ADrawingEngine.TextOut(txtRect.Left, txtRect.Top, s);
+end;
+
+{ Draws horizontal grid lines (constant longitudes)
+  * Area - Area covered by the map, in (monotonous) degrees
+  * AMapRect - dto., in pixels.
+  * AIncrement - distance between grid lines, in degrees. }
+procedure TGridPlugin.DrawHorGridLines(AMapView: TMapView; Area: TRealArea;
+  AMapRect: TRect; AIncrement: Double);
+var
+  rP1, rP2: TRealPoint;    // Top and bottom points of each gridline, in degrees
+  P1, P2: TPoint;          // ... and in pixels
+  lat: Double;
+begin
+  // Northern hemispere...
+  lat := trunc(Area.BottomRight.Lat / AIncrement) * AIncrement;
+  rP1 := RealPoint(lat, Area.TopLeft.Lon);
+  rP2 := RealPoint(lat, Area.BottomRight.Lon);
+  while (rP2.Lat <= Area.TopLeft.Lat) do
+  begin
+    P1 := AMapView.Engine.LatLonToScreen(rP1);
+    P2 := AMapView.Engine.LatLonToScreen(rP2);
+    if AMapView.Cyclic then
+    begin
+      P1.X := 0;
+      P2.X := AMapView.ClientWidth;
+    end;
+    DrawGridLine(AMapView.DrawingEngine, rP1, rP2, P1, P2, AMapRect);
+    rP1.Lat := rP1.Lat + AIncrement;
+    rP2.Lat := rP2.Lat + AIncrement;
+  end;
+
+  // Southern hemisphere...
+  rP1 := RealPoint(0.0, Area.TopLeft.Lon);
+  rP2 := RealPoint(0.0, Area.BottomRight.Lon);
+  while (rP2.Lat >= Area.BottomRight.Lat) do
+  begin
+    P1 := AMapView.Engine.LatLonToScreen(rP1);
+    P2 := AMapView.Engine.LatLonToScreen(rP2);
+    if AMapView.Cyclic then
+    begin
+      P1.X := 0;
+      P2.X := AMapView.ClientWidth;
+    end;
+    DrawGridLine(AMapView.DrawingEngine, rP1, rP2, P1, P2, AMapRect);
+    rP1.Lat := rP1.Lat - AIncrement;
+    rP2.Lat := rP2.Lat - AIncrement;
+  end;
+end;
+
+{ Draws vertical grid lines (constant longitude).
+  * Area - Area covered by the map, in (monotonous) degrees
+  * AMapRect - dto., in pixels.
+  * AIncrement - distance between grid lines, in degrees. }
+procedure TGridPlugin.DrawVertGridlines(AMapView: TMapView; Area: TRealArea;
+  AMapRect: TRect; AIncrement: Double);
+var
+  rP1, rP2: TRealPoint;    // top and bottom points of each gridline, in degrees
+  P1, P2: TPoint;          // ... and in pixels
+  incrPx: integer;         // increment (distance between grid lines), in pixels
+  lon: Double;             // longitude of grid line, in (monotonous) degrees
+  lonPx, lonPxLeft, lonPxRight: Integer;  // longitude parameters and its limits, in pixels
+  worldSize: Int64;
+begin
+  // Increment in pixels
+  worldSize := mvGeoMath.ZoomFactor(AMapView.Zoom) * TileSize.CX;
+  incrPx := round(AIncrement / 360 * worldSize);
+
+  // Position of starting point
+  lon := trunc(Area.TopLeft.Lon / AIncrement) * AIncrement;
+  rP1 := RealPoint(Area.TopLeft.Lat, lon);
+  rP2 := RealPoint(Area.BottomRight.Lat, lon);
+  P1 := AMapView.Engine.LatLonToScreen(rP1);
+  P2 := AMapView.Engine.LatLonToScreen(rP2);
+
+  // Left and right pixel borders of the area to be handled.
+  if AMapView.Cyclic then
+  begin
+    lonPxLeft := 0;
+    lonPxRight := AMapView.Width;
+  end else
+  begin
+    lonPxLeft := AMapRect.Left;
+    lonPxRight := AMapRect.Right;
+  end;
+
+  // Find and draw vertical grid lines while going to the left
+  lonPx := P1.X - incrPx;
+  while lonPx > lonPxLeft do begin
+    rP1.Lon := lon;
+    rP2.Lon := lon;
+    DrawGridLine(AMapView.DrawingEngine, rP1, rP2, Point(lonPx, P1.Y), Point(lonPx, P2.Y), AMapRect);
+    lon := lon - AIncrement;
+    lonPx := lonPx - incrPx;
+  end;
+
+  // Find and draw vertical grid lines while going to the right
+  lonPx := P1.X;
+  while lonPx < lonPxRight do
+  begin
+    rP1.Lon := lon;
+    rP2.Lon := lon;
+    DrawGridLine(AMapView.DrawingEngine, rP1, rP2, Point(lonPx, P1.Y), Point(lonPx, P2.Y), AMapRect);
+    lon := lon + AIncrement;
+    lonPx := lonPx + incrPx;
+  end;
+end;
+
+function TGridPlugin.GetLatLonAsString(AValue: Double; ACoordType: TGridCoordType): String;
+var
+  degs, mins, secs: Double;
+  secsZero: Boolean;
+begin
+  SplitGPS(AValue, degs, mins, secs);
+  secsZero := SameValue(secs, 0.0, 2E-1);
+
+  if (mins = 0) and secsZero then
+    Result := Format('%.0f°', [abs(degs)])
+  else
+  if secsZero then
+    Result := Format('%.0f° %.0f''', [abs(degs), mins])
+  else
+    Result := Format('%.0f° %.0f'' %.0f"', [abs(degs), mins, secs]);
+  case ACoordType of
+    gctLatitude:
+      if AValue > 0 then
+        Result := Result + ' N'
+      else if AValue < 0 then
+        Result := Result + ' S';
+    gctLongitude:
+      if abs(AValue) <> 180 then
+      begin
+        if (AValue > 0) then
+          Result := Result + ' E'
+        else
+          Result := Result + ' W';
+      end;
+  end;
+end;
+
+procedure TGridPlugin.SetBackgroundColor(AValue: TColor);
+begin
+  if FBackgroundColor <> AValue then
+  begin
+    FBackgroundColor := AValue;
+    Update;
+  end;
+end;
+
+procedure TGridPlugin.SetFont(AValue: TFont);
+begin
+  FFont := AValue;
+  Update;
+end;
+
+procedure TGridPlugin.SetIncrement(AValue: Double);
+begin
+  if FIncrement <> AValue then
+  begin
+    FIncrement := AValue;
+    Update;
+  end;
+end;
+
+procedure TGridPlugin.SetMaxDistance(AValue: Integer);
+begin
+  if FMaxDistance <> AValue then
+  begin
+    FMaxDistance := AValue;
+    Update;
+  end;
+end;
+
+procedure TGridPlugin.SetMinDistance(AValue: Integer);
+begin
+  if FMinDistance <> AValue then
+  begin
+    FMinDistance := AValue;
+    Update;
+  end;
+end;
+
+procedure TGridPlugin.SetOpacity(AValue: Single);
+begin
+  if FOpacity <> AValue then
+  begin
+    FOpacity := AValue;
+    Update;
+  end;
+end;
+
+procedure TGridPlugin.SetPen(AValue: TPen);
+begin
+  FPen.Assign(AValue);
+  Update;
+end;
+
 
 { TLinkedMapsPlugin }
 

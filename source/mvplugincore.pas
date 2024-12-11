@@ -39,7 +39,6 @@ type
     procedure SetPluginManager(AValue: TMvPluginManager);
   protected
     function GetIndex: Integer; override;
-    procedure Notification(AComponent: TComponent; Operation: TOperation); override;
     procedure ReadState(Reader: TReader); override;
     procedure SetIndex(AValue: Integer); override;
     procedure SetParentComponent(AParent: TComponent); override;
@@ -56,6 +55,7 @@ type
       var Handled: Boolean); virtual;
     procedure MouseUp(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
       X, Y: Integer; var Handled: Boolean); virtual;
+    procedure Notification(AComponent: TComponent; Operation: TOperation); override;
     procedure ZoomChange(AMapView: TMapView; var Handled: Boolean); virtual;
   //  procedure ZoomChanging(AMapView: TMapView; NewZoom: Integer; var Allow, Handled: Boolean); virtual;
     { GPSItemsModified is called if one of the GPSList of the MapView changed their content.
@@ -342,10 +342,9 @@ begin
   if FMapView <> AValue then
   begin
     FMapView := AValue;
-    if FMapView <> nil then begin
+    if FMapView <> nil then
       FreeNotification(FMapView);
-      Update;
-    end;
+    Update;
   end;
 end;
 

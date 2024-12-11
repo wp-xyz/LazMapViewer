@@ -1,0 +1,189 @@
+object Form1: TForm1
+  Left = 314
+  Height = 568
+  Top = 130
+  Width = 871
+  Caption = 'Grid Plugin Demo'
+  ClientHeight = 568
+  ClientWidth = 871
+  LCLVersion = '4.99.0.0'
+  OnCreate = FormCreate
+  object MapView: TMapView
+    Left = 144
+    Height = 568
+    Top = 0
+    Width = 727
+    Active = True
+    Align = alClient
+    Cyclic = True
+    DownloadEngine = MapView.BuiltInDLE
+    DrawingEngine = MapView.BuiltInDE
+    Layers = <>
+    Font.Color = clBlack
+    MapProvider = 'Open Topo Map'
+    MapCenter.Longitude = 11
+    MapCenter.Latitude = 49
+    PluginManager = PluginManager
+    UseThreads = True
+    Zoom = 8
+  end
+  object ParamsPanel: TPanel
+    Left = 8
+    Height = 552
+    Top = 8
+    Width = 128
+    Align = alLeft
+    AutoSize = True
+    BorderSpacing.Around = 8
+    BevelOuter = bvNone
+    ClientHeight = 552
+    ClientWidth = 128
+    TabOrder = 1
+    object cbEnabled: TCheckBox
+      AnchorSideLeft.Control = ParamsPanel
+      AnchorSideTop.Control = ParamsPanel
+      Left = 0
+      Height = 19
+      Top = 0
+      Width = 60
+      Caption = 'Enabled'
+      Checked = True
+      State = cbChecked
+      TabOrder = 0
+      OnChange = cbEnabledChange
+    end
+    object cbCyclic: TCheckBox
+      AnchorSideLeft.Control = ParamsPanel
+      AnchorSideTop.Control = cbEnabled
+      AnchorSideTop.Side = asrBottom
+      Left = 0
+      Height = 19
+      Top = 27
+      Width = 50
+      BorderSpacing.Top = 8
+      Caption = 'Cyclic'
+      Checked = True
+      State = cbChecked
+      TabOrder = 1
+      OnChange = cbCyclicChange
+    end
+    object lblIncrement: TLabel
+      AnchorSideLeft.Control = ParamsPanel
+      AnchorSideTop.Control = cbCyclic
+      AnchorSideTop.Side = asrBottom
+      Left = 0
+      Height = 15
+      Top = 54
+      Width = 54
+      BorderSpacing.Top = 8
+      Caption = 'Increment'
+    end
+    object cmbIncrement: TComboBox
+      AnchorSideLeft.Control = ParamsPanel
+      AnchorSideTop.Control = lblIncrement
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = ParamsPanel
+      AnchorSideRight.Side = asrBottom
+      Left = 0
+      Height = 23
+      Top = 71
+      Width = 128
+      Anchors = [akTop, akLeft, akRight]
+      BorderSpacing.Top = 2
+      DropDownCount = 24
+      ItemHeight = 15
+      ItemIndex = 0
+      Items.Strings = (
+        'automatic'
+        '90°'
+        '45°'
+        '30°'
+        '20°'
+        '10°'
+        '5°'
+        '2°'
+        '1"'
+        '30'''
+        '20'''
+        '10'''
+        '5'''
+        '2'''
+        '1'''
+        '30"'
+        '20"'
+        '10"'
+        '5"'
+        '2"'
+        '1"'
+      )
+      Style = csDropDownList
+      TabOrder = 2
+      Text = 'automatic'
+      OnChange = cmbIncrementChange
+    end
+    object clbBackgroundColor: TColorButton
+      AnchorSideLeft.Control = ParamsPanel
+      AnchorSideTop.Control = clbPenColor
+      AnchorSideTop.Side = asrBottom
+      Left = 0
+      Height = 25
+      Top = 135
+      Width = 128
+      BorderSpacing.Top = 8
+      BorderWidth = 2
+      ButtonColorAutoSize = False
+      ButtonColorSize = 16
+      ButtonColor = clBlack
+      Caption = 'Background color'
+      OnColorChanged = clbBackgroundColorColorChanged
+    end
+    object tbOpacity: TTrackBar
+      AnchorSideLeft.Control = ParamsPanel
+      AnchorSideTop.Control = lblOpacity
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = ParamsPanel
+      AnchorSideRight.Side = asrBottom
+      Left = 0
+      Height = 25
+      Top = 183
+      Width = 128
+      Frequency = 10
+      Max = 100
+      Position = 0
+      OnChange = tbOpacityChange
+      Anchors = [akTop, akLeft, akRight]
+      TabOrder = 3
+    end
+    object lblOpacity: TLabel
+      AnchorSideLeft.Control = ParamsPanel
+      AnchorSideTop.Control = clbBackgroundColor
+      AnchorSideTop.Side = asrBottom
+      Left = 0
+      Height = 15
+      Top = 168
+      Width = 41
+      BorderSpacing.Top = 8
+      Caption = 'Opacity'
+    end
+    object clbPenColor: TColorButton
+      AnchorSideLeft.Control = ParamsPanel
+      AnchorSideTop.Control = cmbIncrement
+      AnchorSideTop.Side = asrBottom
+      Left = 0
+      Height = 25
+      Top = 102
+      Width = 128
+      BorderSpacing.Top = 8
+      BorderWidth = 2
+      ButtonColorAutoSize = False
+      ButtonColorSize = 16
+      ButtonColor = clBlack
+      Caption = 'Grid Line color'
+      OnColorChanged = clbPenColorColorChanged
+    end
+  end
+  object PluginManager: TMvPluginManager
+    Left = 314
+    Top = 165
+  end
+end

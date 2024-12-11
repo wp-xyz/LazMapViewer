@@ -33,7 +33,7 @@ Type
   { TRealPoint }
   TRealPoint = Record
     public
-      Lon: Double;
+      Lon: Double;  // in degrees
       Lat: Double;
     private
       function GetLonRad: Extended;
