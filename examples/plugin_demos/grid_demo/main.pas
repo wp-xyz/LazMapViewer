@@ -5,7 +5,7 @@ unit main;
 interface
 
 uses
-  Classes, ComCtrls, ExtCtrls, StdCtrls, SysUtils,
+  Classes, ComCtrls, DividerBevel, ExtCtrls, Spin, StdCtrls, SysUtils,
   Forms, Controls, Graphics, Dialogs, //LazLogger,
   mvMapViewer, mvEngine, mvPluginCore, mvPlugins;
 
@@ -18,22 +18,29 @@ type
     cbRight: TCheckBox;
     cbBottom: TCheckBox;
     clbBackgroundColor: TColorButton;
+    clbLabelTextColor: TColorButton;
     clbPenColor: TColorButton;
     cmbIncrement: TComboBox;
+    divLines: TDividerBevel;
+    divLabels: TDividerBevel;
     GroupBox1: TGroupBox;
+    lblLabelDistance: TLabel;
     lblIncrement: TLabel;
     lblOpacity: TLabel;
     MapView: TMapView;
     PluginManager: TMvPluginManager;
     ParamsPanel: TPanel;
+    seLabelDistance: TSpinEdit;
     tbOpacity: TTrackBar;
     procedure cbEnabledChange(Sender: TObject);
     procedure cbCyclicChange(Sender: TObject);
+    procedure clbLabelTextColorColorChanged(Sender: TObject);
     procedure LabelPositionChange(Sender: TObject);
     procedure clbBackgroundColorColorChanged(Sender: TObject);
     procedure clbPenColorColorChanged(Sender: TObject);
     procedure cmbIncrementChange(Sender: TObject);
     procedure FormCreate(Sender: TObject);
+    procedure seLabelDistanceChange(Sender: TObject);
     procedure tbOpacityChange(Sender: TObject);
   private
 
@@ -53,10 +60,16 @@ begin
   MapView.Zoom := 5;
   with TGridPlugin.Create(PluginManager) do
   begin
-    clbBackgroundColor.ButtonColor := BackgroundColor;
-    clbPenColor.ButtonColor := Pen.Color;
+    clbBackgroundColor.ButtonColor := ColorToRGB(BackgroundColor);
+    clbPenColor.ButtonColor := ColorToRGB(Pen.Color);
+    clbLabelTextColor.ButtonColor := ColorToRGB(Font.Color);
     tbOpacity.Position := round(Opacity * 100);
   end;
+end;
+
+procedure TForm1.seLabelDistanceChange(Sender: TObject);
+begin
+  (PluginManager.PluginList[0] as TGridPlugin).GridLabels.Distance := seLabelDistance.Value;
 end;
 
 procedure TForm1.cbCyclicChange(Sender: TObject);
@@ -98,6 +111,11 @@ end;
 procedure TForm1.clbBackgroundColorColorChanged(Sender: TObject);
 begin
   (PluginManager.PluginList[0] as TGridPlugin).BackgroundColor := clbBackgroundColor.ButtonColor;
+end;
+
+procedure TForm1.clbLabelTextColorColorChanged(Sender: TObject);
+begin
+  (PluginManager.PluginList[0] as TGridPlugin).Font.Color := clbLabelTextColor.ButtonColor;
 end;
 
 procedure TForm1.clbPenColorColorChanged(Sender: TObject);

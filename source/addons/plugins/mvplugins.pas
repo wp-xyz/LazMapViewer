@@ -517,13 +517,13 @@ begin
         if (glpLeft in FGridLabels.Position) and InRange(P1.X, AMapRect.Left, AMapRect.Right) then
         begin
           txtRect[glpLeft] := Rect(0, 0, txtSize.CX, txtSize.CY);
-          OffsetRect(txtRect[glpLeft], P1.X, P1.Y - txtSize.CY div 2);
+          OffsetRect(txtRect[glpLeft], P1.X + FGridLabels.Distance, P1.Y - txtSize.CY div 2);
         end else
           txtRect[glpLeft] := Rect(AMapRect.Left, P1.Y, AMapRect.Left, P1.Y);
         if (glpRight in FGridLabels.Position) and InRange(P1.X, AMapRect.Left, AMapRect.Right) then
         begin
           txtRect[glpRight] := Rect(0, 0, txtSize.CX, txtSize.CY);
-          OffsetRect(txtRect[glpRight], P2.X - txtSize.CY, P1.Y - txtSize.CY div 2);
+          OffsetRect(txtRect[glpRight], P2.X - txtSize.CX - FGridLabels.Distance, P1.Y - txtSize.CY div 2);
         end else
           txtRect[glpRight] := Rect(AMapRect.Right, P1.Y, AMapRect.Right, P1.Y);
       end;
@@ -532,13 +532,13 @@ begin
         if (glpTop in FGridLabels.Position) then
         begin
           txtRect[glpTop] := Rect(0, 0, txtSize.CX, txtSize.CY);
-          OffsetRect(txtRect[glpTop], P1.X - txtSize.CX div 2, P1.Y);
+          OffsetRect(txtRect[glpTop], P1.X - txtSize.CX div 2, P1.Y + FGridlabels.Distance);
         end else
           txtRect[glpTop] := Rect(P1.X, AMapRect.Top, P1.X, AMapRect.Top);
         if (glpBottom in FGridLabels.Position) then
         begin
           txtRect[glpBottom] := Rect(0, 0, txtSize.CX, txtSize.CY);
-          OffsetRect(txtRect[glpBottom], P1.X - txtSize.CX div 2, P2.Y - txtSize.CY);
+          OffsetRect(txtRect[glpBottom], P1.X - txtSize.CX div 2, P2.Y - txtSize.CY - FGridLabels.Distance);
         end else
           txtRect[glpBottom] := Rect(P1.X, AMapRect.Bottom, P1.X, AMapRect.Bottom);
       end;
@@ -669,17 +669,6 @@ var
   lonPx, lonPxLeft, lonPxRight: Integer;  // longitude parameters and its limits, in pixels
   worldSize: Int64;
 begin
-  // Increment in pixels
-  worldSize := mvGeoMath.ZoomFactor(AMapView.Zoom) * TileSize.CX;
-  incrPx := round(AIncrement / 360 * worldSize);
-
-  // Position of starting point
-  lon := trunc(Area.TopLeft.Lon / AIncrement) * AIncrement;
-  rP1 := RealPoint(Area.TopLeft.Lat, lon);
-  rP2 := RealPoint(Area.BottomRight.Lat, lon);
-  P1 := AMapView.Engine.LatLonToScreen(rP1);
-  P2 := AMapView.Engine.LatLonToScreen(rP2);
-
   // Left and right pixel borders of the area to be handled.
   if AMapView.Cyclic then
   begin
@@ -691,16 +680,26 @@ begin
     lonPxRight := AMapRect.Right;
   end;
 
-  // Find and draw vertical grid lines while going to the left
-  lonPx := P1.X - incrPx;
-  while lonPx > lonPxLeft do begin
-    DrawGridLine(AMapView.DrawingEngine, lon, Point(lonPx, P1.Y), Point(lonPx, P2.Y), AMapRect);
+  // Increment in pixels
+  worldSize := mvGeoMath.ZoomFactor(AMapView.Zoom) * TileSize.CX;
+  incrPx := round(AIncrement / 360 * worldSize);
+
+  // Rounded longitude for grid point
+  lon := trunc(Area.TopLeft.Lon / AIncrement) * AIncrement;
+  rP1 := RealPoint(Area.TopLeft.Lat, lon);
+  rP2 := RealPoint(Area.BottomRight.Lat, lon);
+  P1 := AMapView.Engine.LatLonToScreen(rP1);
+  P2 := AMapView.Engine.LatLonToScreen(rP2);
+
+  // Find starting point at the left side, outside the map
+  lonPx := P1.X;
+  while lonPx > lonPxLeft do
+  begin
+    dec(lonPx, incrPx);
     lon := lon - AIncrement;
-    lonPx := lonPx - incrPx;
   end;
 
-  // Find and draw vertical grid lines while going to the right
-  lonPx := P1.X;
+  // Now go to the right in AIncrement steps and draw a vertical line
   while lonPx < lonPxRight do
   begin
     DrawGridLine(AMapView.DrawingEngine, lon, Point(lonPx, P1.Y), Point(lonPx, P2.Y), AMapRect);

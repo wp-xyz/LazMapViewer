@@ -9,10 +9,10 @@ object Form1: TForm1
   LCLVersion = '4.99.0.0'
   OnCreate = FormCreate
   object MapView: TMapView
-    Left = 144
+    Left = 157
     Height = 568
     Top = 0
-    Width = 727
+    Width = 714
     Active = True
     Align = alClient
     Cyclic = True
@@ -31,14 +31,14 @@ object Form1: TForm1
     Left = 8
     Height = 552
     Top = 8
-    Width = 128
+    Width = 141
     Align = alLeft
     AutoSize = True
     BorderSpacing.Around = 8
     BevelOuter = bvNone
     ClientHeight = 552
-    ClientWidth = 128
-    TabOrder = 1
+    ClientWidth = 141
+    TabOrder = 0
     object cbEnabled: TCheckBox
       AnchorSideLeft.Control = ParamsPanel
       AnchorSideTop.Control = ParamsPanel
@@ -69,11 +69,11 @@ object Form1: TForm1
     end
     object lblIncrement: TLabel
       AnchorSideLeft.Control = ParamsPanel
-      AnchorSideTop.Control = cbCyclic
+      AnchorSideTop.Control = divLines
       AnchorSideTop.Side = asrBottom
       Left = 0
       Height = 15
-      Top = 54
+      Top = 93
       Width = 54
       BorderSpacing.Top = 8
       Caption = 'Increment'
@@ -86,8 +86,8 @@ object Form1: TForm1
       AnchorSideRight.Side = asrBottom
       Left = 0
       Height = 23
-      Top = 71
-      Width = 128
+      Top = 110
+      Width = 141
       Anchors = [akTop, akLeft, akRight]
       BorderSpacing.Top = 2
       DropDownCount = 24
@@ -123,11 +123,11 @@ object Form1: TForm1
     end
     object clbBackgroundColor: TColorButton
       AnchorSideLeft.Control = ParamsPanel
-      AnchorSideTop.Control = clbPenColor
+      AnchorSideTop.Control = clbLabelTextColor
       AnchorSideTop.Side = asrBottom
       Left = 0
       Height = 25
-      Top = 135
+      Top = 246
       Width = 128
       BorderSpacing.Top = 8
       BorderWidth = 2
@@ -145,8 +145,8 @@ object Form1: TForm1
       AnchorSideRight.Side = asrBottom
       Left = 0
       Height = 25
-      Top = 183
-      Width = 128
+      Top = 294
+      Width = 141
       Frequency = 10
       Max = 100
       Position = 0
@@ -160,7 +160,7 @@ object Form1: TForm1
       AnchorSideTop.Side = asrBottom
       Left = 0
       Height = 15
-      Top = 168
+      Top = 279
       Width = 41
       BorderSpacing.Top = 8
       Caption = 'Opacity'
@@ -171,7 +171,7 @@ object Form1: TForm1
       AnchorSideTop.Side = asrBottom
       Left = 0
       Height = 25
-      Top = 102
+      Top = 141
       Width = 128
       BorderSpacing.Top = 8
       BorderWidth = 2
@@ -189,14 +189,14 @@ object Form1: TForm1
       AnchorSideRight.Side = asrBottom
       Left = 0
       Height = 85
-      Top = 216
-      Width = 128
+      Top = 327
+      Width = 141
       Anchors = [akTop, akLeft, akRight]
       AutoSize = True
       BorderSpacing.Top = 8
       Caption = 'Label Positions'
       ClientHeight = 65
-      ClientWidth = 124
+      ClientWidth = 137
       TabOrder = 4
       object cbLeft: TCheckBox
         AnchorSideLeft.Control = GroupBox1
@@ -210,21 +210,21 @@ object Form1: TForm1
         Caption = 'left'
         Checked = True
         State = cbChecked
-        TabOrder = 0
+        TabOrder = 1
         OnChange = LabelPositionChange
       end
       object cbTop: TCheckBox
         AnchorSideLeft.Control = GroupBox1
         AnchorSideLeft.Side = asrCenter
         AnchorSideTop.Control = GroupBox1
-        Left = 44
+        Left = 50
         Height = 19
         Top = 0
         Width = 36
         Caption = 'top'
         Checked = True
         State = cbChecked
-        TabOrder = 1
+        TabOrder = 0
         OnChange = LabelPositionChange
       end
       object cbRight: TCheckBox
@@ -232,7 +232,7 @@ object Form1: TForm1
         AnchorSideTop.Side = asrBottom
         AnchorSideRight.Control = GroupBox1
         AnchorSideRight.Side = asrBottom
-        Left = 69
+        Left = 82
         Height = 19
         Top = 19
         Width = 43
@@ -246,7 +246,7 @@ object Form1: TForm1
         AnchorSideLeft.Control = cbTop
         AnchorSideTop.Control = cbLeft
         AnchorSideTop.Side = asrBottom
-        Left = 44
+        Left = 50
         Height = 19
         Top = 38
         Width = 58
@@ -255,6 +255,75 @@ object Form1: TForm1
         TabOrder = 3
         OnChange = LabelPositionChange
       end
+    end
+    object lblLabelDistance: TLabel
+      AnchorSideLeft.Control = ParamsPanel
+      AnchorSideTop.Control = GroupBox1
+      AnchorSideTop.Side = asrBottom
+      Left = 0
+      Height = 15
+      Top = 420
+      Width = 76
+      BorderSpacing.Top = 8
+      Caption = 'Label Distance'
+    end
+    object seLabelDistance: TSpinEdit
+      AnchorSideLeft.Control = ParamsPanel
+      AnchorSideTop.Control = lblLabelDistance
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = ParamsPanel
+      AnchorSideRight.Side = asrBottom
+      Left = 0
+      Height = 23
+      Top = 435
+      Width = 141
+      Alignment = taRightJustify
+      Anchors = [akTop, akLeft, akRight]
+      MaxValue = 100
+      TabOrder = 5
+      OnChange = seLabelDistanceChange
+    end
+    object clbLabelTextColor: TColorButton
+      AnchorSideLeft.Control = ParamsPanel
+      AnchorSideTop.Control = divLabels
+      AnchorSideTop.Side = asrBottom
+      Left = 0
+      Height = 25
+      Top = 213
+      Width = 128
+      BorderSpacing.Top = 8
+      BorderWidth = 2
+      ButtonColorAutoSize = False
+      ButtonColorSize = 16
+      ButtonColor = clBlack
+      Caption = 'Label text color'
+      OnColorChanged = clbLabelTextColorColorChanged
+    end
+    object divLines: TDividerBevel
+      AnchorSideTop.Control = cbCyclic
+      AnchorSideTop.Side = asrBottom
+      Left = 0
+      Height = 15
+      Top = 70
+      Width = 141
+      Caption = 'Lines'
+      BorderSpacing.Top = 24
+      Font.Style = [fsBold]
+      LeftIndent = 10
+      ParentFont = False
+    end
+    object divLabels: TDividerBevel
+      AnchorSideTop.Control = clbPenColor
+      AnchorSideTop.Side = asrBottom
+      Left = 0
+      Height = 15
+      Top = 190
+      Width = 141
+      Caption = 'Labels'
+      BorderSpacing.Top = 24
+      Font.Style = [fsBold]
+      LeftIndent = 10
+      ParentFont = False
     end
   end
   object PluginManager: TMvPluginManager
