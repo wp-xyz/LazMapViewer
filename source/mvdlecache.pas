@@ -15,7 +15,7 @@ unit mvDLECache;
 interface
 
 uses
-  Classes, SysUtils, mvDownloadEngine;
+  Classes, SysUtils, mvTypes, mvDownloadEngine;
 
 type
   TMVDECache = class(TMVCustomDownloadEngine)
@@ -28,6 +28,7 @@ implementation
 procedure TMVDECache.InternalDownloadFile(const Url: String; AStream: TStream);
 begin
   // Do not download map tiles from the internet --> use only tiles from the cache.
+  Unused(Url, AStream);
 end;
 
 end.

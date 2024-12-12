@@ -21,7 +21,7 @@ interface
 
 uses
   Classes, SysUtils, IntfGraphics, Controls, Math, GraphType, FPImage,
-  mvTypes, mvGeoMath, mvJobQueue, mvMapProvider, mvDownloadEngine, mvCache, mvDragObj;
+  mvGeoMath, mvTypes, mvJobQueue, mvMapProvider, mvDownloadEngine, mvCache, mvDragObj;
 
 type
   TDrawTileEvent = procedure (const TileId: TTileId; X,Y: integer;
@@ -729,7 +729,7 @@ begin
   pt.Lon := Math.EnsureRange(APt.Lon, MIN_LONGITUDE, MAX_LONGITUDE);
 
   Z := 23 - AWin.Zoom;
-  zoomfac := ZoomFactor(Z);
+  zoomfac := mvGeomath.ZoomFactor(Z);
   cfmpx := IntPower(2, 31);
   cfmpm := cfmpx / EARTH_CIRCUMFERENCE;
   px := (EARTH_CIRCUMFERENCE/2 + EARTH_EQUATORIAL_RADIUS * pt.LonRad) * cfmpm / zoomfac;
@@ -1160,8 +1160,8 @@ begin
       // is not valid
       begin
         previewdrawn := False;
-        py := AWin.Y + Y * TileSize.CY;
-        px := AWin.X + X * TileSize.CX;
+        py := AWin.Y {%H-}+ Y * TileSize.CY;
+        px := AWin.X {%H-}+ X * TileSize.CX;
         if FDrawPreviewTiles then
         begin
           if IsValidTile(AWin, Tiles[iTile]) then  // Invalid tiles probably will not be found in the cache
@@ -1354,8 +1354,6 @@ begin
 end;
 
 procedure TMapViewerEngine.SetZoom(AValue: integer; AZoomToCursor: Boolean);
-var
-  Allow: Boolean;
 begin
   if MapWin.Zoom = AValue then Exit;
 

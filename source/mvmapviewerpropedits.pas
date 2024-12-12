@@ -100,8 +100,8 @@ implementation
 
 uses
   System.UITypes, Dialogs, IDEWindowIntf, LazIDEIntf, StrUtils, mvMapViewer,
-  mvGpsObj, mvLayersPropEditForm, mvEngine, mvMapViewerPathEditDsgForm,
-  mvPluginCore, mvPluginEditors;
+  mvGpsObj, mvLayersPropEditForm, mvEngine, mvGeoMath,
+  mvMapViewerPathEditDsgForm, mvPluginCore;
 
 const
   sNONE = '(none)';

@@ -68,6 +68,11 @@ Type
 
 function RealPoint(Lat, Lon: Double): TRealPoint;
 
+// Call this to silence 'parameter is unused' hint
+procedure Unused(const A1);
+procedure Unused(const A1, A2);
+procedure Unused(const A1, A2, A3);
+
 
 implementation
 
@@ -379,6 +384,20 @@ begin
   CyclicUnion(TopLeft.Lon, BottomRight.Lon, Area.TopLeft.Lon, Area.BottomRight.Lon, L, R);
   Result.Init(L, T, R, B);
 end;
+
+{$PUSH}{$HINTS OFF}
+procedure Unused(const A1);
+begin
+end;
+
+procedure Unused(const A1, A2);
+begin
+end;
+
+procedure Unused(const A1, A2, A3);
+begin
+end;
+{$POP}
 
 end.
 

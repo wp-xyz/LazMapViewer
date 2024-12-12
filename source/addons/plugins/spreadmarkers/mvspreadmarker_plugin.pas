@@ -121,9 +121,9 @@ type
     FOptions : TSpreadMarkerOptions;
     function GetSpreadModeActive(AMapView : TMapView) : Boolean;
     function GetSpreadMarkerCount(AMapView : TMapView) : Integer;
-    function GetSpreadMarkerOfsCenterX(AMapView : TMapView; AIndex : Integer): Integer;
-    function GetSpreadMarkerOfsCenterY(AMapView : TMapView; AIndex : Integer): Integer;
-    function GetSpreadMarkerOrgPositions(AMapView : TMapView; AIndex : Integer): TRealPoint;
+    function GetSpreadMarkerOfsCenterX(AMapView : TMapView; {%H-}AIndex : Integer): Integer;
+    function GetSpreadMarkerOfsCenterY(AMapView : TMapView; {%H-}AIndex : Integer): Integer;
+    function GetSpreadMarkerOrgPositions(AMapView : TMapView; {%H-}AIndex : Integer): TRealPoint;
     function GetSpreadMarkers(AMapView : TMapView; AIndex : Integer) : TGPSPoint;
     procedure SetMarkerSpreadDelayMS(Value : Integer);
     procedure SetMarkerCollapseDelayMS(Value : Integer);
@@ -141,16 +141,16 @@ type
   protected
 //    procedure MouseDown(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
 //      X, Y: Integer; var Handled: Boolean); override;
-    procedure MouseMove(AMapView: TMapView; AShift: TShiftState; X,Y: Integer;
-      var Handled: Boolean); override;
+    procedure MouseMove(AMapView: TMapView; {%H-}AShift: TShiftState; X,Y: Integer;
+      var {%H-}Handled: Boolean); override;
 //    procedure MouseUp(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
 //      X, Y: Integer; var Handled: Boolean); override;
-    procedure ZoomChange(AMapView: TMapView; var Handled: Boolean); override;
+    procedure ZoomChange(AMapView: TMapView; var {%H-}Handled: Boolean); override;
     procedure AfterPaint(AMapView: TMapView; var Handled: Boolean); override;
-    procedure AfterDrawObjects(AMapView: TMapView; var Handled: Boolean); override;
+    procedure AfterDrawObjects(AMapView: TMapView; var {%H-}Handled: Boolean); override;
     procedure GPSItemsModified(AMapView: TMapView; ChangedList: TGPSObjectList;
                                ActualObjs: TGPSObjList; Adding: Boolean;
-                               var Handled : Boolean);override;
+                               var {%H-}Handled : Boolean);override;
 
     function CreateMultiMapsPluginData : TMvMultiMapsPluginData;override;
 
@@ -443,7 +443,7 @@ begin
   sd := TSpreadMarkerPluginData(MapViewDataItem[AMapView]);
   if not Assigned(sd) then
   begin
-    FillChar(ld,SizeOf(ld),0);
+    FillChar(ld{%H-},SizeOf(ld),0);
     SetMapViewData(AMapView,ld,SizeOf(ld));
   end;
   sd := TSpreadMarkerPluginData(MapViewDataItem[AMapView]);
@@ -494,7 +494,7 @@ begin
   sd := TSpreadMarkerPluginData(MapViewDataItem[AMapView]);
   if not Assigned(sd) then
   begin
-    FillChar(ld,SizeOf(ld),0);
+    FillChar(ld{%H-},SizeOf(ld),0);
     SetMapViewData(AMapView,ld,SizeOf(ld));
   end;
   sd := TSpreadMarkerPluginData(MapViewDataItem[AMapView]);

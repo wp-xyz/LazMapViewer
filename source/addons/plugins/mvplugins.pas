@@ -5,7 +5,7 @@ unit mvPlugins;
 interface
 
 uses
-  Classes, SysUtils, Contnrs, Math,
+  Classes, SysUtils, Math,
   Graphics, Controls, LCLIntf, LazLoggerBase,
   mvMapViewer, mvDrawingEngine, mvPluginCore, mvGPSObj, mvGeoMath, mvTypes;
 

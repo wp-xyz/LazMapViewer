@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, StrUtils, Math, LazLoggerBase,
   Controls, Dialogs, Contnrs,
-  mvMapViewer, mvGpsObj, mvClassRegistration;
+  mvMapViewer, mvTypes, mvGpsObj, mvClassRegistration;
 
 type
   TMvCustomPlugin = class;
@@ -47,6 +47,8 @@ type
     procedure AfterPaint(AMapView: TMapView; var Handled: Boolean); virtual;
     procedure BeforeDrawObjects(AMapView: TMapView; var Handled: Boolean); virtual;
     procedure CenterMove(AMapView: TMapView; var Handled: Boolean); virtual;
+    procedure GPSItemsModified(AMapView: TMapView; ModifiedList: TGPSObjectList;
+      ActualObjs: TGPSObjList; Adding: Boolean; var Handled : Boolean);virtual;
     procedure MouseDown(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
       X, Y: Integer; var Handled: Boolean); virtual;
     procedure MouseEnter(AMapView: TMapView; var Handled: Boolean); virtual;
@@ -54,15 +56,12 @@ type
     procedure MouseMove(AMapView: TMapView; AShift: TShiftState; X,Y: Integer;
       var Handled: Boolean); virtual;
     procedure MouseUp(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
-      X, Y: Integer; var Handled: Boolean); virtual;
+      X,Y: Integer; var Handled: Boolean); virtual;
     procedure Notification(AComponent: TComponent; Operation: TOperation); override;
     procedure ZoomChange(AMapView: TMapView; var Handled: Boolean); virtual;
   //  procedure ZoomChanging(AMapView: TMapView; NewZoom: Integer; var Allow, Handled: Boolean); virtual;
     { GPSItemsModified is called if one of the GPSList of the MapView changed their content.
       ActualObjs contains the affected objs, but may nil }
-    procedure GPSItemsModified(AMapView: TMapView; ModifiedList: TGPSObjectList;
-                               ActualObjs: TGPSObjList; Adding: Boolean;
-                               var Handled : Boolean);virtual;
     procedure Update; virtual;
   protected
     property MapView: TMapView read FMapView write SetMapView;
@@ -251,18 +250,22 @@ end;
 
 procedure TMvCustomPlugin.AfterPaint(AMapView: TMapView; var Handled: Boolean);
 begin
+  Unused(AMapView, Handled);
 end;
 
 procedure TMvCustomPlugin.AfterDrawObjects(AMapView: TMapView; var Handled: Boolean);
 begin
+  Unused(AMapView, Handled);
 end;
 
 procedure TMvCustomPlugin.BeforeDrawObjects(AMapView: TMapView; var Handled: Boolean);
 begin
+  Unused(AMapView, Handled);
 end;
 
 procedure TMvCustomPlugin.CenterMove(AMapView: TMapView; var Handled: Boolean);
 begin
+  Unused(AMapView, Handled);
 end;
 
 function TMvCustomPlugin.GetIndex: Integer;
@@ -278,6 +281,14 @@ begin
   Result := FPluginManager;
 end;
 
+procedure TMvCustomPlugin.GPSItemsModified(AMapView: TMapView;
+  ModifiedList: TGPSObjectList; ActualObjs: TGPSObjList; Adding: Boolean;
+  var Handled: Boolean);
+begin
+  Unused(AMapView, Handled);
+  Unused(ModifiedList, ActualObjs, Adding);
+end;
+
 function TMvCustomPlugin.HasParent: Boolean;
 begin
   Result := true;
@@ -286,24 +297,32 @@ end;
 procedure TMvCustomPlugin.MouseDown(AMapView: TMapView; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer; var Handled: Boolean);
 begin
+  Unused(AMapView, Handled, Button);
+  Unused(Shift, X, Y);
 end;
 
 procedure TMvCustomPlugin.MouseEnter(AMapView: TMapView; var Handled: Boolean);
 begin
+  Unused(AMapView, Handled);
 end;
 
 procedure TMvCustomPlugin.MouseLeave(AMapView: TMapView; var Handled: Boolean);
 begin
+  Unused(AMapView, Handled);
 end;
 
 procedure TMvCustomPlugin.MouseMove(AMapView: TMapView; AShift: TShiftState;
   X, Y: Integer; var Handled: Boolean);
 begin
+  Unused(AMapView, Handled);
+  Unused(AShift, X, Y);
 end;
 
 procedure TMvCustomPlugin.MouseUp(AMapView: TMapView; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer; var Handled: Boolean);
 begin
+  Unused(AMapView, Handled, Button);
+  Unused(Shift, X, Y);
 end;
 
 procedure TMvCustomPlugin.Notification(AComponent: TComponent; Operation: TOperation);
@@ -372,12 +391,7 @@ end;
 
 procedure TMvCustomPlugin.ZoomChange(AMapView: TMapView; var Handled: Boolean);
 begin
-end;
-
-procedure TMvCustomPlugin.GPSItemsModified(AMapView: TMapView;
-  ModifiedList: TGPSObjectList; ActualObjs: TGPSObjList; Adding: Boolean;
-  var Handled: Boolean);
-begin
+  Unused(AMapView, Handled);
 end;
 
 {
@@ -449,7 +463,6 @@ function TMvMultiMapsPlugin.GetMapViewDataItem(Value: TMapView
   ): TMvMultiMapsPluginData;
 var
   ndx : Integer;
-  di : TMvMultiMapsPluginData;
 begin
   Result := Nil;
   ndx := MapViewDataIndex[Value];
@@ -476,7 +489,6 @@ function TMvMultiMapsPlugin.GetMapViewData(const AMapView: TMapView; out AData;
   const AMaxDataSize: Integer): Integer;
 var
   ds : Integer;
-  ndx : Integer;
   di : TMvMultiMapsPluginData;
 begin
   Result := 0;
@@ -812,7 +824,7 @@ begin
   begin
     plugin := Item[i];
     if HandlePlugin(plugin, AMapView) then
-      plugin.GPSItemsModified(AMapView,ModifiedList,ActualObjs,Adding, Handled);
+      plugin.GPSItemsModified(AMapView,ModifiedList,ActualObjs,Adding, Handled{%H-});
   end;
   inherited GPSItemsModified(AMapView,ModifiedList,ActualObjs,Adding, lHandled);
 end;
