@@ -181,6 +181,81 @@ object Form1: TForm1
       Caption = 'Grid Line color'
       OnColorChanged = clbPenColorColorChanged
     end
+    object GroupBox1: TGroupBox
+      AnchorSideLeft.Control = ParamsPanel
+      AnchorSideTop.Control = tbOpacity
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = ParamsPanel
+      AnchorSideRight.Side = asrBottom
+      Left = 0
+      Height = 85
+      Top = 216
+      Width = 128
+      Anchors = [akTop, akLeft, akRight]
+      AutoSize = True
+      BorderSpacing.Top = 8
+      Caption = 'Label Positions'
+      ClientHeight = 65
+      ClientWidth = 124
+      TabOrder = 4
+      object cbLeft: TCheckBox
+        AnchorSideLeft.Control = GroupBox1
+        AnchorSideTop.Control = cbTop
+        AnchorSideTop.Side = asrBottom
+        Left = 12
+        Height = 19
+        Top = 19
+        Width = 35
+        BorderSpacing.Left = 12
+        Caption = 'left'
+        Checked = True
+        State = cbChecked
+        TabOrder = 0
+        OnChange = LabelPositionChange
+      end
+      object cbTop: TCheckBox
+        AnchorSideLeft.Control = GroupBox1
+        AnchorSideLeft.Side = asrCenter
+        AnchorSideTop.Control = GroupBox1
+        Left = 44
+        Height = 19
+        Top = 0
+        Width = 36
+        Caption = 'top'
+        Checked = True
+        State = cbChecked
+        TabOrder = 1
+        OnChange = LabelPositionChange
+      end
+      object cbRight: TCheckBox
+        AnchorSideTop.Control = cbTop
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = GroupBox1
+        AnchorSideRight.Side = asrBottom
+        Left = 69
+        Height = 19
+        Top = 19
+        Width = 43
+        Anchors = [akTop, akRight]
+        BorderSpacing.Right = 12
+        Caption = 'right'
+        TabOrder = 2
+        OnChange = LabelPositionChange
+      end
+      object cbBottom: TCheckBox
+        AnchorSideLeft.Control = cbTop
+        AnchorSideTop.Control = cbLeft
+        AnchorSideTop.Side = asrBottom
+        Left = 44
+        Height = 19
+        Top = 38
+        Width = 58
+        BorderSpacing.Bottom = 8
+        Caption = 'bottom'
+        TabOrder = 3
+        OnChange = LabelPositionChange
+      end
+    end
   end
   object PluginManager: TMvPluginManager
     Left = 314

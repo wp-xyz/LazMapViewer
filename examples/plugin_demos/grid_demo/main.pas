@@ -13,9 +13,14 @@ type
   TForm1 = class(TForm)
     cbCyclic: TCheckBox;
     cbEnabled: TCheckBox;
+    cbLeft: TCheckBox;
+    cbTop: TCheckBox;
+    cbRight: TCheckBox;
+    cbBottom: TCheckBox;
     clbBackgroundColor: TColorButton;
     clbPenColor: TColorButton;
     cmbIncrement: TComboBox;
+    GroupBox1: TGroupBox;
     lblIncrement: TLabel;
     lblOpacity: TLabel;
     MapView: TMapView;
@@ -24,6 +29,7 @@ type
     tbOpacity: TTrackBar;
     procedure cbEnabledChange(Sender: TObject);
     procedure cbCyclicChange(Sender: TObject);
+    procedure LabelPositionChange(Sender: TObject);
     procedure clbBackgroundColorColorChanged(Sender: TObject);
     procedure clbPenColorColorChanged(Sender: TObject);
     procedure cmbIncrementChange(Sender: TObject);
@@ -56,6 +62,32 @@ end;
 procedure TForm1.cbCyclicChange(Sender: TObject);
 begin
   MapView.Cyclic := cbCyclic.Checked;
+end;
+
+procedure TForm1.LabelPositionChange(Sender: TObject);
+begin
+  with (PluginManager.PluginList[0] as TGridPlugin).GridLabels do
+  begin
+    if cbLeft.Checked then
+      Position := Position + [glpLeft]
+    else
+      Position := Position - [glpLeft];
+
+    if cbTop.Checked then
+      Position := Position + [glpTop]
+    else
+      Position := Position - [glpTop];
+
+    if cbRight.Checked then
+      Position := Position + [glpRight]
+    else
+      Position := Position - [glpRight];
+
+    if cbBottom.Checked then
+      Position := Position + [glpBottom]
+    else
+      Position := Position - [glpBottom];
+  end;
 end;
 
 procedure TForm1.cbEnabledChange(Sender: TObject);

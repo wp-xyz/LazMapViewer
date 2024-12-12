@@ -36,6 +36,26 @@ type
 
   { TGridPlugin - draws a degrees grid }
 
+  TGridPlugin = class;
+  TMvGridLabelPosition = (glpLeft, glpTop, glpRight, glpBottom);
+  TMvGridLabelPositions = set of TMvGridLabelPosition;
+
+  TMvGridLabels = class(TPersistent)
+  private
+    FPlugin: TGridPlugin;
+    FPosition: TMvGridLabelPositions;
+    FDistance: Integer;
+    procedure SetDistance(AValue: Integer);
+    procedure SetPosition(AValue: TMvGridLabelpositions);
+  protected
+    procedure Update;
+  public
+    constructor Create(AOwner: TGridPlugin);
+  published
+    property Distance: Integer read FDistance write SetDistance default 0;
+    property Position: TMvGridLabelPositions read FPosition write SetPosition default [glpLeft, glpTop];
+  end;
+
   TGridPlugin = class(TMvPlugin)
   private
     const
@@ -49,6 +69,7 @@ type
     FIncrement: Double;
     FOpacity: Single;
     FPen: TPen;
+    FGridLabels: TMvGridLabels;
     FMaxDistance: Integer;
     FMinDistance: Integer;
     procedure SetBackgroundColor(AValue: TColor);
@@ -65,7 +86,7 @@ type
     function CalcIncrement(AMapView: TMapView; Area: TRealArea): Double;
     function CalcVisibleArea(AMapView: TMapView): TRealArea;
     procedure DrawGridLine(ADrawingEngine: TMvCustomDrawingEngine;
-      RealP1, RealP2: TRealPoint; P1, P2: TPoint; AMapRect: TRect);
+      AValue: Double; P1, P2: TPoint; AMapRect: TRect);
     procedure DrawHorGridLines(AMapView: TMapView; Area: TRealArea; AMapRect: TRect; AIncrement: Double);
     procedure DrawVertGridlines(AMapView: TMapView; Area: TRealArea; AMapRect: TRect; AIncrement: Double);
     function GetLatLonAsString(AValue: Double; ACoordType: TGridCoordType): String; virtual;
@@ -75,6 +96,7 @@ type
   published
     property BackgroundColor: TColor read FBackgroundColor write SetBackgroundColor default clWhite;
     property Font: TFont read FFont write SetFont;
+    property GridLabels: TMvGridLabels read FGridLabels write FGridLabels;
     property Increment: Double read FIncrement write SetIncrement; // 0 = automatic increment detection
     property MaxDistance: Integer read FMaxDistance write SetMaxDistance default DEFAULT_MAX_DISTANCE;
     property MinDistance: Integer read FMinDistance write SetMinDistance default DEFAULT_MIN_DISTANCE;
@@ -308,6 +330,39 @@ begin
 end;
 
 
+{ TMvGridLabels }
+
+constructor TMvGridLabels.Create(AOwner: TGridPlugin);
+begin
+  inherited Create;
+  FPlugin := AOwner;
+  FPosition := [glpLeft, glpTop];
+end;
+
+procedure TMvGridLabels.SetDistance(AValue: Integer);
+begin
+  if FDistance <> AValue then
+  begin
+    FDistance := AValue;
+    FPlugin.Update;
+  end;
+end;
+
+procedure TMvGridLabels.SetPosition(AValue: TMvGridLabelPositions);
+begin
+  if FPosition <> AValue then
+  begin
+    FPosition := AValue;
+    Update;
+  end;
+end;
+
+procedure TMvGridLabels.Update;
+begin
+  FPlugin.Update;
+end;
+
+
 { TGridPlugin }
 
 constructor TGridPlugin.Create(AOwner: TComponent);
@@ -319,12 +374,14 @@ begin
   FFont.OnChange := @Changed;
   FPen := TPen.Create;
   FPen.OnChange := @Changed;
+  FGridLabels := TMvGridLabels.Create(Self);
   FMaxDistance := DEFAULT_MAX_DISTANCE;
   FMinDistance := DEFAULT_MIN_DISTANCE;
 end;
 
 destructor TGridPlugin.Destroy;
 begin
+  FGridLabels.Free;
   FPen.Free;
   FFont.Free;
   inherited;
@@ -428,57 +485,127 @@ begin
 end;
 
 procedure TGridPlugin.DrawGridLine(ADrawingEngine: TMvCustomDrawingEngine;
-  RealP1, RealP2: TRealPoint; P1, P2: TPoint; AMapRect: TRect);
+  AValue: Double; P1, P2: TPoint; AMapRect: TRect);
 var
   s: String;
-  value: Double;
   txtSize: TSize;
-  txtRect: TRect;
+  txtRect: array[TMvGridLabelPosition] of TRect;
+  glp: TMvGridLabelPosition;
   coordType: TGridCoordType;
 begin
-  if RealP1.Lat = RealP2.Lat then
+  if P1.Y = P2.Y then
   begin
-    value := RealP1.Lat;
     coordType := gctLatitude;
+    if (P1.Y < AMapRect.Top) or (P2.Y > AMapRect.Bottom) then   // Pixel coordinates grow downwards
+      exit;
   end else
-  if RealP1.Lon = RealP2.Lon then
+  if P1.X = P2.X then
   begin
-    value := NormalizeLon(RealP1.Lon);
     coordType := gctLongitude;
+    AValue := NormalizeLon(AValue);
+    if (P1.X < AMapRect.Left) or (P2.X > AMapRect.Right) then
+      exit;
   end else
     exit;
 
-  s := GetLatLonAsString(value, coordType);
+  // Calculate label text and position
+  s := GetLatLonAsString(AValue, coordType);
   txtSize := ADrawingEngine.TextExtent(s);
-  txtRect := Rect(0, 0, txtSize.CX, txtSize.CY);
-
-  ADrawingEngine.Opacity := 1.0;
   case coordType of
-    gctLatitude:  // horizontal lines
+    gctLatitude:
       begin
-        OffsetRect(txtRect, P1.X, P1.Y - txtSize.CY div 2);
-        if txtRect.Top < AMapRect.Top then P1.Y := AMapRect.Top;
-        if txtRect.Right > AMapRect.Bottom then P1.Y := AMapRect.Bottom - txtSize.CY;
-        ADrawingEngine.Line(txtRect.Right, P1.Y, P2.X, P2.Y);
+        if (glpLeft in FGridLabels.Position) and InRange(P1.X, AMapRect.Left, AMapRect.Right) then
+        begin
+          txtRect[glpLeft] := Rect(0, 0, txtSize.CX, txtSize.CY);
+          OffsetRect(txtRect[glpLeft], P1.X, P1.Y - txtSize.CY div 2);
+        end else
+          txtRect[glpLeft] := Rect(AMapRect.Left, P1.Y, AMapRect.Left, P1.Y);
+        if (glpRight in FGridLabels.Position) and InRange(P1.X, AMapRect.Left, AMapRect.Right) then
+        begin
+          txtRect[glpRight] := Rect(0, 0, txtSize.CX, txtSize.CY);
+          OffsetRect(txtRect[glpRight], P2.X - txtSize.CY, P1.Y - txtSize.CY div 2);
+        end else
+          txtRect[glpRight] := Rect(AMapRect.Right, P1.Y, AMapRect.Right, P1.Y);
       end;
-    gctLongitude:  // vertical lines
+    gctLongitude:
       begin
-        OffsetRect(txtRect, P1.X - txtSize.CX div 2, P1.Y);
-        ADrawingEngine.Line(P1.X, txtRect.Bottom, P2.X, P2.Y);
+        if (glpTop in FGridLabels.Position) then
+        begin
+          txtRect[glpTop] := Rect(0, 0, txtSize.CX, txtSize.CY);
+          OffsetRect(txtRect[glpTop], P1.X - txtSize.CX div 2, P1.Y);
+        end else
+          txtRect[glpTop] := Rect(P1.X, AMapRect.Top, P1.X, AMapRect.Top);
+        if (glpBottom in FGridLabels.Position) then
+        begin
+          txtRect[glpBottom] := Rect(0, 0, txtSize.CX, txtSize.CY);
+          OffsetRect(txtRect[glpBottom], P1.X - txtSize.CX div 2, P2.Y - txtSize.CY);
+        end else
+          txtRect[glpBottom] := Rect(P1.X, AMapRect.Bottom, P1.X, AMapRect.Bottom);
       end;
-  end;
+    end;
+    for glp in TMvGridLabelPositions do
+    begin
+      if txtRect[glp].Top < AMapRect.Top then OffsetRect(txtRect[glp], 0, AMapRect.Top - txtRect[glp].Top);
+      if txtRect[glp].Bottom > AMapRect.Bottom then OffsetRect(txtRect[glp], 0, AMapRect.Bottom - txtRect[glp].Bottom);
+      if txtRect[glp].Left < AMapRect.Left then OffsetRect(txtRect[glp], AMapRect.Left - txtRect[glp].Left, 0);
+      if txtRect[glp].Right > AMapRect.Right then OffsetRect(txtRect[glp], AMapRect.Right - txtRect[glp].Right, 0);
+    end;
 
-  // Semi-transparent background
-  if FBackgroundColor <> clNone then
-  begin
-    ADrawingEngine.Opacity := FOpacity;
-    ADrawingEngine.BrushStyle := bsSolid;
-    ADrawingEngine.FillRect(txtRect.Left, txtRect.Top, txtRect.Right, txtRect.Bottom);
-  end;
+    // Draw latitude/longitude lines
+    ADrawingEngine.Opacity := 1.0;
+    case coordType of
+      gctLatitude: ADrawingEngine.Line(txtRect[glpLeft].Right, P1.Y, txtRect[glpRight].Left, P2.Y);
+      gctLongitude: ADrawingEngine.line(P1.X, txtRect[glpTop].Bottom, P2.X, txtRect[glpBottom].Top);
+    end;
 
-  // Draw grid coordinate as text
-  ADrawingEngine.BrushStyle := bsClear;
-  ADrawingEngine.TextOut(txtRect.Left, txtRect.Top, s);
+    // Draw (semi-transparent) background
+    if FBackgroundColor <> clNone then
+    begin
+      ADrawingEngine.Opacity := FOpacity;
+      ADrawingEngine.BrushStyle := bsSolid;
+      case coordType of
+        gctLatitude:
+          begin
+            if (glpLeft in FGridLabels.Position) then
+              with txtRect[glpLeft] do
+                ADrawingEngine.FillRect(Left, Top, Right, Bottom);
+            if (glpRight in FGridLabels.Position) then
+              with txtRect[glpRight] do
+                ADrawingEngine.FillRect(Left, Top, Right, Bottom);
+          end;
+        gctLongitude:
+          begin
+            if (glpTop in FGridLabels.Position) then
+              with txtRect[glpTop] do
+                ADrawingEngine.FillRect(Left, top, Right, Bottom);
+            if (glpBottom in FGridLabels.Position) then
+              with txtRect[glpBottom] do
+                ADrawingEngine.FillRect(Left, Top, Right, Bottom);
+          end;
+      end;
+    end;
+
+    // Draw grid coordinates as text
+    ADrawingEngine.BrushStyle := bsClear;
+    ADrawingEngine.Opacity := 1.0;
+    case coordType of
+      gctLatitude:
+        begin
+          if glpLeft in FGridlabels.Position then
+            with txtRect[glpLeft] do
+              ADrawingEngine.TextOut(Left, Top, s);
+          if glpRight in FGridLabels.Position then
+            with txtRect[glpRight] do
+              ADrawingEngine.TextOut(Left, Top, s);
+        end;
+      gctLongitude:
+        begin
+          if glpTop in FGridLabels.Position then
+            with txtRect[glpTop] do ADrawingEngine.TextOut(Left, Top, s);
+          if glpBottom in FGridLabels.Position then
+            with txtRect[glpBottom] do ADrawingEngine.TextOut(Left, Top, s);
+        end;
+    end;
 end;
 
 { Draws horizontal grid lines (constant longitudes)
@@ -505,7 +632,7 @@ begin
       P1.X := 0;
       P2.X := AMapView.ClientWidth;
     end;
-    DrawGridLine(AMapView.DrawingEngine, rP1, rP2, P1, P2, AMapRect);
+    DrawGridLine(AMapView.DrawingEngine, rP1.Lat, P1, P2, AMapRect);
     rP1.Lat := rP1.Lat + AIncrement;
     rP2.Lat := rP2.Lat + AIncrement;
   end;
@@ -522,7 +649,7 @@ begin
       P1.X := 0;
       P2.X := AMapView.ClientWidth;
     end;
-    DrawGridLine(AMapView.DrawingEngine, rP1, rP2, P1, P2, AMapRect);
+    DrawGridLine(AMapView.DrawingEngine, rP1.Lat, P1, P2, AMapRect);
     rP1.Lat := rP1.Lat - AIncrement;
     rP2.Lat := rP2.Lat - AIncrement;
   end;
@@ -567,9 +694,7 @@ begin
   // Find and draw vertical grid lines while going to the left
   lonPx := P1.X - incrPx;
   while lonPx > lonPxLeft do begin
-    rP1.Lon := lon;
-    rP2.Lon := lon;
-    DrawGridLine(AMapView.DrawingEngine, rP1, rP2, Point(lonPx, P1.Y), Point(lonPx, P2.Y), AMapRect);
+    DrawGridLine(AMapView.DrawingEngine, lon, Point(lonPx, P1.Y), Point(lonPx, P2.Y), AMapRect);
     lon := lon - AIncrement;
     lonPx := lonPx - incrPx;
   end;
@@ -578,9 +703,7 @@ begin
   lonPx := P1.X;
   while lonPx < lonPxRight do
   begin
-    rP1.Lon := lon;
-    rP2.Lon := lon;
-    DrawGridLine(AMapView.DrawingEngine, rP1, rP2, Point(lonPx, P1.Y), Point(lonPx, P2.Y), AMapRect);
+    DrawGridLine(AMapView.DrawingEngine, lon, Point(lonPx, P1.Y), Point(lonPx, P2.Y), AMapRect);
     lon := lon + AIncrement;
     lonPx := lonPx + incrPx;
   end;
@@ -608,7 +731,7 @@ begin
       else if AValue < 0 then
         Result := Result + ' S';
     gctLongitude:
-      if abs(AValue) <> 180 then
+      if (abs(AValue) <> 180) and (AValue <> 0) then
       begin
         if (AValue > 0) then
           Result := Result + ' E'
