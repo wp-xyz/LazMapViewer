@@ -1,20 +1,22 @@
 object Form1: TForm1
   Left = 314
-  Height = 568
+  Height = 524
   Top = 130
-  Width = 871
+  Width = 884
   Caption = 'Grid Plugin Demo'
-  ClientHeight = 568
-  ClientWidth = 871
+  ClientHeight = 524
+  ClientWidth = 884
   LCLVersion = '4.99.0.0'
   OnCreate = FormCreate
   object MapView: TMapView
     Left = 157
-    Height = 568
-    Top = 0
-    Width = 714
+    Height = 508
+    Top = 8
+    Width = 719
     Active = True
     Align = alClient
+    Anchors = [akTop, akRight, akBottom]
+    BorderSpacing.Around = 8
     Cyclic = True
     DownloadEngine = MapView.BuiltInDLE
     DrawingEngine = MapView.BuiltInDE
@@ -25,18 +27,18 @@ object Form1: TForm1
     MapCenter.Latitude = 49
     PluginManager = PluginManager
     UseThreads = True
-    Zoom = 8
+    Zoom = 3
   end
   object ParamsPanel: TPanel
     Left = 8
-    Height = 552
+    Height = 508
     Top = 8
     Width = 141
     Align = alLeft
     AutoSize = True
     BorderSpacing.Around = 8
     BevelOuter = bvNone
-    ClientHeight = 552
+    ClientHeight = 508
     ClientWidth = 141
     TabOrder = 0
     object cbEnabled: TCheckBox

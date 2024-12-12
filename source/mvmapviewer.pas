@@ -703,6 +703,8 @@ type
     published
       property Active: boolean read FActive write SetActive default false;
       property Align;
+      property Anchors;
+      property BorderSpacing;
       property CacheOnDisk: boolean read GetCacheOnDisk write SetCacheOnDisk default true;
       property CacheLocation: TCacheLocation read FCacheLocation write SetCacheLocation default clProfile;
       property CachePath: String read FCachePath write SetCachePath stored IsCachePathStored;
