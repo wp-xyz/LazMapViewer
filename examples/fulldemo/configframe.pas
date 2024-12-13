@@ -8,7 +8,7 @@ uses
   Classes, SysUtils, IniFiles,
   Graphics,
   Forms, Controls, StdCtrls, Buttons, Dialogs, ExtCtrls, ColorBox, ExtDlgs, Spin,
-  mvMapViewer, mvEngine,
+  mvMapViewer, mvEngine, mvPluginCore, mvMapGridPlugin, mvMapScalePlugin,
   globals;
 
 type
@@ -28,6 +28,8 @@ type
     cbDoubleBuffer: TCheckBox;
     cbPOITextBgColor: TColorBox;
     cbPreviewTiles: TCheckBox;
+    cbMapScale: TCheckBox;
+    cbMapGrid: TCheckBox;
     cmbProviders: TComboBox;
     cbUseThreads: TCheckBox;
     cbZoomToCursor: TCheckBox;
@@ -43,6 +45,9 @@ type
     lblProxyPassword: TLabel;
     lblProxyPort: TLabel;
     lblProxyUserName: TLabel;
+    PluginManager: TMvPluginManager;
+    MapGridPlugin: TMapGridPlugin;
+    MapScalePlugin: TMapScalePlugin;
     OpenPictureDialog: TOpenPictureDialog;
     rbNoProxy: TRadioButton;
     rbProxyData: TRadioButton;
@@ -56,6 +61,8 @@ type
     procedure cbCyclicViewChange(Sender: TObject);
     procedure cbDebugTilesChange(Sender: TObject);
     procedure cbDoubleBufferChange(Sender: TObject);
+    procedure cbMapGridChange(Sender: TObject);
+    procedure cbMapScaleChange(Sender: TObject);
     procedure cbPOITextBgColorChange(Sender: TObject);
     procedure cbPreviewTilesChange(Sender: TObject);
     procedure cbUseThreadsChange(Sender: TObject);
@@ -167,6 +174,16 @@ end;
 procedure TCfgFrame.cbDoubleBufferChange(Sender: TObject);
 begin
   MapView.DoubleBuffered := cbDoubleBuffer.Checked;
+end;
+
+procedure TCfgFrame.cbMapGridChange(Sender: TObject);
+begin
+  MapGridPlugin.Enabled := cbMapGrid.Checked;
+end;
+
+procedure TCfgFrame.cbMapScaleChange(Sender: TObject);
+begin
+  MapScalePlugin.Enabled := cbMapScale.Checked;
 end;
 
 procedure TCfgFrame.cbPOITextBgColorChange(Sender: TObject);
@@ -296,11 +313,14 @@ begin
   //sgLayers.Columns[1].PickList.Assign(CbProviders.Items);    // << --- FIX ME
   FMapView.DoubleBuffered := true;
   FMapView.Zoom := 1;
+  FMapView.PluginManager := PluginManager;
   cbZoomToCursor.Checked := FMapView.ZoomToCursor;
   cbUseThreads.Checked := FMapView.UseThreads;
   cbDoubleBuffer.Checked := FMapView.DoubleBuffered;
   cbPOITextBgColor.Selected := FMapView.POITextBgColor;
   cbPOITextBgColor.ItemHeight := cmbProviders.ItemHeight + 2;
+  cbMapGrid.Checked := MapGridPlugin.Enabled;
+  cbMapScale.Checked := MapScalePlugin.Enabled;
   clbBackColor.ButtonColor := FMapView.InactiveColor;
 
   FDrawGPSpointEvent := FMapView.OnDrawGPSPoint;

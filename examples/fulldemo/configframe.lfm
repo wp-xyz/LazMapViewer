@@ -1,9 +1,9 @@
 object CfgFrame: TCfgFrame
   Left = 0
-  Height = 682
+  Height = 604
   Top = 0
   Width = 287
-  ClientHeight = 682
+  ClientHeight = 604
   ClientWidth = 287
   TabOrder = 0
   DesignLeft = 1150
@@ -269,7 +269,7 @@ object CfgFrame: TCfgFrame
       Left = 10
       Height = 19
       Top = 42
-      Width = 74
+      Width = 73
       BorderSpacing.Top = 2
       Caption = 'Proxy data'
       TabOrder = 2
@@ -281,7 +281,7 @@ object CfgFrame: TCfgFrame
       Left = 10
       Height = 19
       Top = 0
-      Width = 67
+      Width = 66
       BorderSpacing.Left = 10
       Caption = 'No proxy'
       TabOrder = 0
@@ -294,7 +294,7 @@ object CfgFrame: TCfgFrame
       Left = 10
       Height = 19
       Top = 21
-      Width = 110
+      Width = 109
       BorderSpacing.Top = 2
       Caption = 'Use system proxy'
       Checked = True
@@ -393,12 +393,13 @@ object CfgFrame: TCfgFrame
   end
   object clbBackColor: TColorButton
     AnchorSideLeft.Control = cbCyclicView
-    AnchorSideTop.Control = cbDoubleBuffer
-    AnchorSideTop.Side = asrCenter
+    AnchorSideTop.Control = cbMapGrid
+    AnchorSideTop.Side = asrBottom
     Left = 120
     Height = 28
-    Top = 290
+    Top = 341
     Width = 108
+    BorderSpacing.Top = 4
     BorderWidth = 2
     ButtonColorAutoSize = False
     ButtonColorSize = 15
@@ -409,15 +410,16 @@ object CfgFrame: TCfgFrame
   end
   object Bevel1: TBevel
     AnchorSideLeft.Control = cbDebugTiles
-    AnchorSideTop.Control = cbDebugTiles
+    AnchorSideTop.Control = clbBackColor
     AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = Owner
     AnchorSideRight.Side = asrBottom
     Left = 4
     Height = 2
-    Top = 343
-    Width = 257
+    Top = 377
+    Width = 283
     Anchors = [akTop, akLeft, akRight]
-    BorderSpacing.Top = 6
+    BorderSpacing.Top = 8
     Shape = bsTopLine
   end
   object rgPOIMode: TRadioGroup
@@ -428,7 +430,7 @@ object CfgFrame: TCfgFrame
     AnchorSideRight.Side = asrBottom
     Left = 4
     Height = 128
-    Top = 351
+    Top = 385
     Width = 279
     Anchors = [akTop, akLeft, akRight]
     AutoFill = False
@@ -495,7 +497,7 @@ object CfgFrame: TCfgFrame
     AnchorSideTop.Side = asrBottom
     Left = 4
     Height = 30
-    Top = 487
+    Top = 521
     Width = 87
     BorderSpacing.Top = 8
     Caption = 'POI text font'
@@ -509,7 +511,7 @@ object CfgFrame: TCfgFrame
     AnchorSideTop.Side = asrCenter
     Left = 97
     Height = 15
-    Top = 495
+    Top = 529
     Width = 39
     BorderSpacing.Left = 6
     Caption = 'Backgr.'
@@ -524,7 +526,7 @@ object CfgFrame: TCfgFrame
     AnchorSideRight.Side = asrBottom
     Left = 142
     Height = 21
-    Top = 492
+    Top = 526
     Width = 141
     NoneColorColor = clWhite
     Style = [cbStandardColors, cbExtendedColors, cbIncludeNone, cbCustomColor, cbPrettyNames, cbCustomColors]
@@ -534,14 +536,49 @@ object CfgFrame: TCfgFrame
     TabOrder = 10
     OnChange = cbPOITextBgColorChange
   end
+  object cbMapScale: TCheckBox
+    AnchorSideLeft.Control = cbPreviewTiles
+    AnchorSideTop.Control = cbDoubleBuffer
+    Left = 120
+    Height = 19
+    Top = 295
+    Width = 71
+    Caption = 'Map scale'
+    Checked = True
+    State = cbChecked
+    TabOrder = 11
+    OnChange = cbMapScaleChange
+  end
+  object cbMapGrid: TCheckBox
+    AnchorSideLeft.Control = cbMapScale
+    AnchorSideTop.Control = cbDebugTiles
+    Left = 120
+    Height = 19
+    Top = 318
+    Width = 66
+    Caption = 'Map grid'
+    TabOrder = 12
+    OnChange = cbMapGridChange
+  end
   object OpenPictureDialog: TOpenPictureDialog
-    Left = 184
-    Top = 344
+    Left = 192
+    Top = 72
   end
   object FontDialog: TFontDialog
     MinFontSize = 0
     MaxFontSize = 0
     Left = 40
     Top = 528
+  end
+  object PluginManager: TMvPluginManager
+    Left = 224
+    Top = 288
+    object MapGridPlugin: TMapGridPlugin
+      Enabled = False
+      BackgroundOpacity = 0.550000011920929
+    end
+    object MapScalePlugin: TMapScalePlugin
+      ZoomMin = 5
+    end
   end
 end

@@ -6,8 +6,8 @@ interface
 
 uses
   Classes, SysUtils,
-  Forms, Controls, Graphics, Dialogs, ExtCtrls, StdCtrls,
-  mvMapViewer, mvPluginCore, mvMapScalePlugin;
+  Forms, Controls, Graphics, Dialogs, ExtCtrls, StdCtrls, Spin,
+  mvMapViewer, mvMapProvider, mvPluginCore, mvMapScalePlugin;
 
 type
 
@@ -15,17 +15,24 @@ type
 
   TForm1 = class(TForm)
     cbScaleVisible: TCheckBox;
+    gbZoomMin: TGroupBox;
+    Label1: TLabel;
+    lblCurrentZoom: TLabel;
     MapView1: TMapView;
     MvPluginManager1: TMvPluginManager;
     Panel1: TPanel;
     rgLengthUnits: TRadioGroup;
     rgScaleAlign: TRadioGroup;
+    seZoomMin: TSpinEdit;
     procedure cbScaleVisibleChange(Sender: TObject);
     procedure FormCreate(Sender: TObject);
+    procedure MapView1ZoomChange(Sender: TObject);
     procedure rgLengthUnitsClick(Sender: TObject);
     procedure rgScaleAlignClick(Sender: TObject);
+    procedure seZoomMinChange(Sender: TObject);
   private
     FScalePlugin: TMapScalePlugin;
+    procedure UpdateZoomInfo;
 
   public
 
@@ -41,8 +48,29 @@ implementation
 { TForm1 }
 
 procedure TForm1.FormCreate(Sender: TObject);
+var
+  P: TMapProvider;
+  zoomMin, zoomMax: Integer;
 begin
   FScalePlugin := TMapScalePlugin.Create(MvPluginManager1);
+
+  P := MapView1.Engine.MapProviderByName(MapView1.MapProvider);
+  P.GetZoomInfos(zoomMin, zoomMax);
+  seZoomMin.MaxValue := zoomMax;
+  seZoomMin.MinValue := zoomMin;
+  seZoomMin.Value := FScalePlugin.ZoomMin;
+
+  UpdateZoomInfo;
+end;
+
+procedure TForm1.MapView1ZoomChange(Sender: TObject);
+begin
+  UpdateZoomInfo;
+end;
+
+procedure TForm1.cbScaleVisibleChange(Sender: TObject);
+begin
+  FScalePlugin.Enabled := cbScaleVisible.Checked;
 end;
 
 procedure TForm1.rgLengthUnitsClick(Sender: TObject);
@@ -69,10 +97,16 @@ begin
   FScalePlugin.AlignSet := alignSet;
 end;
 
-procedure TForm1.cbScaleVisibleChange(Sender: TObject);
+procedure TForm1.seZoomMinChange(Sender: TObject);
 begin
-  FScalePlugin.Enabled := cbScaleVisible.Checked;
+  FScalePlugin.ZoomMin := seZoomMin.Value;
 end;
+
+procedure TForm1.UpdateZoomInfo;
+begin
+  lblCurrentZoom.Caption := Format('Current zoom level %d', [MapView1.Zoom]);
+end;
+
 
 end.
 
