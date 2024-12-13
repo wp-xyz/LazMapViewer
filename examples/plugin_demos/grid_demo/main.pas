@@ -7,7 +7,7 @@ interface
 uses
   Classes, ComCtrls, DividerBevel, ExtCtrls, Spin, StdCtrls, SysUtils,
   Forms, Controls, Graphics, Dialogs, //LazLogger,
-  mvMapViewer, mvEngine, mvPluginCore, mvPlugins;
+  mvMapViewer, mvTypes, mvEngine, mvPluginCore, mvPlugins;
 
 type
   TForm1 = class(TForm)
@@ -24,6 +24,8 @@ type
     divLines: TDividerBevel;
     divLabels: TDividerBevel;
     GroupBox1: TGroupBox;
+    ImageList1: TImageList;
+    Label1: TLabel;
     lblLabelDistance: TLabel;
     lblIncrement: TLabel;
     lblOpacity: TLabel;
@@ -40,9 +42,12 @@ type
     procedure clbPenColorColorChanged(Sender: TObject);
     procedure cmbIncrementChange(Sender: TObject);
     procedure FormCreate(Sender: TObject);
+    procedure MapViewMouseUp(Sender: TObject; Button: TMouseButton; Shift:
+      TShiftState; X, Y: Integer);
     procedure seLabelDistanceChange(Sender: TObject);
     procedure tbOpacityChange(Sender: TObject);
   private
+    procedure AddPointOfInterest(X, Y: Integer);
 
   public
 
@@ -57,6 +62,7 @@ implementation
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
+  Randomize;
   MapView.Zoom := 5;
   with TGridPlugin.Create(PluginManager) do
   begin
@@ -65,6 +71,31 @@ begin
     clbLabelTextColor.ButtonColor := ColorToRGB(Font.Color);
     tbOpacity.Position := round(Opacity * 100);
   end;
+end;
+
+procedure TForm1.AddPointOfInterest(X, Y: Integer);
+var
+  layer: TMapLayer;
+  poi: TPointOfInterest;
+  RP: TRealPoint;
+begin
+  RP := MapView.Engine.ScreenToLatLon(Point(X, Y));
+  if MapView.Layers.Count = 0 then
+    layer := TMapLayer(MapView.Layers.Add)
+  else
+    layer := MapView.Layers[0];
+  poi := TPointOfInterest(layer.PointsOfInterest.Add);
+  poi.Caption := 'Test ' + IntToStr(layer.PointsOfInterest.Count);
+  poi.ImageIndex := Random(ImageList1.Count);
+  poi.Longitude := RP.Lon;
+  poi.Latitude := RP.Lat;
+end;
+
+
+procedure TForm1.MapViewMouseUp(Sender: TObject; Button: TMouseButton; Shift:
+  TShiftState; X, Y: Integer);
+begin
+  AddPointOfInterest(X, Y);
 end;
 
 procedure TForm1.seLabelDistanceChange(Sender: TObject);

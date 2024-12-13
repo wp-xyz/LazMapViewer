@@ -82,7 +82,7 @@ type
   private
     procedure Changed(Sender: TObject);
   protected
-    procedure AfterDrawObjects(AMapView: TMapView; var {%H-}Handled: Boolean); override;
+    procedure BeforeDrawObjects(AMapView: TMapView; var {%H-}Handled: Boolean); override;
     function CalcIncrement(AMapView: TMapView; Area: TRealArea): Double;
     function CalcVisibleArea(AMapView: TMapView): TRealArea;
     procedure DrawGridLine(ADrawingEngine: TMvCustomDrawingEngine;
@@ -387,7 +387,7 @@ begin
   inherited;
 end;
 
-procedure TGridPlugin.AfterDrawObjects(AMapView: TMapView; var Handled: Boolean);
+procedure TGridPlugin.BeforeDrawObjects(AMapView: TMapView; var Handled: Boolean);
 var
   area: TRealArea;
   coordType: TGridCoordType;
