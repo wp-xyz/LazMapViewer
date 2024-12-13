@@ -74,64 +74,48 @@ begin
 end;
 
 procedure TForm1.AddPointOfInterest(X, Y: Integer);
+const
+  DELTA = 4;
 var
   layer: TMapLayer;
   poi: TPointOfInterest;
   RP: TRealPoint;
+  area: TRealArea;
+  list: TMapObjectList;
+  i: Integer;
 begin
-  RP := MapView.Engine.ScreenToLatLon(Point(X, Y));
   if MapView.Layers.Count = 0 then
     layer := TMapLayer(MapView.Layers.Add)
   else
     layer := MapView.Layers[0];
-  poi := TPointOfInterest(layer.PointsOfInterest.Add);
-  poi.Caption := 'Test ' + IntToStr(layer.PointsOfInterest.Count);
-  poi.ImageIndex := Random(ImageList1.Count);
-  poi.Longitude := RP.Lon;
-  poi.Latitude := RP.Lat;
-end;
 
+  RP := MapView.Engine.ScreenToLatLon(Point(X, Y));
+  area := MapView.Engine.ScreenRectToRealArea(Rect(X-DELTA, Y-DELTA, X+DELTA, Y+DELTA));
 
-procedure TForm1.MapViewMouseUp(Sender: TObject; Button: TMouseButton; Shift:
-  TShiftState; X, Y: Integer);
-begin
-  AddPointOfInterest(X, Y);
-end;
-
-procedure TForm1.seLabelDistanceChange(Sender: TObject);
-begin
-  (PluginManager.PluginList[0] as TGridPlugin).GridLabels.Distance := seLabelDistance.Value;
+  list := layer.PointsOfInterest.HitTest(area);
+  if (list = nil) then
+  begin
+    poi := TPointOfInterest(layer.PointsOfInterest.Add);
+    poi.Caption := 'Test ' + IntToStr(layer.PointsOfInterest.Count);
+    poi.ImageIndex := Random(ImageList1.Count);
+    poi.Longitude := RP.Lon;
+    poi.Latitude := RP.Lat;
+  end else
+  begin
+    for i := list.Count-1 downto 0 do
+    begin
+      if list[i] is TPointOfInterest then
+      begin
+        poi := TPointOfInterest(list[i]);
+        poi.Free;
+      end;
+    end;
+  end;
 end;
 
 procedure TForm1.cbCyclicChange(Sender: TObject);
 begin
   MapView.Cyclic := cbCyclic.Checked;
-end;
-
-procedure TForm1.LabelPositionChange(Sender: TObject);
-begin
-  with (PluginManager.PluginList[0] as TGridPlugin).GridLabels do
-  begin
-    if cbLeft.Checked then
-      Position := Position + [glpLeft]
-    else
-      Position := Position - [glpLeft];
-
-    if cbTop.Checked then
-      Position := Position + [glpTop]
-    else
-      Position := Position - [glpTop];
-
-    if cbRight.Checked then
-      Position := Position + [glpRight]
-    else
-      Position := Position - [glpRight];
-
-    if cbBottom.Checked then
-      Position := Position + [glpBottom]
-    else
-      Position := Position - [glpBottom];
-  end;
 end;
 
 procedure TForm1.cbEnabledChange(Sender: TObject);
@@ -185,6 +169,44 @@ begin
     s := copy(s, 1, p-1);
     (PluginManager.PluginList[0] as TGridPlugin).Increment := StrToInt(s) * multiplier;
   end;
+end;
+
+procedure TForm1.LabelPositionChange(Sender: TObject);
+begin
+  with (PluginManager.PluginList[0] as TGridPlugin).GridLabels do
+  begin
+    if cbLeft.Checked then
+      Position := Position + [glpLeft]
+    else
+      Position := Position - [glpLeft];
+
+    if cbTop.Checked then
+      Position := Position + [glpTop]
+    else
+      Position := Position - [glpTop];
+
+    if cbRight.Checked then
+      Position := Position + [glpRight]
+    else
+      Position := Position - [glpRight];
+
+    if cbBottom.Checked then
+      Position := Position + [glpBottom]
+    else
+      Position := Position - [glpBottom];
+  end;
+end;
+
+procedure TForm1.MapViewMouseUp(Sender: TObject; Button: TMouseButton; Shift:
+  TShiftState; X, Y: Integer);
+begin
+  if Button = mbRight then
+    AddPointOfInterest(X, Y);
+end;
+
+procedure TForm1.seLabelDistanceChange(Sender: TObject);
+begin
+  (PluginManager.PluginList[0] as TGridPlugin).GridLabels.Distance := seLabelDistance.Value;
 end;
 
 procedure TForm1.tbOpacityChange(Sender: TObject);
