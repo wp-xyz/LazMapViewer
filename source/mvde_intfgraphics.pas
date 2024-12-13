@@ -763,7 +763,7 @@ begin
 
   bmp := TBitmap.Create;
   try
-    bmp.PixelFormat := pf32Bit;
+//    bmp.PixelFormat := pf32Bit;     // causes a crash on XUbuntu
     bmp.Canvas.Font.Name := FFontName;
     bmp.Canvas.Font.Size := FFontSize;
     bmp.Canvas.Font.Style := FFontStyle;
