@@ -1,4 +1,4 @@
-program GridPlugin_Demo;
+program MapScale_Demo;
 
 {$mode objfpc}{$H+}
 
@@ -10,13 +10,14 @@ uses
   athreads,
   {$ENDIF}
   Interfaces, // this includes the LCL widgetset
-  Forms, main;
+  Forms, main
+  { you can add units after this };
 
 {$R *.res}
 
 begin
   RequireDerivedFormResource := True;
-  Application.Scaled:=True;
+  Application.Scaled := True;
   {$PUSH}{$WARN 5044 OFF}
   Application.MainFormOnTaskbar := True;
   {$POP}

@@ -7,7 +7,7 @@
     <CompilerOptions>
       <Version Value="11"/>
       <SearchPaths>
-        <OtherUnitFiles Value="source;source/addons/plugins;source/addons/plugins/spreadmarkers"/>
+        <OtherUnitFiles Value="source;source/addons/plugins;source/addons/plugins/spreadmarkers;source/addons/plugins/grids;source/addons/plugins/scale"/>
         <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
       </SearchPaths>
       <Other>
@@ -22,7 +22,7 @@
 FPC 3.2.0 or newer required."/>
     <License Value="Modified LGPL with linking exception, like FreePascal RTL/FCL and Lazarus LCL"/>
     <Version Minor="2" Release="7"/>
-    <Files Count="30">
+    <Files Count="32">
       <Item1>
         <Filename Value="source/mvcache.pas"/>
         <UnitName Value="mvCache"/>
@@ -144,6 +144,14 @@ FPC 3.2.0 or newer required."/>
         <Filename Value="source/addons/plugins/spreadmarkers/uinactivityalarmtimer.pas"/>
         <UnitName Value="uInactivityAlarmTimer"/>
       </Item30>
+      <Item31>
+        <Filename Value="source/addons/plugins/grids/mvmapgridplugin.pas"/>
+        <UnitName Value="mvMapGridPlugin"/>
+      </Item31>
+      <Item32>
+        <Filename Value="source/addons/plugins/scale/mvmapscaleplugin.pas"/>
+        <UnitName Value="mvMapScalePlugin"/>
+      </Item32>
     </Files>
     <CompatibilityMode Value="True"/>
     <RequiredPkgs Count="2">

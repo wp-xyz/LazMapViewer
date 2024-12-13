@@ -230,39 +230,6 @@ type
     property Latitude: Double read FLatitude write SetLatitude;
   end;
 
-  { TMapScale }
-
-  TScaleAlignSet = set of alTop..alRight;
-
-  TMapScale = class(TPersistent)
-  private
-    FSpaceY: Integer;
-    FView: TMapView;
-    FAlignSet: TScaleAlignSet;
-    FImperial: Boolean;
-    FSpaceX: Integer;
-    FVisible: Boolean;
-    FWidthMax: Integer;
-    FZoomMin: Integer;
-    procedure SetAlignSet(AValue: TScaleAlignSet);
-    procedure SetImperial(AValue: Boolean);
-    procedure SetSpaceX(AValue: Integer);
-    procedure SetSpaceY(AValue: Integer);
-    procedure SetVisible(AValue: Boolean);
-    procedure SetWidthMax(AValue: Integer);
-    procedure SetZoomMin(AValue: Integer);
-  public
-    constructor Create(AView: TMapView);
-  published
-    property Visible: Boolean read FVisible write SetVisible default False;
-    property ZoomMin: Integer read FZoomMin write SetZoomMin default 8;
-    property WidthMax: Integer read FWidthMax write SetWidthMax default 250;
-    property SpaceX: Integer read FSpaceX write SetSpaceX default 10;
-    property SpaceY: Integer read FSpaceY write SetSpaceY default 10;
-    property Imperial: Boolean read FImperial write SetImperial default False;
-    property AlignSet: TScaleAlignSet read FAlignSet write SetAlignSet default [alRight, alBottom];
-  end;
-
   { TMapPoint }
 
   TMapPoint = class(TMapItem)
@@ -510,7 +477,6 @@ type
       FCacheLocation: TCacheLocation;
       FCachePath, FCacheFullPath: String;
       FCenter: TMapCenter;
-      FScale: TMapScale;
       FDownloadEngine: TMvCustomDownloadEngine;
       FBuiltinDownloadEngine: TMvCustomDownloadEngine;
       FBuiltinPluginManager: TMvCustomPluginManager;
@@ -568,7 +534,6 @@ type
       function GetOnChange: TNotifyEvent;
 //      function GetOnZoomChange: TNotifyEvent;
       function GetOnZoomChanging: TZoomChangingEvent;
-      function GetPluginManager: TMvCustomPluginManager;
       function GetUseThreads: boolean;
       function GetZoom: integer;
       function GetZoomToCursor: Boolean;
@@ -636,7 +601,6 @@ type
       procedure MouseEnter; override;
       procedure MouseLeave; override;
       procedure Notification(AComponent: TComponent; Operation: TOperation); override;
-      procedure DrawMapScale; virtual;
       procedure Paint; override;
       procedure OnGPSItemsModified(Sender: TObject; objs: TGPSObjList; Adding: boolean);
 
@@ -673,6 +637,7 @@ type
       procedure DrawArea(const {%H-}Area: TRealArea; ar: TGPSArea);
       procedure ClearBuffer;
       procedure GetMapProviders(lstProviders: TStrings);
+      function GetPluginManager: TMvCustomPluginManager;
       function GetVisibleArea: TRealArea;
       function LatLonToScreen(aPt: TRealPoint): TPoint;
       function LatLonToScreen(Lat, Lon: Double): TPoint; overload;
@@ -724,8 +689,7 @@ type
       property InactiveColor: TColor read GetInactiveColor write SetInactiveColor default clWhite;
       property MapProvider: String read GetMapProvider write SetMapProvider;
       property MapCenter: TMapCenter read FCenter write FCenter;
-      property Scale: TMapScale read FScale write FScale;
-      property PluginManager: TMvCustomPluginManager read GetPluginManager write SetPluginManager;
+      property PluginManager: TMvCustomPluginManager read FPluginManager write SetPluginManager;
       property POIImage: TCustomBitmap read FPOIImage write SetPOIImage;
       property POIImages: TCustomImageList read FPOIImages write SetPOIImages;
       property POIImagesWidth: Integer read FPOIImagesWidth write SetPOIImagesWidth default 0;
@@ -989,68 +953,6 @@ type
     destructor Destroy; override;
   end;
 
-{ TMapScale }
-
-procedure TMapScale.SetAlignSet(AValue: TScaleAlignSet);
-begin
-  if FAlignSet = AValue then Exit;
-  FAlignSet := AValue;
-  FView.Invalidate;
-end;
-
-procedure TMapScale.SetImperial(AValue: Boolean);
-begin
-  if FImperial = AValue then Exit;
-  FImperial := AValue;
-  FView.Invalidate;
-end;
-
-procedure TMapScale.SetSpaceX(AValue: Integer);
-begin
-  if FSpaceX = AValue then Exit;
-  FSpaceX := AValue;
-  FView.Invalidate;
-end;
-
-procedure TMapScale.SetSpaceY(AValue: Integer);
-begin
-  if FSpaceY = AValue then Exit;
-  FSpaceY := AValue;
-  FView.Invalidate;
-end;
-
-procedure TMapScale.SetVisible(AValue: Boolean);
-begin
-  if FVisible = AValue then Exit;
-  FVisible := AValue;
-  FView.Invalidate;
-end;
-
-procedure TMapScale.SetWidthMax(AValue: Integer);
-begin
-  if FWidthMax = AValue then Exit;
-  FWidthMax := AValue;
-  FView.Invalidate;
-end;
-
-procedure TMapScale.SetZoomMin(AValue: Integer);
-begin
-  if FZoomMin = AValue then Exit;
-  FZoomMin := AValue;
-  FView.Invalidate;
-end;
-
-constructor TMapScale.Create(AView: TMapView);
-begin
-  FView := AView;
-  FAlignSet := [alRight, alBottom];
-  FImperial := False;
-  FSpaceX := 10;
-  FSpaceY := 10;
-  FVisible := False;
-  FWidthMax := 250;
-  FZoomMin := 8;
-end;
 
 { TMapAreaPoints }
 
@@ -2321,7 +2223,7 @@ end;
 
 procedure TMapView.DoZoomChange(Sender: TObject);
 begin
-  PluginManager.ZoomChange(Self, FOnZoomChange);
+  GetPluginManager.ZoomChange(Self, FOnZoomChange);
 end;
 
 function TMapView.GetOnChange: TNotifyEvent;
@@ -2653,7 +2555,7 @@ begin
   finally
     OnMouseDown := savedOnMouseDown;
   end;
-  PluginManager.MouseDown(Self, Button, Shift, X, Y, OnMouseDown, lHandled);
+  GetPluginManager.MouseDown(Self, Button, Shift, X, Y, OnMouseDown, lHandled);
 
   if EditingEnabled then
   begin
@@ -2691,7 +2593,7 @@ begin
   finally
     OnMouseUp := savedOnMouseUp;
   end;
-  PluginManager.MouseUp(Self, Button, Shift, X, Y, OnMouseUp, lHandled);
+  GetPluginManager.MouseUp(Self, Button, Shift, X, Y, OnMouseUp, lHandled);
 
   if IsActive then
     if Button = mbLeft then
@@ -2748,7 +2650,7 @@ begin
   finally
     OnMouseMove := savedOnMouseMove;
   end;
-  PluginManager.MouseMove(Self, Shift, X, Y, OnMouseMove, lHandled);
+  GetPluginManager.MouseMove(Self, Shift, X, Y, OnMouseMove, lHandled);
   if IsActive then
   begin
     Engine.MouseMove(self,Shift,X,Y);
@@ -2765,14 +2667,14 @@ procedure TMapView.MouseEnter;
 var
   lHandled : Boolean;
 begin
-  PluginManager.MouseEnter(Self, OnMouseEnter,lHandled);
+  GetPluginManager.MouseEnter(Self, OnMouseEnter,lHandled);
 end;
 
 procedure TMapView.MouseLeave;
 var
   lHandled : Boolean;
 begin
-  PluginManager.MouseLeave(Self, OnMouseLeave,lHandled);
+  GetPluginManager.MouseLeave(Self, OnMouseLeave,lHandled);
 end;
 
 procedure TMapView.Notification(AComponent: TComponent; Operation: TOperation);
@@ -2789,128 +2691,6 @@ begin
     if (AComponent = FPluginManager) then
       PluginManager := nil;
   end;
-end;
-
-procedure TMapView.DrawMapScale;
-var
-  Dist, V: Double;
-  Digits: Integer;
-  R: TRect;
-  OldOpacity: Single;
-  OldPenStyle: TPenStyle;
-  Capt: String;
-  Extent: TSize;
-  W, H, SpcX, SpcY: Integer;
-  MaxW: Integer;
-  Imperial: Boolean;
-  AlignSet: TAlignSet;
-begin
-  SpcX := Scale.SpaceX;
-  SpcY := Scale.SpaceY;
-  AlignSet := Scale.AlignSet;
-  Imperial := Scale.Imperial;
-  MaxW := Min(Scale.WidthMax, ClientWidth);
-
-  with Engine.ScreenRectToRealArea(Rect(0, Height div 2, MaxW, Height div 2)) do
-    Dist := mvGeoMath.CalcGeoDistance(TopLeft.Lat, TopLeft.Lon,
-      TopLeft.Lat, BottomRight.Lon, duMeters);
-
-  if Imperial then
-  begin
-    Dist := Dist * 0.62137E-3; // to miles
-    Capt := 'mi';
-    if Dist < 1.0 then
-    begin
-      Dist := Dist * 5280;  // 1mi = 5280ft
-      Capt := 'ft';
-    end;
-  end
-  else
-  begin
-    Capt := 'm';
-    if Dist >= 1000 then
-    begin
-      Dist := Dist * 0.001;
-      Capt := 'Km';
-    end;
-  end;
-
-  Digits := Trunc(Math.Log10(Dist));
-  V := Power(10, Digits);
-
-  // 5, 3, 2, 1 multipliers
-  if V * 5 < Dist then
-    V := V * 5
-  else if V * 3 < Dist then
-    V := V * 3
-  else if V * 2 < Dist then
-    V := V * 2;
-
-  // Caption
-  Capt := Round(V).ToString + ' ' + Capt;
-  Extent := DrawingEngine.TextExtent(Capt);
-
-  // Width and height
-  W := Round(MaxW * (V / Dist));
-  H := Extent.Height + 3 + 3;
-
-  if W + SpcX >= ClientWidth then
-    SpcX := Max(1, ClientWidth - W - 1);
-  if H + SpcY > ClientHeight then
-    SpcY := Max(1, ClientHeight - H - 1);
-
-  R := Rect(0, 0, W, H);
-
-  // Fix align set
-  if AlignSet * [alLeft, alRight] = [] then
-    Include(AlignSet, alRight);
-  if AlignSet * [alTop, alBottom] = [] then
-    Include(AlignSet, alBottom);
-
-  // Horizontal position
-  if alLeft in AlignSet then
-    if alRight in AlignSet then
-      R.Offset((ClientWidth - W) div 2, 0) // Both alLeft+alRight=Center
-    else
-      R.Offset(SpcX, 0) // to the left
-  else if alRight in AlignSet then
-      R.Offset((ClientWidth - W) - SpcX, 0); // to the right
-
-  // Vertical position
-  if alTop in AlignSet then
-    if alBottom in AlignSet then
-      R.Offset(0, (ClientHeight - H) div 2) // Both alTop+alBottom=Middle
-    else
-      R.Offset(0, SpcY) // to the top
-  else if alBottom in AlignSet then
-    R.Offset(0, (ClientHeight - H) - SpcY); // to the bottom
-
-  OldOpacity := DrawingEngine.Opacity;
-  OldPenStyle := DrawingEngine.PenStyle;
-  with DrawingEngine do
-    try
-      // Semitransparent background
-      Opacity := 0.55;
-      BrushStyle := bsSolid;
-      BrushColor := clWhite;
-      FillRect(R.Left, R.Top, R.Right, R.Bottom);
-
-      // Bar
-      Opacity := 1.0;
-      PenStyle := psSolid;
-      PenColor := clBlack;
-      PenWidth := 1;
-      Polyline([R.TopLeft + Point(0, 10), R.TopLeft,
-        Point(R.Right, R.Top),
-        Point(R.Right, R.Top) + Point(0, 10)]);
-
-      // Caption
-      BrushStyle := bsClear;
-      TextOut(R.CenterPoint.X - Extent.CX div 2, R.Top + 3, Capt);
-    finally
-      Opacity := OldOpacity;
-      PenStyle := OldPenStyle;
-    end;
 end;
 
 procedure TMapView.DblClick;
@@ -2970,18 +2750,15 @@ const
     if Cyclic then
       W := Min(1 shl Zoom * TileSize.CX, W);
 
-    PluginManager.BeforeDrawObjects(Self, FBeforeDrawObjectsEvent,lHandled);
+    GetPluginManager.BeforeDrawObjects(Self, FBeforeDrawObjectsEvent,lHandled);
     DrawObjects(Default(TTileId), 0, 0, W - 1, ClientHeight);
-    PluginManager.AfterDrawObjects(Self, FAfterDrawObjectsEvent,lHandled);
-
-    if Scale.Visible and (Zoom >= Scale.ZoomMin) then
-      DrawMapScale;
+    GetPluginManager.AfterDrawObjects(Self, FAfterDrawObjectsEvent,lHandled);
 
     DrawingEngine.PaintToCanvas(Canvas);
     if DebugTiles then
       DrawCenter;
 
-    PluginManager.AfterPaint(Self, FAfterPaintEvent,lHandled);
+    GetPluginManager.AfterPaint(Self, FAfterPaintEvent,lHandled);
   end;
 
   procedure DragDraw;
@@ -3019,7 +2796,7 @@ var
   {%H-}Area, objArea, visArea: TRealArea;
   lHandled : Boolean;
 begin
-  PluginManager.GPSItemsModified(Self,TGPSObjectList(Sender),objs,Adding,lHandled);
+  GetPluginManager.GPSItemsModified(Self,TGPSObjectList(Sender),objs,Adding,lHandled);
   if Adding and Assigned(Objs) then
   begin
     objArea := GetAreaOf(Objs);
@@ -3437,7 +3214,7 @@ end;
 
 procedure TMapView.DoCenterMove(Sender: TObject);
 begin
-  PluginManager.CenterMove(Self, FOnCenterMove);
+  GetPluginManager.CenterMove(Self, FOnCenterMove);
 end;
 
 procedure TMapView.DoDrawStretchedTile(const TileId: TTileID; X, Y: Integer;
@@ -3562,8 +3339,6 @@ begin
   FCenter.Longitude := 0.0;
   FCenter.Latitude := 0.0;
 
-  FScale := TMapScale.Create(Self);
-
   FZoomMin := 1;
   FZoomMax := 19;
   Zoom := 1;
@@ -3584,7 +3359,6 @@ begin
   FLayers.Free;
   for I := 0 to High(FGPSItems) do
     FreeAndNil(FGPSItems[I]);
-  FScale.Free;
   FCenter.Free;
   inherited Destroy;
 end;
@@ -3752,6 +3526,10 @@ begin
 //  Engine.GetMapProviders(lstProviders);
 end;
 
+{ Returns the builtin plugin manager when no external plugin manager is
+  attached.
+  Note that this is not the getter function of the PluginManager property
+  which is meant only for the external plugin manager. }
 function TMapView.GetPluginManager: TMvCustomPluginManager;
 begin
   if Assigned(FPluginManager) then

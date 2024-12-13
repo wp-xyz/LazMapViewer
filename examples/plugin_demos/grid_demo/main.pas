@@ -7,7 +7,7 @@ interface
 uses
   Classes, ComCtrls, DividerBevel, ExtCtrls, Spin, StdCtrls, SysUtils,
   Forms, Controls, Graphics, Dialogs, //LazLogger,
-  mvMapViewer, mvTypes, mvEngine, mvPluginCore, mvPlugins;
+  mvMapViewer, mvTypes, mvEngine, mvPluginCore, mvMapGridPlugin;
 
 type
   TForm1 = class(TForm)
@@ -47,7 +47,8 @@ type
     procedure seLabelDistanceChange(Sender: TObject);
     procedure tbOpacityChange(Sender: TObject);
   private
-    procedure AddPointOfInterest(X, Y: Integer);
+    FMapGridPlugin: TMapGridPlugin;
+    procedure AddOrDeletePointOfInterest(X, Y: Integer);
 
   public
 
@@ -64,16 +65,15 @@ procedure TForm1.FormCreate(Sender: TObject);
 begin
   Randomize;
   MapView.Zoom := 5;
-  with TGridPlugin.Create(PluginManager) do
-  begin
-    clbBackgroundColor.ButtonColor := ColorToRGB(BackgroundColor);
-    clbPenColor.ButtonColor := ColorToRGB(Pen.Color);
-    clbLabelTextColor.ButtonColor := ColorToRGB(Font.Color);
-    tbOpacity.Position := round(Opacity * 100);
-  end;
+  FMapGridPlugin := TMapGridPlugin.Create(PluginManager);
+
+  clbBackgroundColor.ButtonColor := ColorToRGB(FMapGridPlugin.BackgroundColor);
+  clbPenColor.ButtonColor := ColorToRGB(FMapGridPlugin.Pen.Color);
+  clbLabelTextColor.ButtonColor := ColorToRGB(FMapGridPlugin.Font.Color);
+  tbOpacity.Position := round(FMapGridPlugin.BackgroundOpacity * 100);
 end;
 
-procedure TForm1.AddPointOfInterest(X, Y: Integer);
+procedure TForm1.AddOrDeletePointOfInterest(X, Y: Integer);
 const
   DELTA = 4;
 var
@@ -120,22 +120,22 @@ end;
 
 procedure TForm1.cbEnabledChange(Sender: TObject);
 begin
-  (PluginManager.PluginList[0] as TGridPlugin).Enabled := cbEnabled.Checked;
+  FMapGridPlugin.Enabled := cbEnabled.Checked;
 end;
 
 procedure TForm1.clbBackgroundColorColorChanged(Sender: TObject);
 begin
-  (PluginManager.PluginList[0] as TGridPlugin).BackgroundColor := clbBackgroundColor.ButtonColor;
+  FMapGridPlugin.BackgroundColor := clbBackgroundColor.ButtonColor;
 end;
 
 procedure TForm1.clbLabelTextColorColorChanged(Sender: TObject);
 begin
-  (PluginManager.PluginList[0] as TGridPlugin).Font.Color := clbLabelTextColor.ButtonColor;
+  FMapGridPlugin.Font.Color := clbLabelTextColor.ButtonColor;
 end;
 
 procedure TForm1.clbPenColorColorChanged(Sender: TObject);
 begin
-  (PluginManager.PluginList[0] as TGridPlugin).Pen.Color := clbPenColor.ButtonColor;
+  FMapGridPlugin.Pen.Color := clbPenColor.ButtonColor;
 end;
 
 procedure TForm1.cmbIncrementChange(Sender: TObject);
@@ -145,7 +145,7 @@ var
   p: Integer;
 begin
   if cmbIncrement.ItemIndex <= 0 then
-    (PluginManager.PluginList[0] as TGridPlugin).Increment := 0
+    FMapGridPlugin.Increment := 0
   else
   begin
     s := cmbIncrement.Items[cmbIncrement.ItemIndex];
@@ -167,51 +167,51 @@ begin
       end;
     end;
     s := copy(s, 1, p-1);
-    (PluginManager.PluginList[0] as TGridPlugin).Increment := StrToInt(s) * multiplier;
+    FMapGridPlugin.Increment := StrToInt(s) * multiplier;
   end;
 end;
 
 procedure TForm1.LabelPositionChange(Sender: TObject);
 begin
-  with (PluginManager.PluginList[0] as TGridPlugin).GridLabels do
+  with FMapGridPlugin do
   begin
     if cbLeft.Checked then
-      Position := Position + [glpLeft]
+      LabelPositions := LabelPositions + [glpLeft]
     else
-      Position := Position - [glpLeft];
+      LabelPositions := LabelPositions - [glpLeft];
 
     if cbTop.Checked then
-      Position := Position + [glpTop]
+      LabelPositions := LabelPositions + [glpTop]
     else
-      Position := Position - [glpTop];
+      LabelPositions := LabelPositions - [glpTop];
 
     if cbRight.Checked then
-      Position := Position + [glpRight]
+      LabelPositions := LabelPositions + [glpRight]
     else
-      Position := Position - [glpRight];
+      LabelPositions := LabelPositions - [glpRight];
 
     if cbBottom.Checked then
-      Position := Position + [glpBottom]
+      LabelPositions := LabelPositions + [glpBottom]
     else
-      Position := Position - [glpBottom];
+      LabelPositions := LabelPositions - [glpBottom];
   end;
 end;
 
 procedure TForm1.MapViewMouseUp(Sender: TObject; Button: TMouseButton; Shift:
   TShiftState; X, Y: Integer);
 begin
-  if Button = mbRight then
-    AddPointOfInterest(X, Y);
+  if (Button = mbRight) and (Shift = []) then
+    AddOrDeletePointOfInterest(X, Y);
 end;
 
 procedure TForm1.seLabelDistanceChange(Sender: TObject);
 begin
-  (PluginManager.PluginList[0] as TGridPlugin).GridLabels.Distance := seLabelDistance.Value;
+  FMapGridPlugin.LabelDistance := seLabelDistance.Value;
 end;
 
 procedure TForm1.tbOpacityChange(Sender: TObject);
 begin
-  (PluginManager.PluginList[0] as TGridPlugin).Opacity := tbOpacity.Position / 100;
+  FMapGridPlugin.BackgroundOpacity := tbOpacity.Position / 100;
 end;
 
 end.
