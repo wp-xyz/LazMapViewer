@@ -2,8 +2,9 @@
 mvGridPlugins.pas
 -----------------
 
-The TGridPlugin draw a grid of lines at constant and equidistant latitudes and
-longitudes. The lines can be labeled at both sides.
+The TGridPlugin draws a grid of lines at constant and equidistant latitudes and
+longitudes. The lines can be labeled at both sides by the longitude/latitude
+values.
 
 Properties
 ----------
@@ -14,14 +15,12 @@ BackgroundColor: TColor
 Font: TFont
   Font to be used to draw the labels at the grid lines
 
-GridLabels: TMvGridLabels
-  Parameters for drawing the grid labels:
-
-  Distance: Integer
-    Distance of the labels from the map edges
-  Position: TMvGridLabelPosition
-    a set of [glpLeft, glpTop, glpRight, glpBottom] indicating the map sides 
-    at which the labels will appear (
+LabelDistacne: Integer
+  Distance of the labels from the map edges
+  
+LabelPositions: TMvGridLabelPositions
+  a set of [glpLeft, glpTop, glpRight, glpBottom] indicating the map sides 
+  at which the labels are drawn
     
 Increment: Double
   Distance between the grid lines, in (fractional) degress

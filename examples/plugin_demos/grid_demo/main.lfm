@@ -164,9 +164,9 @@ object MainForm: TMainForm
       Left = 0
       Height = 15
       Top = 279
-      Width = 41
+      Width = 108
       BorderSpacing.Top = 8
-      Caption = 'Opacity'
+      Caption = 'Background Opacity'
     end
     object clbPenColor: TColorButton
       AnchorSideLeft.Control = ParamsPanel

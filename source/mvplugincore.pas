@@ -5,8 +5,8 @@ unit mvPluginCore;
 interface
 
 uses
-  Classes, SysUtils, StrUtils, Math, LazLoggerBase,
-  Controls, Dialogs, Contnrs,
+  Classes, SysUtils, StrUtils, Contnrs, Math, LazLoggerBase,
+  Graphics, Controls, Dialogs,
   mvMapViewer, mvTypes, mvGpsObj, mvClassRegistration;
 
 type
@@ -80,6 +80,35 @@ type
   published
     property Enabled;
     property MapView;
+  end;
+
+  { TMvDrawPlugin - common ancestor of all plugins drawing something in the map }
+
+  TMvDrawPlugin = class(TMvPlugin)
+  private
+    const
+      DEFAULT_OPACITY = 0.55;
+      DEFAULT_BACKGROUND_COLOR = clWhite;
+  private
+    FBackgroundColor: TColor;
+    FBackgroundOpacity: Single;
+    FFont: TFont;
+    FPen: TPen;
+    function IsOpacityStored: Boolean;
+    procedure SetBackgroundColor(AValue: TColor);
+    procedure SetBackgroundOpacity(AValue: Single);
+    procedure SetFont(AValue: TFont);
+    procedure SetPen(AValue: TPen);
+  protected
+    procedure Changed(Sender: TObject);
+    property BackgroundColor: TColor read FBackgroundColor write SetBackgroundColor default DEFAULT_BACKGROUND_COLOR;
+    property BackgroundOpacity: Single read FBackgroundOpacity write SetBackgroundOpacity stored IsOpacityStored;
+    property Font: TFont read FFont write SetFont;
+    property Pen: TPen read FPen write SetPen;
+  public
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
+    procedure Assign(ASource: TPersistent); override;
   end;
 
   { TMvMultiMapsPluginData }
@@ -233,9 +262,8 @@ end;
 procedure TMvCustomPlugin.Assign(Source: TPersistent);
 begin
   if Source is TMvCustomPlugin then
-    FEnabled := TMvCustomPlugin(Source).Enabled
-  else
-    inherited Assign(Source);
+    FEnabled := TMvCustomPlugin(Source).Enabled;
+  inherited Assign(Source);
 end;
 
 procedure TMvCustomPlugin.AfterPaint(AMapView: TMapView; var Handled: Boolean);
@@ -392,6 +420,93 @@ procedure TMvCustomPlugin.ZoomChanging(AMapView: TMapView; NewZoom: Integer;
 begin
 end;
 }
+
+
+{ TMvDrawPlugin }
+
+constructor TMvDrawPlugin.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+  FBackgroundColor := DEFAULT_BACKGROUND_COLOR;
+  FBackgroundOpacity := DEFAULT_OPACITY;
+  FFont := TFont.Create;
+  FFont.OnChange := @Changed;
+  FPen := TPen.Create;
+  FPen.OnChange := @Changed;
+end;
+
+destructor TMvDrawPlugin.Destroy;
+begin
+  FFont.Free;
+  FPen.Free;
+  inherited Destroy;
+end;
+
+procedure TMvDrawPlugin.Assign(ASource: TPersistent);
+begin
+  if ASource is TMvDrawPlugin then
+  begin
+    FBackgroundColor := TMvDrawPlugin(ASource).BackgroundColor;
+    FBackgroundOpacity := TMvDrawPlugin(ASource).BackgroundOpacity;
+    FFont.Assign(TMvDrawPlugin(ASource).Font);
+    FPen.Assign(TMvDrawPlugin(ASource).Pen);
+  end;
+  inherited;
+end;
+
+procedure TMvDrawPlugin.Changed(Sender: TObject);
+begin
+  Update;
+end;
+
+function TMvDrawPlugin.IsOpacityStored: Boolean;
+begin
+  Result := FBackgroundOpacity <> DEFAULT_OPACITY;
+end;
+
+procedure TMvDrawPlugin.SetBackgroundColor(AValue: TColor);
+begin
+  if FBackgroundColor <> AValue then
+  begin
+    FBackgroundColor := AValue;
+    Update;
+  end;
+end;
+
+procedure TMvDrawPlugin.SetBackgroundOpacity(AValue: Single);
+begin
+  if FBackgroundOpacity <> AValue then
+  begin
+    FBackgroundOpacity := AValue;
+    Update;
+  end;
+end;
+
+procedure TMvDrawPlugin.SetFont(AValue: TFont);
+begin
+  if (AValue = nil) then
+    exit;
+  if (AValue.Name = FFont.Name) and (AValue.Size = FFont.Size) and
+    (AValue.Style = FFont.Style) and (AValue.Color = FFont.Color)
+  then
+    exit;
+  FFont.Assign(AValue);
+  Changed(Self);
+end;
+
+procedure TMvDrawPlugin.SetPen(AValue: TPen);
+begin
+  if (AValue = nil) then
+    exit;
+  if (AValue.Color = FPen.Color) and (AValue.Width = FPen.Width) and
+     (AValue.Style = FPen.Style) and (AValue.Mode = FPen.Mode) and
+     (AValue.JoinStyle = FPen.JoinStyle) and (AValue.EndCap = FPen.EndCap)
+  then
+    exit;
+  FPen.Assign(AValue);
+  Changed(Self);
+end;
+
 
 { TMvMultiMapsPluginData }
 

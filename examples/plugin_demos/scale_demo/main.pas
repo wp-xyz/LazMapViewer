@@ -14,8 +14,20 @@ type
   { TMainForm }
 
   TMainForm = class(TForm)
+    Bevel1: TBevel;
+    Bevel2: TBevel;
+    btnFont: TButton;
     cbScaleVisible: TCheckBox;
+    clbBackgroundColor: TColorButton;
+    clbPenColor: TColorButton;
+    FontDialog: TFontDialog;
+    gbFont: TGroupBox;
+    gbBackground: TGroupBox;
     gbZoomMin: TGroupBox;
+    gbPen: TGroupBox;
+    lblFontSample: TLabel;
+    lblPenWidth: TLabel;
+    lblOpacity: TLabel;
     lblZoomMinInfo: TLabel;
     lblCurrentZoom: TLabel;
     MapView: TMapView;
@@ -23,12 +35,19 @@ type
     ParamsPanel: TPanel;
     rgLengthUnits: TRadioGroup;
     rgScaleAlign: TRadioGroup;
+    seOpacity: TFloatSpinEdit;
     seZoomMin: TSpinEdit;
+    sePenWidth: TSpinEdit;
+    procedure btnFontClick(Sender: TObject);
     procedure cbScaleVisibleChange(Sender: TObject);
+    procedure clbBackgroundColorChanged(Sender: TObject);
+    procedure clbPenColorChanged(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure MapViewZoomChange(Sender: TObject);
     procedure rgLengthUnitsClick(Sender: TObject);
     procedure rgScaleAlignClick(Sender: TObject);
+    procedure seOpacityChange(Sender: TObject);
+    procedure sePenWidthChange(Sender: TObject);
     procedure seZoomMinChange(Sender: TObject);
   private
     FScalePlugin: TMapScalePlugin;
@@ -60,13 +79,23 @@ begin
   seZoomMin.MaxValue := zoomMax;
   seZoomMin.MinValue := zoomMin;
   seZoomMin.Value := FScalePlugin.ZoomMin;
+  sePenWidth.Value := FScalePlugin.Pen.Width;
+  seOpacity.Value := FScalePlugin.BackgroundOpacity;
+  clbPenColor.ButtonColor := FScalePlugin.Pen.Color;
+  clbBackgroundColor.ButtonColor := FScalePlugin.BackgroundColor;
+  lblFontSample.Font.Assign(FScalePlugin.Font);
 
   UpdateZoomInfo;
 end;
 
-procedure TMainForm.MapViewZoomChange(Sender: TObject);
+procedure TMainForm.btnFontClick(Sender: TObject);
 begin
-  UpdateZoomInfo;
+  FontDialog.Font.Assign(FScalePlugin.Font);
+  if FontDialog.Execute then
+  begin
+    FScalePlugin.Font.Assign(FontDialog.Font);
+    lblFontSample.Font.Assign(FontDialog.Font);
+  end;
 end;
 
 procedure TMainForm.cbScaleVisibleChange(Sender: TObject);
@@ -74,9 +103,24 @@ begin
   FScalePlugin.Enabled := cbScaleVisible.Checked;
 end;
 
+procedure TMainForm.clbBackgroundColorChanged(Sender: TObject);
+begin
+  FScalePlugin.BackgroundColor := clbBackgroundColor.ButtonColor;
+end;
+
+procedure TMainForm.clbPenColorChanged(Sender: TObject);
+begin
+  FScalePlugin.Pen.Color := clbPenColor.ButtonColor;
+end;
+
 procedure TMainForm.rgLengthUnitsClick(Sender: TObject);
 begin
   FScalePlugin.Imperial := rgLengthUnits.ItemIndex = 1;
+end;
+
+procedure TMainForm.MapViewZoomChange(Sender: TObject);
+begin
+  UpdateZoomInfo;
 end;
 
 procedure TMainForm.rgScaleAlignClick(Sender: TObject);
@@ -96,6 +140,16 @@ begin
     8: alignSet := [alRight, alBottom];
   end;
   FScalePlugin.AlignSet := alignSet;
+end;
+
+procedure TMainForm.seOpacityChange(Sender: TObject);
+begin
+  FScalePlugin.BackgroundOpacity := seOpacity.Value;
+end;
+
+procedure TMainForm.sePenWidthChange(Sender: TObject);
+begin
+  FScalePlugin.Pen.Width := sePenWidth.Value;
 end;
 
 procedure TMainForm.seZoomMinChange(Sender: TObject);

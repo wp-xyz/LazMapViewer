@@ -12,24 +12,20 @@ uses
 type
   { TCenterMarkerPlugin - draws a cross in the map center }
 
-  TCenterMarkerPlugin = class(TMvPlugin)
+  TCenterMarkerPlugin = class(TMvDrawPlugin)
   private
     const
       DEFAULT_MARKER_SIZE = 15;
   private
-    FPen: TPen;
     FSize: Integer;
-    procedure Changed(Sender: TObject);
-    procedure SetPen(AValue: TPen);
     procedure SetSize(AValue: Integer);
   protected
     procedure AfterDrawObjects(AMapView: TMapView; var {%H-}Handled: Boolean); override;
   public
     constructor Create(AOwner: TComponent); override;
-    destructor Destroy; override;
     procedure Assign(Source: TPersistent); override;
   published
-    property Pen: TPen read FPen write SetPen;
+    property Pen;
     property Size: Integer read FSize write SetSize default DEFAULT_MARKER_SIZE;
   end;
 
@@ -57,17 +53,17 @@ type
   private
     FLegalNotice: String;
     FLegalNoticeURL: String;
-    FOpacity: Single;
+    FBackgroundOpacity: Single;
     FPosition: TLegalNoticePosition;
     FFont: TFont;
     FSpacing: Integer;
     FBackgroundColor: TColor;
   private
     procedure SetBackgroundColor(AValue: TColor);
+    procedure SetBackgroundOpacity(AValue: Single);
     procedure SetFont(AValue: TFont);
     procedure SetLegalNotice(AValue: String);
     procedure SetLegalNoticeURL(AValue: String);
-    procedure SetOpacity(AValue: Single);
     procedure SetPosition(AValue: TLegalNoticePosition);
     procedure SetSpacing(AValue: Integer);
   protected
@@ -86,28 +82,28 @@ type
     procedure Assign(Source: TPersistent); override;
   published
     property BackgroundColor: TColor read FBackgroundColor write SetBackgroundColor default clNone;
+    property BackgroundOpacity: Single read FBackgroundOpacity write SetBackgroundOpacity default DEFAULT_LEGALNOTICE_OPACITY;  // 0..1
     property Font: TFont read FFont write SetFont;
     property LegalNotice: String read FLegalNotice write SetLegalNotice;
     property LegalNoticeURL: String read FLegalNoticeURL write SetLegalNoticeURL;
-    property Opacity: Single read FOpacity write SetOpacity default DEFAULT_LEGALNOTICE_OPACITY;
     property Position: TLegalNoticePosition read FPosition write SetPosition default lnpBottomRight;
     property Spacing: Integer read FSpacing write SetSpacing default DEFAULT_LEGALNOTICE_SPACING;
     // inherited properties
     property MapView;
   end;
 
+  { TDraggableMarkerPlugin }
+
   TDraggableMarkerPlugin = class;
   TDraggableMarkerCanMoveEvent = function (Sender : TDraggableMarkerPlugin; AMarker : TGPSPoint) : Boolean of object;
   TDraggableMarkerMovedEvent = procedure (Sender : TDraggableMarkerPlugin; AMarker : TGPSPoint; AOrgPosition : TRealPoint) of object;
 
-  { TLegalNoticePluginData }
+  { TDraggableMarkerData }
   PDraggableMarkerData = ^TDraggableMarkerData;
   TDraggableMarkerData = record
     FDraggableMarker : TGPSPoint;
     FOrgPosition : TRealPoint;
   end;
-
-  { TDraggableMarkerPlugin }
 
   TDraggableMarkerPlugin = class(TMvMultiMapsPlugin)
   private
@@ -203,24 +199,13 @@ uses
 constructor TCenterMarkerPlugin.Create(AOwner: TComponent);
 begin
   inherited;
-  FPen := TPen.Create;
-  FPen.OnChange := @Changed;
   FSize := DEFAULT_MARKER_SIZE;
-end;
-
-destructor TCenterMarkerPlugin.Destroy;
-begin
-  FPen.Free;
-  inherited;
 end;
 
 procedure TCenterMarkerPlugin.Assign(Source: TPersistent);
 begin
   if Source is TCenterMarkerPlugin then
-  begin
-    FPen.Assign(TCenterMarkerPlugin(Source).Pen);
     FSize := TCenterMarkerPlugin(Source).Size;
-  end;
   inherited;
 end;
 
@@ -230,23 +215,12 @@ var
   C: TPoint;
 begin
   C := Point(AMapView.ClientWidth div 2, AMapView.ClientHeight div 2);
-  AMapView.DrawingEngine.PenColor := FPen.Color;
-  AMapView.DrawingEngine.PenStyle := FPen.Style;
-  AMapView.DrawingEngine.PenWidth := FPen.Width;
+  AMapView.DrawingEngine.PenColor := Pen.Color;
+  AMapView.DrawingEngine.PenStyle := Pen.Style;
+  AMapView.DrawingEngine.PenWidth := Pen.Width;
   AMapView.DrawingEngine.Opacity := 1.0;
   AMapView.DrawingEngine.Line(C.X, C.Y - FSize, C.X, C.Y + FSize);
   AMapView.DrawingEngine.Line(C.X - FSize, C.Y, C.X + FSize, C.Y);
-end;
-
-procedure TCenterMarkerPlugin.Changed(Sender: TObject);
-begin
-  Update;
-end;
-
-procedure TCenterMarkerPlugin.SetPen(AValue: TPen);
-begin
-  FPen.Assign(AValue);
-  Update;
 end;
 
 procedure TCenterMarkerPlugin.SetSize(AValue: Integer);
@@ -338,7 +312,7 @@ begin
   FPosition := lnpBottomRight;
   FFont := TFont.Create;
   FFont.OnChange := @Changed;
-  FOpacity := DEFAULT_LEGALNOTICE_OPACITY;
+  FBackgroundOpacity := DEFAULT_LEGALNOTICE_OPACITY;
   FSpacing := DEFAULT_LEGALNOTICE_SPACING;
 end;
 
@@ -356,7 +330,7 @@ begin
     FFont.Assign(TLegalNoticePlugin(Source).Font);
     FLegalNotice := TLegalNoticePlugin(Source).LegalNotice;
     FLegalNoticeURL := TLegalNoticePlugin(Source).LegalNoticeURL;
-    FOpacity := TLegalNoticePlugin(Source).Opacity;
+    FBackgroundOpacity := TLegalNoticePlugin(Source).BackgroundOpacity;
     FPosition := TLegalNoticePlugin(Source).Position;
     FSpacing := TLegalNoticePlugin(Source).Spacing;
   end;
@@ -380,7 +354,7 @@ begin
   try
     if FBackgroundColor <> clNone then
     begin
-      AMapView.DrawingEngine.Opacity := FOpacity;
+      AMapView.DrawingEngine.Opacity := FBackgroundOpacity;
       AMapView.DrawingEngine.BrushStyle := bsSolid;
       AMapView.DrawingEngine.BrushColor := ColorToRGB(FBackgroundColor);
       with lClickableRect do
@@ -464,9 +438,10 @@ var
   lClickableRect : TRect;
 begin
   if GetMapViewData(AMapView,lClickableRect,SizeOf(lClickableRect)) < SizeOf(lClickableRect) then
-    CalcClickableRect(AMapView,lClickableRect);
+    CalcClickableRect(AMapView, lClickableRect);
 
-  if PtInRect(lClickableRect, Point(X, Y)) and (not AMapView.Engine.InDrag) then
+  if PtInRect(lClickableRect, Point(X, Y)) and (not AMapView.Engine.InDrag) and
+     (FLegalNoticeURL <> '') then
   begin
     FFont.Style := [fsUnderline];
     AMapView.Cursor := crHandPoint;
@@ -477,13 +452,6 @@ begin
     if not Handled then
       AMapView.Cursor := crDefault;
   end;
-  Update;
-end;
-
-procedure TLegalNoticePlugin.SetOpacity(AValue: Single);
-begin
-  if FOpacity = AValue then Exit;
-  FOpacity := AValue;
   Update;
 end;
 
@@ -512,6 +480,13 @@ procedure TLegalNoticePlugin.SetBackgroundColor(AValue: TColor);
 begin
   if FBackgroundColor = AValue then Exit;
   FBackgroundColor := AValue;
+  Update;
+end;
+
+procedure TLegalNoticePlugin.SetBackgroundOpacity(AValue: Single);
+begin
+  if FBackgroundOpacity = AValue then Exit;
+  FBackgroundOpacity := AValue;
   Update;
 end;
 

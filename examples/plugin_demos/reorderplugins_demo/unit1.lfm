@@ -51,13 +51,15 @@ object Form1: TForm1
     end
     object ValueListEditor1: TValueListEditor
       Left = 16
-      Height = 255
+      Height = 288
       Top = 72
       Width = 192
+      Anchors = [akTop, akLeft, akBottom]
       FixedCols = 0
       RowCount = 2
       TabOrder = 1
       DisplayOptions = [doColumnTitles, doAutoColResize]
+      Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goColSizing, goAlwaysShowEditor, goThumbTracking]
       TitleCaptions.Strings = (
         'Index'
         'Plugin'
@@ -73,24 +75,24 @@ object Form1: TForm1
     Top = 120
     object MvPluginManager1LegalNoticePlugin1: TLegalNoticePlugin
       BackgroundColor = clWhite
+      BackgroundOpacity = 1
       Font.Height = -19
       LegalNotice = 'Test 1'
-      Opacity = 1
     end
     object MvPluginManager1LegalNoticePlugin2: TLegalNoticePlugin
       BackgroundColor = clYellow
+      BackgroundOpacity = 1
       Font.Color = clRed
       Font.Height = -19
       LegalNotice = 'Test 2'
-      Opacity = 1
       Spacing = 14
     end
     object MvPluginManager1LegalNoticePlugin3: TLegalNoticePlugin
       BackgroundColor = clBlue
+      BackgroundOpacity = 1
       Font.Color = clWhite
       Font.Height = -19
       LegalNotice = 'Test 3'
-      Opacity = 1
       Spacing = 24
     end
   end

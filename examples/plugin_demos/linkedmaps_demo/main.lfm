@@ -5,43 +5,66 @@ object MainForm: TMainForm
   Width = 1109
   Caption = 'Linked maps demo'
   ChildSizing.HorizontalSpacing = 4
-  ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
-  ChildSizing.EnlargeVertical = crsHomogenousChildResize
-  ChildSizing.Layout = cclLeftToRightThenTopToBottom
-  ChildSizing.ControlsPerLine = 2
+  ChildSizing.ControlsPerLine = 1
   ClientHeight = 406
   ClientWidth = 1109
   LCLVersion = '4.99.0.0'
   OnCreate = FormCreate
-  object MapView1: TMapView
+  object Panel1: TPanel
     Left = 0
-    Height = 406
+    Height = 375
     Top = 0
-    Width = 552
-    Cyclic = True
-    DownloadEngine = MapView1.BuiltInDLE
-    DrawingEngine = MapView1.BuiltInDE
-    Layers = <>
-    Font.Color = clBlack
-    MapProvider = 'OpenStreetMap Mapnik'
-    PluginManager = PluginManager
-    UseThreads = True
-    ZoomToCursor = False
+    Width = 1109
+    Align = alClient
+    BevelOuter = bvNone
+    ChildSizing.HorizontalSpacing = 4
+    ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+    ChildSizing.EnlargeVertical = crsHomogenousChildResize
+    ChildSizing.Layout = cclLeftToRightThenTopToBottom
+    ChildSizing.ControlsPerLine = 2
+    ClientHeight = 375
+    ClientWidth = 1109
+    TabOrder = 0
+    object MapView1: TMapView
+      Left = 0
+      Height = 375
+      Top = 0
+      Width = 552
+      Cyclic = True
+      DownloadEngine = MapView1.BuiltInDLE
+      DrawingEngine = MapView1.BuiltInDE
+      Layers = <>
+      Font.Color = clBlack
+      MapProvider = 'OpenStreetMap Mapnik'
+      PluginManager = PluginManager
+      UseThreads = True
+      ZoomToCursor = False
+    end
+    object MapView2: TMapView
+      Left = 556
+      Height = 375
+      Top = 0
+      Width = 553
+      Cyclic = True
+      DownloadEngine = MapView2.BuiltInDLE
+      DrawingEngine = MapView2.BuiltInDE
+      Layers = <>
+      Font.Color = clBlack
+      MapProvider = 'Maps For Free'
+      PluginManager = PluginManager
+      UseThreads = True
+      ZoomToCursor = False
+    end
   end
-  object MapView2: TMapView
-    Left = 556
-    Height = 406
-    Top = 0
-    Width = 553
-    Cyclic = True
-    DownloadEngine = MapView2.BuiltInDLE
-    DrawingEngine = MapView2.BuiltInDE
-    Layers = <>
-    Font.Color = clBlack
-    MapProvider = 'Maps For Free'
-    PluginManager = PluginManager
-    UseThreads = True
-    ZoomToCursor = False
+  object Label1: TLabel
+    Left = 8
+    Height = 15
+    Top = 383
+    Width = 1093
+    Align = alBottom
+    Alignment = taCenter
+    BorderSpacing.Around = 8
+    Caption = 'Zoom or move one map, and the other map will follow.'
   end
   object PluginManager: TMvPluginManager
     Left = 424

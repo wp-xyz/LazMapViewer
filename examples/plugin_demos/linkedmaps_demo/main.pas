@@ -5,13 +5,19 @@ unit main;
 interface
 
 uses
-  Classes, ExtCtrls, mvMapViewer, mvPluginCore, mvPlugins, SysUtils, Forms,
-  Controls, Graphics;
+  Classes, SysUtils,
+  Graphics, Controls, StdCtrls, ExtCtrls, Forms,
+  mvMapViewer, mvPluginCore, mvPlugins;
 
 type
+
+  { TMainForm }
+
   TMainForm = class(TForm)
+    Label1: TLabel;
     MapView1: TMapView;
     MapView2: TMapView;
+    Panel1: TPanel;
     PluginManager: TMvPluginManager;
     LinkedMapsPlugin: TLinkedMapsPlugin;
     procedure FormCreate(Sender: TObject);

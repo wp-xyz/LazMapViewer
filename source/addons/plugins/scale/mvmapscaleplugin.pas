@@ -16,7 +16,7 @@ type
 
   TScaleAlignSet = set of alTop..alRight;
 
-  TMapScalePlugin = class(TMvPlugin)
+  TMapScalePlugin = class(TMvDrawPlugin)
   private
     FSpaceY: Integer;
     FAlignSet: TScaleAlignSet;
@@ -41,6 +41,11 @@ type
     property SpaceY: Integer read FSpaceY write SetSpaceY default 10;
     property WidthMax: Integer read FWidthMax write SetWidthMax default 250;
     property ZoomMin: Integer read FZoomMin write SetZoomMin default 8;
+    // inherited properties
+    property BackgroundColor;
+    property BackgroundOpacity;
+    property Font;
+    property Pen;
   end;
 
 implementation
@@ -156,16 +161,16 @@ begin
   with AMapView.DrawingEngine do
   try
     // Semitransparent background
-    Opacity := 0.55;
+    Opacity := BackgroundOpacity;
     BrushStyle := bsSolid;
-    BrushColor := clWhite;
+    BrushColor := BackgroundColor;
     FillRect(R.Left, R.Top, R.Right, R.Bottom);
 
     // Bar
     Opacity := 1.0;
-    PenStyle := psSolid;
-    PenColor := clBlack;
-    PenWidth := 1;
+    PenStyle := Self.Pen.Style;
+    PenColor := Self.Pen.Color;
+    PenWidth := Self.Pen.Width;
     Polyline([
       R.TopLeft + Point(0, 10),
       R.TopLeft,
@@ -175,6 +180,8 @@ begin
 
     // Caption
     BrushStyle := bsClear;
+    FontName := Self.Font.Name;
+    SetFont(Self.Font.Name, Self.Font.Size, Self.Font.Style, ColorToRGB(Self.Font.Color));
     TextOut(R.CenterPoint.X - Extent.CX div 2, R.Top + 3, Capt);
   finally
     Opacity := OldOpacity;

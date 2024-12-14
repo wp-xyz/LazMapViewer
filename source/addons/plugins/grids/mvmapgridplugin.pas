@@ -16,36 +16,25 @@ type
   TMapGridLabelPosition = (glpLeft, glpTop, glpRight, glpBottom);
   TMapGridLabelPositions = set of TMapGridLabelPosition;
 
-  TMapGridPlugin = class(TMvPlugin)
+  TMapGridPlugin = class(TMvDrawPlugin)
   private
     const
       DEFAULT_LABEL_POSITIONS = [glpLeft, glpTop];
       DEFAULT_MAX_DISTANCE = 200;
       DEFAULT_MIN_DISTANCE = 80;
-      DEFAULT_OPACITY = 0.55;
     type
       TGridCoordType = (gctLatitude, gctLongitude);
   private
-    FBackgroundColor: TColor;
-    FBackgroundOpacity: Single;
-    FFont: TFont;
     FIncrement: Double;
-    FPen: TPen;
     FLabelDistance: Integer;
     FLabelPositions: TMapGridLabelPositions;
     FMaxDistance: Integer;
     FMinDistance: Integer;
-    procedure SetBackgroundColor(AValue: TColor);
-    procedure SetBackgroundOpacity(AValue: Single);
-    procedure SetFont(AValue: TFont);
     procedure SetIncrement(AValue: Double);
     procedure SetLabelDistance(AValue: Integer);
     procedure SetLabelPositions(AValue: TMapGridLabelPositions);
     procedure SetMaxDistance(AValue: Integer);
     procedure SetMinDistance(AValue: Integer);
-    procedure SetPen(AValue: TPen);
-  private
-    procedure Changed(Sender: TObject);
   protected
     procedure BeforeDrawObjects(AMapView: TMapView; var {%H-}Handled: Boolean); override;
     function CalcIncrement(AMapView: TMapView; Area: TRealArea): Double;
@@ -57,17 +46,18 @@ type
     function GetLatLonAsString(AValue: Double; ACoordType: TGridCoordType): String; virtual;
   public
     constructor Create(AOwner: TComponent); override;
-    destructor Destroy; override;
+    procedure Assign(ASource: TPersistent); override;
   published
-    property BackgroundColor: TColor read FBackgroundColor write SetBackgroundColor default clWhite;
-    property BackgroundOpacity: Single read FBackgroundOpacity write SetBackgroundOpacity;
-    property Font: TFont read FFont write SetFont;
     property Increment: Double read FIncrement write SetIncrement; // 0 = automatic increment detection
     property LabelDistance: Integer read FLabelDistance write SetLabelDistance default 0;
     property LabelPositions: TMapGridLabelPositions read FLabelPositions write SetLabelPositions default DEFAULT_LABEL_POSITIONS;
     property MaxDistance: Integer read FMaxDistance write SetMaxDistance default DEFAULT_MAX_DISTANCE;
     property MinDistance: Integer read FMinDistance write SetMinDistance default DEFAULT_MIN_DISTANCE;
-    property Pen: TPen read FPen write SetPen;
+    // inherited properties
+    property BackgroundColor;
+    property BackgroundOpacity;
+    property Font;
+    property Pen;
   end;
 
 implementation
@@ -81,22 +71,19 @@ uses
 constructor TMapGridPlugin.Create(AOwner: TComponent);
 begin
   inherited;
-  FBackgroundColor := clWhite;
-  FBackgroundOpacity := DEFAULT_OPACITY;
-  FFont := TFont.Create;
-  FFont.OnChange := @Changed;
-  FPen := TPen.Create;
-  FPen.OnChange := @Changed;
   FMaxDistance := DEFAULT_MAX_DISTANCE;
   FMinDistance := DEFAULT_MIN_DISTANCE;
   FLabelPositions := DEFAULT_LABEL_POSITIONS;
 end;
 
-destructor TMapGridPlugin.Destroy;
+procedure TMapGridPlugin.Assign(ASource: TPersistent);
 begin
-  FPen.Free;
-  FFont.Free;
-  inherited;
+  if (ASource is TMapGridPlugin) then
+  begin
+    FLabelPositions := TMapGridPlugin(ASource).LabelPositions;
+    FMaxDistance := TMapGridPlugin(ASource).MaxDistance;
+    FMinDistance := TMapGridPlugin(ASource).MinDistance;
+  end;
 end;
 
 procedure TMapGridPlugin.BeforeDrawObjects(AMapView: TMapView; var Handled: Boolean);
@@ -120,14 +107,14 @@ begin
   else
     incr := FIncrement;
 
-  AMapView.DrawingEngine.PenStyle := FPen.Style;
-  AMapView.DrawingEngine.PenWidth := FPen.Width;
-  AMapView.DrawingEngine.PenColor := FPen.Color;
-  AMapView.DrawingEngine.BrushColor := FBackgroundColor;
-  AMapView.DrawingEngine.FontName := FFont.Name;
-  AMapView.DrawingEngine.FontSize := FFont.Size;
-  AMapView.DrawingEngine.FontStyle := FFont.Style;
-  AMapView.DrawingEngine.FontColor := FFont.Color;
+  AMapView.DrawingEngine.PenStyle := Pen.Style;
+  AMapView.DrawingEngine.PenWidth := Pen.Width;
+  AMapView.DrawingEngine.PenColor := Pen.Color;
+  AMapView.DrawingEngine.BrushColor := BackgroundColor;
+  AMapView.DrawingEngine.FontName := Font.Name;
+  AMapView.DrawingEngine.FontSize := Font.Size;
+  AMapView.DrawingEngine.FontStyle := Font.Style;
+  AMapView.DrawingEngine.FontColor := Font.Color;
 
   for coordType in TGridCoordType do
   begin
@@ -189,11 +176,6 @@ begin
     numWorlds := trunc(AMapView.ClientWidth / worldWidth);
     Result.BottomRight.Lon := Result.BottomRight.Lon + numWorlds * 360;
   end;
-end;
-
-procedure TMapGridPlugin.Changed(Sender: TObject);
-begin
-  Update;
 end;
 
 procedure TMapGridPlugin.DrawGridLine(ADrawingEngine: TMvCustomDrawingEngine;
@@ -271,9 +253,9 @@ begin
     end;
 
     // Draw (semi-transparent) background
-    if FBackgroundColor <> clNone then
+    if BackgroundColor <> clNone then
     begin
-      ADrawingEngine.Opacity := FBackgroundOpacity;
+      ADrawingEngine.Opacity := BackgroundOpacity;
       ADrawingEngine.BrushStyle := bsSolid;
       case coordType of
         gctLatitude:
@@ -452,30 +434,6 @@ begin
   end;
 end;
 
-procedure TMapGridPlugin.SetBackgroundColor(AValue: TColor);
-begin
-  if FBackgroundColor <> AValue then
-  begin
-    FBackgroundColor := AValue;
-    Update;
-  end;
-end;
-
-procedure TMapGridPlugin.SetBackgroundOpacity(AValue: Single);
-begin
-  if FBackgroundOpacity <> AValue then
-  begin
-    FBackgroundOpacity := AValue;
-    Update;
-  end;
-end;
-
-procedure TMapGridPlugin.SetFont(AValue: TFont);
-begin
-  FFont := AValue;
-  Update;
-end;
-
 procedure TMapGridPlugin.SetIncrement(AValue: Double);
 begin
   if FIncrement <> AValue then
@@ -519,12 +477,6 @@ begin
     FMinDistance := AValue;
     Update;
   end;
-end;
-
-procedure TMapGridPlugin.SetPen(AValue: TPen);
-begin
-  FPen.Assign(AValue);
-  Update;
 end;
 
 

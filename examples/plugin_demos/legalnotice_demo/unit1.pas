@@ -85,7 +85,7 @@ begin
     MapView := FMapView1;
 
     edLegalNotice.Text := LegalNotice;
-    seOpacity.Value := round(Opacity * 100);
+    seOpacity.Value := round(BackgroundOpacity * 100);
   end;
 
   with TLegalNoticePlugin.Create(FPluginManager) do
@@ -116,9 +116,9 @@ end;
 
 procedure TMainForm.FloatSpinEdit1Change(Sender: TObject);
 begin
-  (FPluginManager.Item[0] as TLegalNoticePlugin).Opacity := seOpacity.Value / 100;
+  (FPluginManager.Item[0] as TLegalNoticePlugin).BackgroundOpacity := seOpacity.Value / 100;
   if FPluginManager.PluginList.Count > 1 then
-    (FPluginManager.Item[1] as TLegalNoticePlugin).Opacity := seOpacity.Value / 100;
+    (FPluginManager.Item[1] as TLegalNoticePlugin).BackgroundOpacity := seOpacity.Value / 100;
 end;
 
 procedure TMainForm.btnSaveToImageClick(Sender: TObject);
