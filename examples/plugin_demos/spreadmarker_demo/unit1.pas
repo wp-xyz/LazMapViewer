@@ -11,21 +11,20 @@ uses
 
 type
 
-  { TForm1 }
+  { TMainForm }
 
-  TForm1 = class(TForm)
-    MapView1: TMapView;
-    MvPluginManager1: TMvPluginManager;
-    MvPluginManager1DraggableMarkerPlugin1: TDraggableMarkerPlugin;
+  TMainForm = class(TForm)
+    MapView: TMapView;
+    PluginManager: TMvPluginManager;
+    DraggableMarkerPlugin: TDraggableMarkerPlugin;
     MvPluginManager1DraggableMarkerPlugin2: TDraggableMarkerPlugin;
     MvPluginManager1LegalNoticePlugin1: TLegalNoticePlugin;
     MvPluginManager1LegalNoticePlugin2: TLegalNoticePlugin;
-    MvPluginManager1SpreadMarkerPlugin1: TSpreadMarkerPlugin;
-    MvPluginManager1UserDefinedPlugin1: TUserDefinedPlugin;
+    SpreadMarkerPlugin: TSpreadMarkerPlugin;
+    UserDefinedPlugin: TUserDefinedPlugin;
     procedure FormCreate(Sender: TObject);
-    procedure MvPluginManager1UserDefinedPlugin1MouseDown(Sender: TObject;
-      AMapView: TMapView; Button: TMouseButton; Shift: TShiftState; X,
-      Y: Integer; var Handled: Boolean);
+    procedure UserDefinedPluginMouseDown(Sender: TObject; AMapView: TMapView;
+      Button: TMouseButton; Shift: TShiftState; X, Y: Integer; var Handled: Boolean);
   private
 
   public
@@ -33,15 +32,16 @@ type
   end;
 
 var
-  Form1: TForm1;
+  MainForm: TMainForm;
 
 implementation
 
 {$R *.lfm}
 
-{ TForm1 }
+{ TMainForm }
 
-procedure TForm1.FormCreate(Sender: TObject);
+procedure TMainForm.FormCreate(Sender: TObject);
+
   procedure AddTraditionalMarker(const ALon, ALat : Double; ACaption : String);
   var
     gpsPt: TGpsPointOfInterest;
@@ -50,16 +50,18 @@ procedure TForm1.FormCreate(Sender: TObject);
     try
       gpsPt.Name := ACaption;
       gpsPt.ImageIndex := 0;
-      MapView1.GPSItems.Add(gpsPt, 100);
+      MapView.GPSItems.Add(gpsPt, 100);
       gpsPt := Nil;
     finally
       if Assigned(gpsPt) then
         gpsPt.Free;
     end;
   end;
+
 var
   i : Integer;
 begin
+  MapView.Active := true;
   AddTraditionalMarker(0.0, 51.4825766,'Greenwich');
   AddTraditionalMarker(2.2945500,48.8582300,'Tour d´Eiffel, Paris');
   AddTraditionalMarker(-79.3884000,43.6439500,'CN Tower, Toronto');
@@ -74,13 +76,14 @@ begin
     AddTraditionalMarker(0.0,0.0,'Test '+IntToStr(i));
   end;
 end;
+
 { MvPluginManager1UserDefinedPlugin1MouseDown is used to delete some markers where
   the SpreadMarker-Plugin is in the SpreadMode.
   The deletion of the markers will be messaged to the SpreadMarker-plugin, so
   that the stored information of the spreaded markers are updated and no
   access violations on invalid memory occours.
   You can debug this in the deletion or EndUpdate Method. }
-procedure TForm1.MvPluginManager1UserDefinedPlugin1MouseDown(Sender: TObject;
+procedure TMainForm.UserDefinedPluginMouseDown(Sender: TObject;
   AMapView: TMapView; Button: TMouseButton; Shift: TShiftState; X, Y: Integer;
   var Handled: Boolean);
 var
@@ -90,10 +93,10 @@ var
   i : Integer;
 begin
   if Button <> mbLeft then Exit;
-  if (not Handled) and MvPluginManager1SpreadMarkerPlugin1.SpreadModeActive[AMapView] then
+  if (not Handled) and SpreadMarkerPlugin.SpreadModeActive[AMapView] then
   begin
     Handled := True; // Reserve this event for us, prohibit the dragging of the map
-    lstcnt := MapView1.GPSItems.Count;
+    lstcnt := MapView.GPSItems.Count;
     delcnt := Random(5)+1;
     if delcnt > lstcnt then
       delcnt := lstcnt;
@@ -101,21 +104,21 @@ begin
     if delcnt = 1 then
     begin
       ndx := Random(lstcnt);
-      MapView1.GPSItems.Delete(MapView1.GPSItems.Items[ndx]);
+      MapView.GPSItems.Delete(MapView.GPSItems.Items[ndx]);
     end
     else
     begin
-      MapView1.GPSItems.BeginUpdate;
+      MapView.GPSItems.BeginUpdate;
       try
         for i := 0 to delcnt-1 do
         begin
           if lstcnt <= 0 then Break;
           ndx := Random(lstcnt);
-          MapView1.GPSItems.Delete(MapView1.GPSItems.Items[ndx]);
+          MapView.GPSItems.Delete(MapView.GPSItems.Items[ndx]);
           Dec(lstcnt);
         end;
       finally
-        MapView1.GPSItems.EndUpdate;
+        MapView.GPSItems.EndUpdate;
       end;
     end;
   end;

@@ -1,36 +1,34 @@
-object Form1: TForm1
+object MainForm: TMainForm
   Left = 324
   Height = 473
   Top = 118
   Width = 669
-  Caption = 'Form1'
+  Caption = 'Draggable Marker Demo'
   ClientHeight = 473
   ClientWidth = 669
+  LCLVersion = '4.99.0.0'
   OnCreate = FormCreate
-  LCLVersion = '3.4.0.0'
-  object MapView1: TMapView
+  object MapView: TMapView
     Left = 0
     Height = 473
     Top = 0
     Width = 669
-    Active = True
     Align = alClient
-    DownloadEngine = MapView1.BuiltInDLE
-    DrawingEngine = MapView1.BuiltInDE
+    DownloadEngine = MapView.BuiltInDLE
+    DrawingEngine = MapView.BuiltInDE
     Layers = <>
     Font.Color = clBlack
     MapProvider = 'OpenStreetMap Mapnik'
-    PluginManager = MvPluginManager1
+    PluginManager = PluginManager
   end
-  object MvPluginManager1: TMvPluginManager
+  object PluginManager: TMvPluginManager
     Left = 427
     Top = 141
-    object MvPluginManager1LegalNoticePlugin2: TLegalNoticePlugin
-      LegalNotice = 'Copyright'
+    object LegalNoticePlugin: TLegalNoticePlugin
+      LegalNotice = '(c) OpenStreetMap and contributors'
       LegalNoticeURL = 'https://www.openstreetmap.org'
-      Spacing = 0
     end
-    object MvPluginManager1DraggableMarkerPlugin2: TDraggableMarkerPlugin
+    object DraggableMarkerPlugin: TDraggableMarkerPlugin
     end
   end
 end

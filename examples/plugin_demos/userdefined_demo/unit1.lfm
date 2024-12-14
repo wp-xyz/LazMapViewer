@@ -1,28 +1,27 @@
-object Form1: TForm1
+object MainForm: TMainForm
   Left = 324
   Height = 307
   Top = 119
   Width = 451
-  Caption = 'Form1'
+  Caption = 'User-defined Plugin Demo'
   ClientHeight = 307
   ClientWidth = 451
   LCLVersion = '4.99.0.0'
   OnCreate = FormCreate
-  object MapView1: TMapView
+  object MapView: TMapView
     Left = 0
     Height = 257
     Top = 0
     Width = 451
-    Active = True
     Align = alClient
-    DownloadEngine = MapView1.BuiltInDLE
-    DrawingEngine = MapView1.BuiltInDE
+    DownloadEngine = MapView.BuiltInDLE
+    DrawingEngine = MapView.BuiltInDE
     Layers = <>
     Font.Color = clBlack
     MapProvider = 'OpenStreetMap Mapnik'
-    PluginManager = MvPluginManager1
+    PluginManager = PluginManager
   end
-  object Panel1: TPanel
+  object InfoPanel: TPanel
     Left = 0
     Height = 50
     Top = 257
@@ -31,25 +30,29 @@ object Form1: TForm1
     ClientHeight = 50
     ClientWidth = 451
     TabOrder = 1
-    object Label1: TLabel
+    object lblMessageLabel: TLabel
+      AnchorSideTop.Control = InfoPanel
+      AnchorSideTop.Side = asrCenter
       Left = 16
       Height = 15
-      Top = 16
+      Top = 18
       Width = 146
       Caption = 'UserdefinedPlugin Message'
     end
     object lblUserdefinedPluginMessage: TLabel
-      AnchorSideLeft.Control = Label1
+      AnchorSideLeft.Control = lblMessageLabel
       AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = InfoPanel
+      AnchorSideTop.Side = asrCenter
       Left = 170
       Height = 15
-      Top = 16
+      Top = 18
       Width = 38
       BorderSpacing.Left = 8
       Caption = ' (none)'
     end
   end
-  object MvPluginManager1: TMvPluginManager
+  object PluginManager: TMvPluginManager
     Left = 262
     Top = 31
   end

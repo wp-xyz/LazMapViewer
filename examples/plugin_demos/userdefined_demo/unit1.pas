@@ -10,14 +10,14 @@ uses
 
 type
 
-  { TForm1 }
+  { TMainForm }
 
-  TForm1 = class(TForm)
-    Label1: TLabel;
+  TMainForm = class(TForm)
+    lblMessageLabel: TLabel;
     lblUserdefinedPluginMessage: TLabel;
-    MapView1: TMapView;
-    MvPluginManager1: TMvPluginManager;
-    Panel1: TPanel;
+    MapView: TMapView;
+    PluginManager: TMvPluginManager;
+    InfoPanel: TPanel;
     procedure FormCreate(Sender: TObject);
   private
     procedure UserdefinedPluginMouseUp(Sender: TObject; AMapView: TMapView; Button: TMouseButton;
@@ -29,31 +29,33 @@ type
   end;
 
 var
-  Form1: TForm1;
+  MainForm: TMainForm;
 
 implementation
 
 {$R *.lfm}
 
-{ TForm1 }
+{ TMainForm }
 
-procedure TForm1.FormCreate(Sender: TObject);
+procedure TMainForm.FormCreate(Sender: TObject);
 var
   udp : TUserDefinedPlugin;
 begin
-  udp := TUserdefinedPlugin.Create(MvPluginManager1);
+  MapView.Active := true;
+
+  udp := TUserdefinedPlugin.Create(PluginManager);
   udp.OnMouseUp := @UserdefinedPluginMouseUp;
   udp.OnMouseDown := @UserdefinedPluginMouseDown;
 end;
 
-procedure TForm1.UserdefinedPluginMouseUp(Sender: TObject; AMapView: TMapView;
+procedure TMainForm.UserdefinedPluginMouseUp(Sender: TObject; AMapView: TMapView;
   Button: TMouseButton; Shift: TShiftState; X, Y: Integer; var Handled: Boolean
   );
 begin
   lblUserdefinedPluginMessage.Caption := Format('MouseUp X:%d Y:%d',[X,Y]);
 end;
 
-procedure TForm1.UserdefinedPluginMouseDown(Sender: TObject; AMapView: TMapView;
+procedure TMainForm.UserdefinedPluginMouseDown(Sender: TObject; AMapView: TMapView;
   Button: TMouseButton; Shift: TShiftState; X, Y: Integer; var Handled: Boolean
   );
 begin

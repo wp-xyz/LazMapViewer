@@ -11,24 +11,24 @@ uses
   mvMapViewer, mvPluginCore, mvPlugins;
 
 type
-  TForm1 = class(TForm)
+  TMainForm = class(TForm)
     Bevel1: TBevel;
-    Button1: TButton;
-    CheckBox1: TCheckBox;
-    CheckBox2: TCheckBox;
-    ComboBox1: TComboBox;
-    Edit1: TEdit;
-    SpinEdit1: TSpinEdit;
-    Label1: TLabel;
-    Label2: TLabel;
-    Panel1: TPanel;
+    btnSaveToImage: TButton;
+    cbShowMapCenter: TCheckBox;
+    cbShowLegalNotice: TCheckBox;
+    cmbPosition: TComboBox;
+    edLegalNotice: TEdit;
+    seOpacity: TSpinEdit;
+    lblLegalNotice: TLabel;
+    lblOpacity: TLabel;
+    ParamsPanel: TPanel;
     Panel2: TPanel;
     Panel3: TPanel;
-    procedure Button1Click(Sender: TObject);
-    procedure CheckBox1Change(Sender: TObject);
-    procedure CheckBox2Change(Sender: TObject);
-    procedure ComboBox1Change(Sender: TObject);
-    procedure Edit1Change(Sender: TObject);
+    procedure btnSaveToImageClick(Sender: TObject);
+    procedure cbShowMapCenterChange(Sender: TObject);
+    procedure cbShowLegalNoticeChange(Sender: TObject);
+    procedure cmbPositionChange(Sender: TObject);
+    procedure edLegalNoticeChange(Sender: TObject);
     procedure FloatSpinEdit1Change(Sender: TObject);
     procedure FormCreate(Sender: TObject);
   private
@@ -40,15 +40,15 @@ type
   end;
 
 var
-  Form1: TForm1;
+  MainForm: TMainForm;
 
 implementation
 
 {$R *.lfm}
 
-{ TForm1 }
+{ TMainForm }
 
-procedure TForm1.FormCreate(Sender: TObject);
+procedure TMainForm.FormCreate(Sender: TObject);
 begin
   FPluginManager := TMvPluginManager.Create(Self);
 
@@ -84,8 +84,8 @@ begin
     BackgroundColor := clWhite;
     MapView := FMapView1;
 
-    Edit1.Text := LegalNotice;
-    SpinEdit1.Value := round(Opacity * 100);
+    edLegalNotice.Text := LegalNotice;
+    seOpacity.Value := round(Opacity * 100);
   end;
 
   with TLegalNoticePlugin.Create(FPluginManager) do
@@ -109,39 +109,39 @@ begin
   with TLinkedMapsPlugin.Create(FPluginManager) do ;
 end;
 
-procedure TForm1.Edit1Change(Sender: TObject);
+procedure TMainForm.edLegalNoticeChange(Sender: TObject);
 begin
-  (FPluginManager.Item[0] as TLegalNoticePlugin).LegalNotice := Edit1.Text;
+  (FPluginManager.Item[0] as TLegalNoticePlugin).LegalNotice := edLegalNotice.Text;
 end;
 
-procedure TForm1.FloatSpinEdit1Change(Sender: TObject);
+procedure TMainForm.FloatSpinEdit1Change(Sender: TObject);
 begin
-  (FPluginManager.Item[0] as TLegalNoticePlugin).Opacity := SpinEdit1.Value / 100;
+  (FPluginManager.Item[0] as TLegalNoticePlugin).Opacity := seOpacity.Value / 100;
   if FPluginManager.PluginList.Count > 1 then
-    (FPluginManager.Item[1] as TLegalNoticePlugin).Opacity := SpinEdit1.Value / 100;
+    (FPluginManager.Item[1] as TLegalNoticePlugin).Opacity := seOpacity.Value / 100;
 end;
 
-procedure TForm1.Button1Click(Sender: TObject);
+procedure TMainForm.btnSaveToImageClick(Sender: TObject);
 begin
   FMapView1.SaveToFile(TPortableNetworkGraphic, 'map1.png');
   FMapView2.SaveToFile(TPortableNetworkGraphic, 'map2.png');
 end;
 
-procedure TForm1.CheckBox1Change(Sender: TObject);
+procedure TMainForm.cbShowMapCenterChange(Sender: TObject);
 begin
-  (FPluginManager.Item[2] as TCenterMarkerPlugin).Enabled := Checkbox1.Checked;
+  (FPluginManager.Item[2] as TCenterMarkerPlugin).Enabled := cbShowMapCenter.Checked;
 end;
 
-procedure TForm1.CheckBox2Change(Sender: TObject);
+procedure TMainForm.cbShowLegalNoticeChange(Sender: TObject);
 begin
-  (FPluginManager.Item[0] as TLegalNoticePlugin).Enabled := Checkbox2.Checked;
-  (FPluginManager.Item[1] as TLegalNoticePlugin).Enabled := Checkbox2.Checked;
+  (FPluginManager.Item[0] as TLegalNoticePlugin).Enabled := cbShowLegalNotice.Checked;
+  (FPluginManager.Item[1] as TLegalNoticePlugin).Enabled := cbShowLegalNotice.Checked;
 end;
 
-procedure TForm1.ComboBox1Change(Sender: TObject);
+procedure TMainForm.cmbPositionChange(Sender: TObject);
 begin
-  (FPluginManager.Item[0] as TLegalNoticePlugin).Position := TLegalNoticePosition(Combobox1.ItemIndex);
-  (FPluginManager.Item[1] as TLegalNoticePlugin).Position := TLegalNoticePosition(Combobox1.ItemIndex);
+  (FPluginManager.Item[0] as TLegalNoticePlugin).Position := TLegalNoticePosition(cmbPosition.ItemIndex);
+  (FPluginManager.Item[1] as TLegalNoticePlugin).Position := TLegalNoticePosition(cmbPosition.ItemIndex);
 end;
 
 end.

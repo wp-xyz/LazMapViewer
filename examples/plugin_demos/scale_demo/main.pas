@@ -11,22 +11,22 @@ uses
 
 type
 
-  { TForm1 }
+  { TMainForm }
 
-  TForm1 = class(TForm)
+  TMainForm = class(TForm)
     cbScaleVisible: TCheckBox;
     gbZoomMin: TGroupBox;
-    Label1: TLabel;
+    lblZoomMinInfo: TLabel;
     lblCurrentZoom: TLabel;
-    MapView1: TMapView;
-    MvPluginManager1: TMvPluginManager;
-    Panel1: TPanel;
+    MapView: TMapView;
+    PluginManager: TMvPluginManager;
+    ParamsPanel: TPanel;
     rgLengthUnits: TRadioGroup;
     rgScaleAlign: TRadioGroup;
     seZoomMin: TSpinEdit;
     procedure cbScaleVisibleChange(Sender: TObject);
     procedure FormCreate(Sender: TObject);
-    procedure MapView1ZoomChange(Sender: TObject);
+    procedure MapViewZoomChange(Sender: TObject);
     procedure rgLengthUnitsClick(Sender: TObject);
     procedure rgScaleAlignClick(Sender: TObject);
     procedure seZoomMinChange(Sender: TObject);
@@ -39,22 +39,23 @@ type
   end;
 
 var
-  Form1: TForm1;
+  MainForm: TMainForm;
 
 implementation
 
 {$R *.lfm}
 
-{ TForm1 }
+{ TMainForm }
 
-procedure TForm1.FormCreate(Sender: TObject);
+procedure TMainForm.FormCreate(Sender: TObject);
 var
   P: TMapProvider;
   zoomMin, zoomMax: Integer;
 begin
-  FScalePlugin := TMapScalePlugin.Create(MvPluginManager1);
+  MapView.Active := true;
+  FScalePlugin := TMapScalePlugin.Create(PluginManager);
 
-  P := MapView1.Engine.MapProviderByName(MapView1.MapProvider);
+  P := MapView.Engine.MapProviderByName(MapView.MapProvider);
   P.GetZoomInfos(zoomMin, zoomMax);
   seZoomMin.MaxValue := zoomMax;
   seZoomMin.MinValue := zoomMin;
@@ -63,22 +64,22 @@ begin
   UpdateZoomInfo;
 end;
 
-procedure TForm1.MapView1ZoomChange(Sender: TObject);
+procedure TMainForm.MapViewZoomChange(Sender: TObject);
 begin
   UpdateZoomInfo;
 end;
 
-procedure TForm1.cbScaleVisibleChange(Sender: TObject);
+procedure TMainForm.cbScaleVisibleChange(Sender: TObject);
 begin
   FScalePlugin.Enabled := cbScaleVisible.Checked;
 end;
 
-procedure TForm1.rgLengthUnitsClick(Sender: TObject);
+procedure TMainForm.rgLengthUnitsClick(Sender: TObject);
 begin
   FScalePlugin.Imperial := rgLengthUnits.ItemIndex = 1;
 end;
 
-procedure TForm1.rgScaleAlignClick(Sender: TObject);
+procedure TMainForm.rgScaleAlignClick(Sender: TObject);
 var
   alignSet: TScaleAlignSet;
 begin
@@ -97,14 +98,14 @@ begin
   FScalePlugin.AlignSet := alignSet;
 end;
 
-procedure TForm1.seZoomMinChange(Sender: TObject);
+procedure TMainForm.seZoomMinChange(Sender: TObject);
 begin
   FScalePlugin.ZoomMin := seZoomMin.Value;
 end;
 
-procedure TForm1.UpdateZoomInfo;
+procedure TMainForm.UpdateZoomInfo;
 begin
-  lblCurrentZoom.Caption := Format('Current zoom level %d', [MapView1.Zoom]);
+  lblCurrentZoom.Caption := Format('Current zoom level %d', [MapView.Zoom]);
 end;
 
 

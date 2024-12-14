@@ -1,63 +1,76 @@
-object Form1: TForm1
+object MainForm: TMainForm
   Left = 314
   Height = 487
   Top = 130
-  Width = 977
+  Width = 943
   Caption = 'Legal Notice Plugin Demo'
   ClientHeight = 487
-  ClientWidth = 977
+  ClientWidth = 943
   LCLVersion = '4.99.0.0'
   OnCreate = FormCreate
-  object Panel1: TPanel
-    Left = 0
-    Height = 70
-    Top = 417
-    Width = 977
+  object ParamsPanel: TPanel
+    Left = 8
+    Height = 54
+    Top = 425
+    Width = 927
     Align = alBottom
+    AutoSize = True
+    BorderSpacing.Around = 8
     BevelOuter = bvNone
-    ClientHeight = 70
-    ClientWidth = 977
+    ClientHeight = 54
+    ClientWidth = 927
     TabOrder = 0
-    object Edit1: TEdit
-      AnchorSideRight.Side = asrBottom
-      Left = 96
+    object edLegalNotice: TEdit
+      AnchorSideLeft.Control = lblLegalNotice
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = ParamsPanel
+      AnchorSideRight.Control = cmbPosition
+      Left = 75
       Height = 23
-      Top = 6
-      Width = 640
+      Top = 0
+      Width = 601
       Anchors = [akTop, akLeft, akRight]
+      BorderSpacing.Left = 8
+      BorderSpacing.Right = 4
       TabOrder = 0
-      Text = 'Edit1'
-      OnChange = Edit1Change
+      Text = 'edLegalNotice'
+      OnChange = edLegalNoticeChange
     end
-    object Label1: TLabel
-      AnchorSideTop.Control = Edit1
+    object lblLegalNotice: TLabel
+      AnchorSideLeft.Control = ParamsPanel
+      AnchorSideTop.Control = edLegalNotice
       AnchorSideTop.Side = asrCenter
-      Left = 13
+      Left = 0
       Height = 15
-      Top = 10
+      Top = 4
       Width = 67
       Caption = 'Legal notice:'
     end
-    object Button1: TButton
+    object btnSaveToImage: TButton
+      AnchorSideTop.Control = ParamsPanel
+      AnchorSideRight.Control = ParamsPanel
       AnchorSideRight.Side = asrBottom
-      Left = 868
+      Left = 800
       Height = 25
-      Top = 6
-      Width = 100
+      Top = 0
+      Width = 127
       Anchors = [akTop, akRight]
       AutoSize = True
-      Caption = 'Save to image'
+      Caption = 'Save map to image'
       TabOrder = 1
-      OnClick = Button1Click
+      OnClick = btnSaveToImageClick
     end
-    object ComboBox1: TComboBox
-      AnchorSideTop.Control = Edit1
+    object cmbPosition: TComboBox
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = edLegalNotice
       AnchorSideTop.Side = asrCenter
-      Left = 744
+      AnchorSideRight.Control = btnSaveToImage
+      Left = 680
       Height = 23
-      Top = 6
+      Top = 0
       Width = 116
       Anchors = [akTop, akRight]
+      BorderSpacing.Right = 4
       ItemHeight = 15
       ItemIndex = 3
       Items.Strings = (
@@ -69,50 +82,62 @@ object Form1: TForm1
       Style = csDropDownList
       TabOrder = 2
       Text = 'bottom/right'
-      OnChange = ComboBox1Change
+      OnChange = cmbPositionChange
     end
-    object CheckBox1: TCheckBox
-      Left = 96
+    object cbShowMapCenter: TCheckBox
+      AnchorSideLeft.Control = edLegalNotice
+      AnchorSideTop.Control = seOpacity
+      AnchorSideTop.Side = asrCenter
+      Left = 75
       Height = 19
-      Top = 36
+      Top = 33
       Width = 110
       Caption = 'Show map center'
       Checked = True
       State = cbChecked
       TabOrder = 3
-      OnChange = CheckBox1Change
+      OnChange = cbShowMapCenterChange
     end
-    object CheckBox2: TCheckBox
-      Left = 224
+    object cbShowLegalNotice: TCheckBox
+      AnchorSideLeft.Control = cbShowMapCenter
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = seOpacity
+      AnchorSideTop.Side = asrCenter
+      Left = 209
       Height = 19
-      Top = 36
+      Top = 33
       Width = 111
+      BorderSpacing.Left = 24
       Caption = 'Show legal notice'
       Checked = True
       State = cbChecked
       TabOrder = 4
-      OnChange = CheckBox2Change
+      OnChange = cbShowLegalNoticeChange
     end
-    object Label2: TLabel
-      AnchorSideTop.Control = CheckBox1
+    object lblOpacity: TLabel
+      AnchorSideLeft.Control = cbShowLegalNotice
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = cbShowMapCenter
       AnchorSideTop.Side = asrCenter
-      Left = 387
+      Left = 352
       Height = 15
-      Top = 38
+      Top = 35
       Width = 124
+      BorderSpacing.Left = 32
       Caption = 'Legal note opacity: (%):'
     end
-    object SpinEdit1: TSpinEdit
-      AnchorSideLeft.Control = Label2
+    object seOpacity: TSpinEdit
+      AnchorSideLeft.Control = lblOpacity
       AnchorSideLeft.Side = asrBottom
-      AnchorSideTop.Control = Label2
-      AnchorSideTop.Side = asrCenter
-      Left = 519
+      AnchorSideTop.Control = edLegalNotice
+      AnchorSideTop.Side = asrBottom
+      Left = 484
       Height = 23
-      Top = 34
+      Top = 31
       Width = 69
       Alignment = taRightJustify
       BorderSpacing.Left = 8
+      BorderSpacing.Top = 8
       Increment = 5
       MaxValue = 100
       TabOrder = 5
@@ -124,8 +149,8 @@ object Form1: TForm1
     AnchorSideLeft.Control = Owner
     AnchorSideLeft.Side = asrCenter
     AnchorSideTop.Control = Owner
-    AnchorSideBottom.Control = Panel1
-    Left = 486
+    AnchorSideBottom.Control = ParamsPanel
+    Left = 469
     Height = 417
     Top = 0
     Width = 4
@@ -136,11 +161,11 @@ object Form1: TForm1
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner
     AnchorSideRight.Control = Bevel1
-    AnchorSideBottom.Control = Panel1
+    AnchorSideBottom.Control = ParamsPanel
     Left = 0
     Height = 417
     Top = 0
-    Width = 486
+    Width = 469
     Anchors = [akTop, akLeft, akRight, akBottom]
     BevelOuter = bvNone
     TabOrder = 1
@@ -151,11 +176,11 @@ object Form1: TForm1
     AnchorSideTop.Control = Owner
     AnchorSideRight.Control = Owner
     AnchorSideRight.Side = asrBottom
-    AnchorSideBottom.Control = Panel1
-    Left = 490
+    AnchorSideBottom.Control = ParamsPanel
+    Left = 473
     Height = 417
     Top = 0
-    Width = 487
+    Width = 470
     Anchors = [akTop, akLeft, akRight, akBottom]
     BevelOuter = bvNone
     TabOrder = 2

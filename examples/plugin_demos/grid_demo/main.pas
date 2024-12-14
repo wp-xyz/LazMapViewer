@@ -10,7 +10,7 @@ uses
   mvMapViewer, mvTypes, mvEngine, mvPluginCore, mvMapGridPlugin;
 
 type
-  TForm1 = class(TForm)
+  TMainForm = class(TForm)
     cbCyclic: TCheckBox;
     cbEnabled: TCheckBox;
     cbLeft: TCheckBox;
@@ -55,13 +55,13 @@ type
   end;
 
 var
-  Form1: TForm1;
+  MainForm: TMainForm;
 
 implementation
 
 {$R *.lfm}
 
-procedure TForm1.FormCreate(Sender: TObject);
+procedure TMainForm.FormCreate(Sender: TObject);
 begin
   Randomize;
   MapView.Active := true;
@@ -74,7 +74,7 @@ begin
   tbOpacity.Position := round(FMapGridPlugin.BackgroundOpacity * 100);
 end;
 
-procedure TForm1.AddOrDeletePointOfInterest(X, Y: Integer);
+procedure TMainForm.AddOrDeletePointOfInterest(X, Y: Integer);
 const
   DELTA = 5;   // Tolerance of the HitTest
 var
@@ -118,32 +118,32 @@ begin
   end;
 end;
 
-procedure TForm1.cbCyclicChange(Sender: TObject);
+procedure TMainForm.cbCyclicChange(Sender: TObject);
 begin
   MapView.Cyclic := cbCyclic.Checked;
 end;
 
-procedure TForm1.cbEnabledChange(Sender: TObject);
+procedure TMainForm.cbEnabledChange(Sender: TObject);
 begin
   FMapGridPlugin.Enabled := cbEnabled.Checked;
 end;
 
-procedure TForm1.clbBackgroundColorColorChanged(Sender: TObject);
+procedure TMainForm.clbBackgroundColorColorChanged(Sender: TObject);
 begin
   FMapGridPlugin.BackgroundColor := clbBackgroundColor.ButtonColor;
 end;
 
-procedure TForm1.clbLabelTextColorColorChanged(Sender: TObject);
+procedure TMainForm.clbLabelTextColorColorChanged(Sender: TObject);
 begin
   FMapGridPlugin.Font.Color := clbLabelTextColor.ButtonColor;
 end;
 
-procedure TForm1.clbPenColorColorChanged(Sender: TObject);
+procedure TMainForm.clbPenColorColorChanged(Sender: TObject);
 begin
   FMapGridPlugin.Pen.Color := clbPenColor.ButtonColor;
 end;
 
-procedure TForm1.cmbIncrementChange(Sender: TObject);
+procedure TMainForm.cmbIncrementChange(Sender: TObject);
 var
   s: String;
   multiplier: Double;
@@ -176,7 +176,7 @@ begin
   end;
 end;
 
-procedure TForm1.LabelPositionChange(Sender: TObject);
+procedure TMainForm.LabelPositionChange(Sender: TObject);
 begin
   with FMapGridPlugin do
   begin
@@ -202,19 +202,19 @@ begin
   end;
 end;
 
-procedure TForm1.MapViewMouseUp(Sender: TObject; Button: TMouseButton; Shift:
+procedure TMainForm.MapViewMouseUp(Sender: TObject; Button: TMouseButton; Shift:
   TShiftState; X, Y: Integer);
 begin
   if (Button = mbRight) and (Shift = []) then
     AddOrDeletePointOfInterest(X, Y);
 end;
 
-procedure TForm1.seLabelDistanceChange(Sender: TObject);
+procedure TMainForm.seLabelDistanceChange(Sender: TObject);
 begin
   FMapGridPlugin.LabelDistance := seLabelDistance.Value;
 end;
 
-procedure TForm1.tbOpacityChange(Sender: TObject);
+procedure TMainForm.tbOpacityChange(Sender: TObject);
 begin
   FMapGridPlugin.BackgroundOpacity := tbOpacity.Position / 100;
 end;

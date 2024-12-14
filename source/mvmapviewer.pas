@@ -444,29 +444,21 @@ type
       AShift: TShiftState; X, Y: Integer; AMapEvent: TMouseEvent);
     procedure DefaultNotifyEventHandler(AMapView: TMapView; AMapEvent: TNotifyEvent);
 
-    procedure AfterDrawObjects(AMapView: TMapView; AMapEvent: TNotifyEvent;
-                               out Handled : Boolean); virtual;
-    procedure AfterPaint(AMapView: TMapView; AMapEvent: TNotifyEvent;
-                         out Handled : Boolean); virtual;
-    procedure BeforeDrawObjects(AMapView: TMapView; AMapEvent: TNotifyEvent;
-                                out Handled : Boolean); virtual;
-    procedure CenterMove(AMapView: TMapView; AMapEvent: TNotifyEvent); virtual;
-    procedure MouseDown(AMapView: TMapView; AButton: TMouseButton;
-                        AShift: TShiftState; X, Y: Integer; AMapEvent: TMouseEvent;
-                        out Handled : Boolean); virtual;
-    procedure MouseEnter(AMapView: TMapView; AMapEvent: TNotifyEvent;
-                         out Handled : Boolean); virtual;
-    procedure MouseLeave(AMapView: TMapView; AMapEvent: TNotifyEvent;
-                         out Handled : Boolean); virtual;
-    procedure MouseMove(AMapView: TMapView; AShift: TShiftState; X,Y: Integer;
-                        AMapEvent: TMouseMoveEvent; out Handled : Boolean); virtual;
-    procedure MouseUp(AMapView: TMapView; AButton: TMouseButton;
-                      AShift: TShiftState; X, Y: Integer; AMapEvent: TMouseEvent;
-                      out Handled : Boolean); virtual;
-    procedure ZoomChange(AMapView: TMapView; AMapEvent: TNotifyEvent); virtual;
-    procedure GPSItemsModified(AMapView: TMapView; ModifiedList: TGPSObjectList;
-                               ActualObjs: TGPSObjList; Adding: Boolean;
-                               out Handled : Boolean);virtual;
+    function AfterDrawObjects(AMapView: TMapView; AMapEvent: TNotifyEvent): Boolean; virtual;
+    function AfterPaint(AMapView: TMapView; AMapEvent: TNotifyEvent): Boolean; virtual;
+    function BeforeDrawObjects(AMapView: TMapView; AMapEvent: TNotifyEvent): Boolean; virtual;
+    function CenterMove(AMapView: TMapView; AMapEvent: TNotifyEvent): Boolean; virtual;
+    function MouseDown(AMapView: TMapView; AButton: TMouseButton; AShift: TShiftState;
+      X, Y: Integer; AMapEvent: TMouseEvent): Boolean; virtual;
+    function MouseEnter(AMapView: TMapView; AMapEvent: TNotifyEvent): Boolean; virtual;
+    function MouseLeave(AMapView: TMapView; AMapEvent: TNotifyEvent): Boolean; virtual;
+    function MouseMove(AMapView: TMapView; AShift: TShiftState; X,Y: Integer;
+      AMapEvent: TMouseMoveEvent): Boolean; virtual;
+    function MouseUp(AMapView: TMapView; AButton: TMouseButton; AShift: TShiftState;
+      X, Y: Integer; AMapEvent: TMouseEvent): Boolean; virtual;
+    function ZoomChange(AMapView: TMapView; AMapEvent: TNotifyEvent): Boolean; virtual;
+    function GPSItemsModified(AMapView: TMapView; ModifiedList: TGPSObjectList;
+      ActualObjs: TGPSObjList; Adding: Boolean): Boolean; virtual;
   public
   end;
 
@@ -2555,7 +2547,7 @@ begin
   finally
     OnMouseDown := savedOnMouseDown;
   end;
-  GetPluginManager.MouseDown(Self, Button, Shift, X, Y, OnMouseDown, lHandled);
+  lHandled := GetPluginManager.MouseDown(Self, Button, Shift, X, Y, OnMouseDown);
 
   if EditingEnabled then
   begin
@@ -2584,7 +2576,6 @@ procedure TMapView.MouseUp(Button: TMouseButton; Shift: TShiftState;
   X, Y: Integer);
 var
   savedOnMouseUp: TMouseEvent;
-  lHandled : Boolean;
 begin
   savedOnMouseUp := OnMouseUp;
   try
@@ -2593,7 +2584,7 @@ begin
   finally
     OnMouseUp := savedOnMouseUp;
   end;
-  GetPluginManager.MouseUp(Self, Button, Shift, X, Y, OnMouseUp, lHandled);
+  GetPluginManager.MouseUp(Self, Button, Shift, X, Y, OnMouseUp);
 
   if IsActive then
     if Button = mbLeft then
@@ -2650,7 +2641,7 @@ begin
   finally
     OnMouseMove := savedOnMouseMove;
   end;
-  GetPluginManager.MouseMove(Self, Shift, X, Y, OnMouseMove, lHandled);
+  lHandled := GetPluginManager.MouseMove(Self, Shift, X, Y, OnMouseMove);
   if IsActive then
   begin
     Engine.MouseMove(self,Shift,X,Y);
@@ -2664,17 +2655,13 @@ begin
 end;
 
 procedure TMapView.MouseEnter;
-var
-  lHandled : Boolean;
 begin
-  GetPluginManager.MouseEnter(Self, OnMouseEnter,lHandled);
+  GetPluginManager.MouseEnter(Self, OnMouseEnter);
 end;
 
 procedure TMapView.MouseLeave;
-var
-  lHandled : Boolean;
 begin
-  GetPluginManager.MouseLeave(Self, OnMouseLeave,lHandled);
+  GetPluginManager.MouseLeave(Self, OnMouseLeave);
 end;
 
 procedure TMapView.Notification(AComponent: TComponent; Operation: TOperation);
@@ -2717,9 +2704,6 @@ begin
 end;
 
 procedure TMapView.Paint;
-var
-  lHandled : Boolean;
-
 const
   FREE_DRAG = 0; //(TILE_SIZE * TILE_SIZE) div 4;
 
@@ -2750,15 +2734,15 @@ const
     if Cyclic then
       W := Min(1 shl Zoom * TileSize.CX, W);
 
-    GetPluginManager.BeforeDrawObjects(Self, FBeforeDrawObjectsEvent,lHandled);
+    GetPluginManager.BeforeDrawObjects(Self, FBeforeDrawObjectsEvent);
     DrawObjects(Default(TTileId), 0, 0, W - 1, ClientHeight);
-    GetPluginManager.AfterDrawObjects(Self, FAfterDrawObjectsEvent,lHandled);
+    GetPluginManager.AfterDrawObjects(Self, FAfterDrawObjectsEvent);
 
     DrawingEngine.PaintToCanvas(Canvas);
     if DebugTiles then
       DrawCenter;
 
-    GetPluginManager.AfterPaint(Self, FAfterPaintEvent,lHandled);
+    GetPluginManager.AfterPaint(Self, FAfterPaintEvent);
   end;
 
   procedure DragDraw;
@@ -2794,9 +2778,8 @@ procedure TMapView.OnGPSItemsModified(Sender: TObject; objs: TGPSObjList;
   Adding: boolean);
 var
   {%H-}Area, objArea, visArea: TRealArea;
-  lHandled : Boolean;
 begin
-  GetPluginManager.GPSItemsModified(Self,TGPSObjectList(Sender),objs,Adding,lHandled);
+  GetPluginManager.GPSItemsModified(Self, TGPSObjectList(Sender), objs, Adding);
   if Adding and Assigned(Objs) then
   begin
     objArea := GetAreaOf(Objs);
@@ -4378,30 +4361,33 @@ end;
 
 { Just executes the handler assigned to the OnAfterDrawObjects event of the
   mapview. The descendant plugin manager will have to iterate over all plugins
-  used by it. }
-procedure TMvCustomPluginManager.AfterDrawObjects(AMapView: TMapView;
-  AMapEvent: TNotifyEvent; out Handled: Boolean);
+  used by it. It will have to set the function result to true of onlf the
+  plugin has "handled" the event. }
+function TMvCustomPluginManager.AfterDrawObjects(AMapView: TMapView;
+  AMapEvent: TNotifyEvent): Boolean;
 begin
-  Handled := False;
+  Result := False;
   DefaultNotifyEventHandler(AMapView, AMapEvent);
 end;
 
-procedure TMvCustomPluginManager.AfterPaint(AMapView: TMapView;
-  AMapEvent: TNotifyEvent; out Handled: Boolean);
+function TMvCustomPluginManager.AfterPaint(AMapView: TMapView;
+  AMapEvent: TNotifyEvent): Boolean;
 begin
+  Result := False;
   DefaultNotifyEventHandler(AMapView, AMapEvent);
 end;
 
-procedure TMvCustomPluginManager.BeforeDrawObjects(AMapView: TMapView;
-  AMapEvent: TNotifyEvent; out Handled: Boolean);
+function TMvCustomPluginManager.BeforeDrawObjects(AMapView: TMapView;
+  AMapEvent: TNotifyEvent): Boolean;
 begin
-  Handled := False;
+  Result := False;
   DefaultNotifyEventHandler(AMapView, AMapEvent);
 end;
 
-procedure TMvCustomPluginManager.CenterMove(AMapView: TMapView;
-  AMapEvent: TNotifyEvent);
+function TMvCustomPluginManager.CenterMove(AMapView: TMapView;
+  AMapEvent: TNotifyEvent): Boolean;
 begin
+  Result := False;
   DefaultNotifyEventHandler(AMapView, AMapEvent);
 end;
 
@@ -4419,42 +4405,47 @@ begin
     AMapEvent(AMapView);
 end;
 
-procedure TMvCustomPluginManager.MouseDown(AMapView: TMapView;
-  AButton: TMouseButton; AShift: TShiftState; X, Y: Integer;
-  AMapEvent: TMouseEvent; out Handled: Boolean);
+function TMvCustomPluginManager.GPSItemsModified(AMapView: TMapView;
+  ModifiedList: TGPSObjectList; ActualObjs: TGPSObjList; Adding: Boolean): Boolean;
 begin
-  Handled := False;
+  Result := false;
+end;
+
+function TMvCustomPluginManager.MouseDown(AMapView: TMapView;
+  AButton: TMouseButton; AShift: TShiftState; X, Y: Integer;
+  AMapEvent: TMouseEvent): Boolean;
+begin
+  Result := False;
   DefaultMouseEvent(AMapView, AButton, AShift, X, Y, AMapEvent);
 end;
 
-procedure TMvCustomPluginManager.MouseEnter(AMapView: TMapView;
-  AMapEvent: TNotifyEvent; out Handled: Boolean);
+function TMvCustomPluginManager.MouseEnter(AMapView: TMapView;
+  AMapEvent: TNotifyEvent): Boolean;
 begin
-  Handled := False;
+  Result := False;
   DefaultNotifyEventHandler(AMapView, AMapEvent);
 end;
 
-procedure TMvCustomPluginManager.MouseLeave(AMapView: TMapView;
-  AMapEvent: TNotifyEvent; out Handled: Boolean);
+function TMvCustomPluginManager.MouseLeave(AMapView: TMapView;
+  AMapEvent: TNotifyEvent): Boolean;
 begin
-  Handled := False;
+  Result := False;
   DefaultNotifyEventHandler(AMapView, AMapEvent);
 end;
 
-procedure TMvCustomPluginManager.MouseMove(AMapView: TMapView;
-  AShift: TShiftState; X, Y: Integer; AMapEvent: TMouseMoveEvent; out
-  Handled: Boolean);
+function TMvCustomPluginManager.MouseMove(AMapView: TMapView;
+  AShift: TShiftState; X, Y: Integer; AMapEvent: TMouseMoveEvent): Boolean;
 begin
-  Handled := False;
+  Result := False;
   if Assigned(AMapEvent) then
     AMapEvent(AMapView, AShift, X, Y);
 end;
 
-procedure TMvCustomPluginManager.MouseUp(AMapView: TMapView;
+function TMvCustomPluginManager.MouseUp(AMapView: TMapView;
   AButton: TMouseButton; AShift: TShiftState; X, Y: Integer;
-  AMapEvent: TMouseEvent; out Handled: Boolean);
+  AMapEvent: TMouseEvent): Boolean;
 begin
-  Handled := False;
+  Result := False;
   DefaultMouseEvent(AMapView, AButton, AShift, X, Y, AMapEvent);
 end;
 
@@ -4463,16 +4454,10 @@ begin
   //
 end;
 
-procedure TMvCustomPluginManager.ZoomChange(AMapView: TMapView; AMapEvent: TNotifyEvent);
+function TMvCustomPluginManager.ZoomChange(AMapView: TMapView; AMapEvent: TNotifyEvent): Boolean;
 begin
+  Result := false;
   DefaultNotifyEventHandler(AMapView, AMapEvent);
-end;
-
-procedure TMvCustomPluginManager.GPSItemsModified(AMapView: TMapView;
-  ModifiedList: TGPSObjectList; ActualObjs: TGPSObjList; Adding: Boolean; out
-  Handled: Boolean);
-begin
-  //
 end;
 
 end.

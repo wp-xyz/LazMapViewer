@@ -11,13 +11,15 @@ uses
 
 type
 
-  { TForm1 }
+  { TMainForm }
 
-  TForm1 = class(TForm)
-    MapView1: TMapView;
-    MvPluginManager1: TMvPluginManager;
+  TMainForm = class(TForm)
+    MapView: TMapView;
+    PluginManager: TMvPluginManager;
     MvPluginManager1DraggableMarkerPlugin1: TDraggableMarkerPlugin;
     MvPluginManager1LegalNoticePlugin1: TLegalNoticePlugin;
+    DraggableMarkerPlugin: TDraggableMarkerPlugin;
+    LegalNoticePlugin: TLegalNoticePlugin;
     procedure FormCreate(Sender: TObject);
   private
 
@@ -26,15 +28,16 @@ type
   end;
 
 var
-  Form1: TForm1;
+  MainForm: TMainForm;
 
 implementation
 
 {$R *.lfm}
 
-{ TForm1 }
+{ TMainForm }
 
-procedure TForm1.FormCreate(Sender: TObject);
+procedure TMainForm.FormCreate(Sender: TObject);
+
   procedure AddTraditionalMarker(const ALon, ALat : Double; ACaption : String);
   var
     gpsPt: TGpsPointOfInterest;
@@ -43,7 +46,7 @@ procedure TForm1.FormCreate(Sender: TObject);
     try
       gpsPt.Name := ACaption;
       gpsPt.ImageIndex := 0;
-      MapView1.GPSItems.Add(gpsPt, 100);
+      MapView.GPSItems.Add(gpsPt, 100);
       gpsPt := Nil;
     finally
       if Assigned(gpsPt) then
@@ -52,6 +55,8 @@ procedure TForm1.FormCreate(Sender: TObject);
   end;
 
 begin
+  MapView.Active := true;
+
   AddTraditionalMarker(0.0, 51.4825766,'Greenwich');
   AddTraditionalMarker(2.2945500,48.8582300,'Tour d´Eiffel, Paris');
   AddTraditionalMarker(-79.3884000,43.6439500,'CN Tower, Toronto');
