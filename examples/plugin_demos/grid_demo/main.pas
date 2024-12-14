@@ -64,6 +64,7 @@ implementation
 procedure TForm1.FormCreate(Sender: TObject);
 begin
   Randomize;
+  MapView.Active := true;
   MapView.Zoom := 5;
   FMapGridPlugin := TMapGridPlugin.Create(PluginManager);
 
@@ -75,7 +76,7 @@ end;
 
 procedure TForm1.AddOrDeletePointOfInterest(X, Y: Integer);
 const
-  DELTA = 4;
+  DELTA = 5;   // Tolerance of the HitTest
 var
   layer: TMapLayer;
   poi: TPointOfInterest;
@@ -93,23 +94,27 @@ begin
   area := MapView.Engine.ScreenRectToRealArea(Rect(X-DELTA, Y-DELTA, X+DELTA, Y+DELTA));
 
   list := layer.PointsOfInterest.HitTest(area);
-  if (list = nil) then
-  begin
-    poi := TPointOfInterest(layer.PointsOfInterest.Add);
-    poi.Caption := 'Test ' + IntToStr(layer.PointsOfInterest.Count);
-    poi.ImageIndex := Random(ImageList1.Count);
-    poi.Longitude := RP.Lon;
-    poi.Latitude := RP.Lat;
-  end else
-  begin
-    for i := list.Count-1 downto 0 do
+  try
+    if (list = nil) then
     begin
-      if list[i] is TPointOfInterest then
+      poi := TPointOfInterest(layer.PointsOfInterest.Add);
+      poi.Caption := 'Test ' + IntToStr(layer.PointsOfInterest.Count);
+      poi.ImageIndex := Random(ImageList1.Count);
+      poi.Longitude := RP.Lon;
+      poi.Latitude := RP.Lat;
+    end else
+    begin
+      for i := list.Count-1 downto 0 do
       begin
-        poi := TPointOfInterest(list[i]);
-        poi.Free;
+        if list[i] is TPointOfInterest then
+        begin
+          poi := TPointOfInterest(list[i]);
+          poi.Free;
+        end;
       end;
     end;
+  finally
+    list.Free;
   end;
 end;
 

@@ -13,7 +13,6 @@ object Form1: TForm1
     Height = 508
     Top = 8
     Width = 719
-    Active = True
     Align = alClient
     Anchors = [akTop, akRight, akBottom]
     BorderSpacing.Around = 8
@@ -335,10 +334,10 @@ object Form1: TForm1
       AnchorSideRight.Side = asrBottom
       Left = 0
       Height = 30
-      Top = 476
+      Top = 472
       Width = 141
       Anchors = [akTop, akLeft, akRight]
-      Caption = 'Right-click to add point-of-interest'
+      Caption = 'Right-click to add / delete a point-of-interest'
       WordWrap = True
     end
   end
