@@ -80,10 +80,13 @@ procedure TMapGridPlugin.Assign(ASource: TPersistent);
 begin
   if (ASource is TMapGridPlugin) then
   begin
+    FIncrement := TMapGridPlugin(ASource).Increment;
+    FLabelDistance := TMapGridPlugin(ASource).LabelDistance;
     FLabelPositions := TMapGridPlugin(ASource).LabelPositions;
     FMaxDistance := TMapGridPlugin(ASource).MaxDistance;
     FMinDistance := TMapGridPlugin(ASource).MinDistance;
   end;
+  inherited Assign(ASource);
 end;
 
 procedure TMapGridPlugin.BeforeDrawObjects(AMapView: TMapView; var Handled: Boolean);

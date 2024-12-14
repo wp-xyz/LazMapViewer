@@ -327,10 +327,10 @@ begin
   if Source is TLegalNoticePlugin then
   begin
     FBackgroundColor := TLegalNoticePlugin(Source).BackgroundColor;
+    FBackgroundOpacity := TLegalNoticePlugin(Source).BackgroundOpacity;
     FFont.Assign(TLegalNoticePlugin(Source).Font);
     FLegalNotice := TLegalNoticePlugin(Source).LegalNotice;
     FLegalNoticeURL := TLegalNoticePlugin(Source).LegalNoticeURL;
-    FBackgroundOpacity := TLegalNoticePlugin(Source).BackgroundOpacity;
     FPosition := TLegalNoticePlugin(Source).Position;
     FSpacing := TLegalNoticePlugin(Source).Spacing;
   end;

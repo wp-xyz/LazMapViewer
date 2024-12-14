@@ -34,6 +34,7 @@ type
     procedure AfterDrawObjects(AMapView: TMapView; var {%H-}Handled: Boolean); override;
   public
     constructor Create(AOwner: TComponent); override;
+    procedure Assign(ASource: TPersistent); override;
   published
     property AlignSet: TScaleAlignSet read FAlignSet write SetAlignSet default [alRight, alBottom];
     property Imperial: Boolean read FImperial write SetImperial default False;
@@ -59,6 +60,20 @@ begin
   FSpaceY := 10;
   FWidthMax := 250;
   FZoomMin := 8;
+end;
+
+procedure TMapScalePlugin.Assign(ASource: TPersistent);
+begin
+  if ASource is TMapScalePlugin then
+  begin
+    FAlignSet := TMapScalePlugin(ASource).AlignSet;
+    FImperial := TMapScalePlugin(ASource).Imperial;
+    FSpaceX := TMapScalePlugin(ASource).SpaceX;
+    FSpaceY := TMapScalePlugin(ASource).SpaceY;
+    FWidthMax := TMapScalePlugin(ASource).WidthMax;
+    FZoomMin := TMapScalePlugin(ASource).ZoomMin;
+  end;
+  inherited Assign(ASource);
 end;
 
 procedure TMapScalePlugin.AfterDrawObjects(AMapView: TMapView; var Handled: Boolean);
