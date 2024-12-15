@@ -456,6 +456,8 @@ type
       AMapEvent: TMouseMoveEvent): Boolean; virtual;
     function MouseUp(AMapView: TMapView; AButton: TMouseButton; AShift: TShiftState;
       X, Y: Integer; AMapEvent: TMouseEvent): Boolean; virtual;
+    function MouseWheel(AMapView: TMapView; AShift: TShiftState; AWheelDelta: Integer;
+      AMousePos: TPoint): Boolean; virtual;
     function ZoomChange(AMapView: TMapView; AMapEvent: TNotifyEvent): Boolean; virtual;
     function GPSItemsModified(AMapView: TMapView; ModifiedList: TGPSObjectList;
       ActualObjs: TGPSObjList; Adding: Boolean): Boolean; virtual;
@@ -712,6 +714,7 @@ type
       property OnMouseLeave;
       property OnMouseMove;
       property OnMouseUp;
+      property OnMouseWheel;
 
   end;
 
@@ -2523,11 +2526,22 @@ begin
   Engine.ZoomToCursor := AValue;
 end;
 
+{ Is called when the mouse wheel is rotated.
+  Default behaviour is to first call the user event handler in "inherited" and
+  then to pass the event on the the Engine for zooming.
+  If plugins are used, the plugin manager dispatches the event at first to all
+  the plugins; if one of the plugins reports the event to be handled the
+  plugin manager inhibits further processing of the event by the Engine, i.e.
+  prevents zooming. }
 function TMapView.DoMouseWheel(Shift: TShiftState; WheelDelta: Integer;
   MousePos: TPoint): Boolean;
+var
+  lHandled: Boolean;
 begin
-  Result:=inherited DoMouseWheel(Shift, WheelDelta, MousePos);
-  if IsActive and (mvoMouseZooming in FOptions) then
+  lHandled := GetPluginManager.MouseWheel(self, Shift, WheelDelta, MousePos);
+
+  Result := inherited DoMouseWheel(Shift, WheelDelta, MousePos);
+  if IsActive and (mvoMouseZooming in FOptions) and not lHandled then
   begin
     Engine.MouseWheel(self,Shift,WheelDelta,MousePos,Result);
     Invalidate;
@@ -4447,6 +4461,13 @@ function TMvCustomPluginManager.MouseUp(AMapView: TMapView;
 begin
   Result := False;
   DefaultMouseEvent(AMapView, AButton, AShift, X, Y, AMapEvent);
+end;
+
+// No user event here; it is handled by the MapView itself.
+function TMvCustomPluginManager.MouseWheel(AMapView: TMapView; AShift: TShiftState;
+  AWheelDelta: Integer; AMousePos: TPoint): Boolean;
+begin
+  Result := False;
 end;
 
 procedure TMvCustomPluginManager.RemoveMapView(AMapView: TMapView);

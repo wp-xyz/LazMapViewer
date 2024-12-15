@@ -39,16 +39,18 @@ type
     procedure SetPluginManager(AValue: TMvPluginManager);
   protected
     function GetIndex: Integer; override;
+    procedure Notification(AComponent: TComponent; Operation: TOperation); override;
     procedure ReadState(Reader: TReader); override;
     procedure SetIndex(AValue: Integer); override;
     procedure SetParentComponent(AParent: TComponent); override;
+    procedure Update; virtual;
   protected
     procedure AfterDrawObjects(AMapView: TMapView; var Handled: Boolean); virtual;
     procedure AfterPaint(AMapView: TMapView; var Handled: Boolean); virtual;
     procedure BeforeDrawObjects(AMapView: TMapView; var Handled: Boolean); virtual;
     procedure CenterMove(AMapView: TMapView; var Handled: Boolean); virtual;
     procedure GPSItemsModified(AMapView: TMapView; ModifiedList: TGPSObjectList;
-      ActualObjs: TGPSObjList; Adding: Boolean; var Handled : Boolean);virtual;
+      ActualObjs: TGPSObjList; Adding: Boolean; var Handled: Boolean); virtual;
     procedure MouseDown(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
       X, Y: Integer; var Handled: Boolean); virtual;
     procedure MouseEnter(AMapView: TMapView; var Handled: Boolean); virtual;
@@ -57,10 +59,10 @@ type
       var Handled: Boolean); virtual;
     procedure MouseUp(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
       X,Y: Integer; var Handled: Boolean); virtual;
-    procedure Notification(AComponent: TComponent; Operation: TOperation); override;
+    procedure MouseWheel(AMapView: TMapView; AShift: TShiftState;
+      AWheelDelta: Integer; AMousePos: TPoint; var Handled: Boolean); virtual;
     procedure ZoomChange(AMapView: TMapView; var Handled: Boolean); virtual;
   //  procedure ZoomChanging(AMapView: TMapView; NewZoom: Integer; var Allow, Handled: Boolean); virtual;
-    procedure Update; virtual;
   protected
     property MapView: TMapView read FMapView write SetMapView;
     property Enabled: Boolean read FEnabled write SetEnabled default true;
@@ -192,6 +194,8 @@ type
       AMapEvent: TMouseMoveEvent): Boolean; override;
     function MouseUp(AMapView: TMapView; AButton: TMouseButton; AShift: TShiftState;
       X, Y: Integer; AMapEvent: TMouseEvent): Boolean; override;
+    function MouseWheel(AMapView: TMapView; AShift: TShiftState; AWheelDelta: Integer;
+      AMousePos: TPoint): Boolean; override;
     function ZoomChange(AMapView: TMapView; AMapEvent: TNotifyEvent): Boolean; override;
 //    procedure ZoomChanging(AMapView: TMapView; NewZoom: Integer; var Allow: Boolean; AMapEvent); override;
 
@@ -343,6 +347,13 @@ procedure TMvCustomPlugin.MouseUp(AMapView: TMapView; Button: TMouseButton;
 begin
   Unused(AMapView, Handled, Button);
   Unused(Shift, X, Y);
+end;
+
+procedure TMvCustomPlugin.MouseWheel(AMapView: TMapView; AShift: TShiftState;
+  AWheelDelta: Integer; AMousePos: TPoint; var Handled: Boolean);
+begin
+  Unused(AMapView, Handled);
+  Unused(AShift, AWheelDelta, AMousePos);
 end;
 
 procedure TMvCustomPlugin.Notification(AComponent: TComponent; Operation: TOperation);
@@ -869,6 +880,22 @@ begin
       plugin.MouseUp(AMapView, AButton, AShift, X, Y, Result);
   end;
   inherited MouseUp(AMapView, AButton, AShift, X, Y, AMapEvent);
+end;
+
+function TMvPluginManager.MouseWheel(AMapView: TMapView; AShift: TShiftState;
+  AWheelDelta: Integer; AMousePos: TPoint): Boolean;
+var
+  i: Integer;
+  plugin: TMvCustomPlugin;
+begin
+  Result := False;
+  for i := 0 to FPluginList.Count-1 do
+  begin
+    plugin := Item[i];
+    if HandlePlugin(plugin, AMapView) then
+      plugin.MouseWheel(AMapView, AShift, AWheelDelta, AMousePos, Result);
+  end;
+  // No user event here; it is handled by the Mapview itself
 end;
 
 procedure TMvPluginManager.Notification(AComponent: TComponent; Operation: TOperation);
