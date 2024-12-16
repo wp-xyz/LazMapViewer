@@ -515,10 +515,8 @@ begin
   end;
 
   // ... and font
-  ADrawer.FontColor := MapView.Font.Color;
-  ADrawer.FontName := MapView.Font.Name;
-  ADrawer.FontSize := MapView.Font.Size;
-  ADrawer.FontStyle := MapView.Font.Style;
+  with MapView.Font do
+    ADrawer.SetFont(Name, Size, Style, Color);
 
   // Write the POI text
   ADrawer.TextOut(P.X - extent.CX div 2, P.Y, APoint.Name);

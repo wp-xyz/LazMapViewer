@@ -577,6 +577,7 @@ type
       procedure DblClick; override;
       procedure DoCenterMove(Sender: TObject);
       procedure DoCenterMoving(Sender: TObject; var NewCenter: TRealPoint; var Allow: Boolean);
+      procedure DoDrawPoint(const Area: TRealArea; APt: TGPSPoint; AImageIndex: Integer);
       procedure DoDrawStretchedTile(const TileId: TTileID; X, Y: Integer; TileImg: TPictureCacheItem; const R: TRect);
       procedure DoDrawTile(const TileId: TTileId; X,Y: integer; TileImg: TPictureCacheItem);
       procedure DoDrawTileInfo(const {%H-}TileID: TTileID; X,Y: Integer);
@@ -3039,34 +3040,38 @@ begin
   end;
 end;
 
-procedure TMapView.DrawPointOfInterest(const Area: TRealArea; APt: TGPSPointOfInterest);
+procedure TMapView.DoDrawPoint(const Area: TRealArea; APt: TGPSPoint; AImageIndex: Integer);
 var
   pt: TPoint;
   ptCyc: TPointArray;
   ptColor: TColor;
-  extent: TSize;
-  s: String;
+  txt: String;
+  txtExtent: TSize;
   bmp: TBitmap;
-  w, h: Integer;
-  OldOpacity: Single;
-  OldPenStyle: TPenStyle;
+  wBmp, hBmp: Integer;
+  savedOpacity: Single;
+  savedPen: TMvPen;
 
-  procedure DrawOne(pt: TPoint);
+  procedure DrawOne(P: TPoint);
+  const
+    SYMBOL_SIZE = 5;
   begin
+    // Draw as bitmap from ImageList...
     if Assigned(bmp) then
-      DrawingEngine.DrawBitmap(pt.X - w div 2, pt.Y - h, bmp, true)
+      DrawingEngine.DrawBitmap(P.X - wBmp div 2, P.Y - hBmp, bmp, true)
     else
+    // ... or draw as global POI bitmap image ...
+    if Assigned(FPOIImage) and not (FPOIImage.Empty) then
+      DrawingEngine.DrawBitmap(P.X - FPOIImage.Width div 2, P.Y - FPOIImage.Height, FPOIImage, true)
+    else
+    // ... or as cross
     begin
-      // ... or as cross
-      ptColor := clRed;
-      if (APt.ExtraData <> nil) and APt.ExtraData.InheritsFrom(TDrawingExtraData) then
-        ptColor := TDrawingExtraData(APt.ExtraData).Color;
-      DrawingEngine.PenColor := ptColor;
-      DrawingEngine.PenWidth := 3;
-      DrawingEngine.Line(pt.X, pt.Y - 5, pt.X, pt.Y + 5);
-      DrawingEngine.Line(pt.X - 5, pt.Y, pt.X + 5, pt.Y);
-      pt.Y := pt.Y + 5;
+      DrawingEngine.Line(P.X, P.Y - SYMBOL_SIZE, P.X, P.Y + SYMBOL_SIZE);
+      DrawingEngine.Line(P.X - SYMBOL_SIZE, P.Y, P.X + SYMBOL_SIZE, P.Y);
+      P.Y := P.Y + 5;  // distance to text
     end;
+
+    // Draw the point text
     if FPOITextBgColor = clNone then
       DrawingEngine.BrushStyle := bsClear
     else
@@ -3074,38 +3079,56 @@ var
       DrawingEngine.BrushStyle := bsSolid;
       DrawingEngine.BrushColor := FPOITextBgColor;
     end;
-    DrawingEngine.TextOut(pt.X - extent.CX div 2, pt.Y + 5, s);
+    DrawingEngine.TextOut(P.X - txtExtent.CX div 2, P.Y + 5, txt);
   end;
 
 begin
-  pt := Engine.LatLonToScreen(APt.RealPoint);
+  if Assigned(FOnDrawGpsPoint) then begin
+    // Custom-draw the point. Note that cyclic points must be handled in the event handler.
+    FOnDrawGpsPoint(Self, DrawingEngine, APt);
+    exit;
+  end;
 
-  OldOpacity := DrawingEngine.Opacity;
-  OldPenStyle := DrawingEngine.PenStyle;
-  bmp := Nil;
+  savedOpacity := DrawingEngine.Opacity;
+  savedPen := DrawingEngine.GetPen;
+  bmp := nil;
   try
     DrawingEngine.Opacity := 1.0;
-    DrawingEngine.PenStyle := psSolid;
 
-    // Draw point as symbol from image list ...
-    if Assigned(FPOIImages) and (APt.ImageIndex <> -1) and (APt.ImageIndex < FPOIImages.Count) then
+    // Prepare point image as symbol from image list ...
+    if Assigned(FPOIImages) and (AImageIndex <> -1) and (AImageIndex < FPOIImages.Count) then
     begin
       bmp := TBitmap.Create;
-      FPOIImages.GetBitmap(APt.ImageIndex, bmp);
+      FPOIImages.GetBitmap(AImageIndex, bmp);
       {$IF LCL_FullVersion >= 2000000}
-      w := FPOIImages.WidthForPPI[FPOIImagesWidth, Font.PixelsPerInch];
-      h := FPOIImages.HeightForPPI[FPOIImagesWidth, Font.PixelsPerInch];
+      wBmp := FPOIImages.WidthForPPI[FPOIImagesWidth, Font.PixelsPerInch];
+      hBmp := FPOIImages.HeightForPPI[FPOIImagesWidth, Font.PixelsPerInch];
       {$ELSE}
-      w := FPOIImages.Width;
-      h := FPOIImages.Height;
+      wBmp := FPOIImages.Width;
+      hBmp := FPOIImages.Height;
       {$IFEND}
+    end else
+    begin
+      // Otherwise prepare default point
+      ptColor := clRed;
+      if APt.ExtraData <> nil then
+      begin
+        if APt.ExtraData.InheritsFrom(TDrawingExtraData) then
+          ptColor := TDrawingExtraData(APt.ExtraData).Color;
+      end;
+      DrawingEngine.PenStyle := psSolid;
+      DrawingEngine.PenWidth := 3;
+      DrawingEngine.PenColor := ptColor;
     end;
 
-    // Draw point text
-    s := APt.Name;
+    // Prepare point text
+    txt := APt.Name;
     if FPOITextBgColor <> clNone then
-      s := ' ' + s + ' ';
-    extent := DrawingEngine.TextExtent(s);
+      txt := ' ' + txt + ' ';  // add some margin
+    txtExtent := DrawingEngine.TextExtent(txt);
+
+    // Draw point, in case of cyclic points multiple times.
+    pt := Engine.LatLonToScreen(APt.RealPoint);
     if Cyclic then
     begin
       ptCyc := CyclicPointsOf(pt);
@@ -3116,62 +3139,19 @@ begin
       DrawOne(pt);
   finally
     bmp.Free;
-    DrawingEngine.Opacity := OldOpacity;
-    DrawingEngine.PenStyle := OldPenStyle;
+    DrawingEngine.Opacity := savedOpacity;
+    DrawingEngine.SetPen(savedPen);
   end;
 end;
 
-procedure TMapView.DrawPt(const Area: TRealArea; APt: TGPSPoint);
-var
-  Pt: TPoint;
-  PtCyc: TPointArray;
-  PtColor: TColor;
-  extent: TSize;
-  s: String;
-
-  procedure DrawOne(Pt: TPoint);
-  begin
-    // Draw point marker
-    if Assigned(FPOIImage) and not (FPOIImage.Empty) then
-      DrawingEngine.DrawBitmap(Pt.X - FPOIImage.Width div 2, Pt.Y - FPOIImage.Height, FPOIImage, true)
-    else begin
-      DrawingEngine.PenColor := ptColor;
-      DrawingEngine.PenWidth := 3;
-      DrawingEngine.Line(Pt.X, Pt.Y - 5, Pt.X, Pt.Y + 5);
-      DrawingEngine.Line(Pt.X - 5, Pt.Y, Pt.X + 5, Pt.Y);
-      Pt.Y := Pt.Y + 5;
-    end;
-
-    // Draw point text
-    s := APt.Name;
-    if FPOITextBgColor = clNone then
-      DrawingEngine.BrushStyle := bsClear
-    else begin
-      DrawingEngine.BrushStyle := bsSolid;
-      DrawingEngine.BrushColor := FPOITextBgColor;
-      s := ' ' + s + ' ';
-    end;
-    extent := DrawingEngine.TextExtent(s);
-    DrawingEngine.Textout(Pt.X - extent.CX div 2, Pt.Y + 5, s);
-  end;
-
+procedure TMapView.DrawPointOfInterest(const Area: TRealArea; APt: TGPSPointOfInterest);
 begin
-  if Assigned(FOnDrawGpsPoint) then begin
-    FOnDrawGpsPoint(Self, DrawingEngine, APt);
-    exit;
-  end;
+  DoDrawPoint(ARea, APt, APt.ImageIndex);
+end;
 
-  Pt := Engine.LatLonToScreen(APt.RealPoint);
-  PtColor := clRed;
-  if APt.ExtraData <> nil then
-  begin
-    if APt.ExtraData.inheritsFrom(TDrawingExtraData) then
-      PtColor := TDrawingExtraData(APt.ExtraData).Color;
-  end;
-
-  PtCyc := CyclicPointsOf(Pt);
-  for Pt in PtCyc do
-    DrawOne(Pt);
+procedure TMapView.DrawPt(const Area: TRealArea; APt: TGPSPoint);
+begin
+  DoDrawPoint(Area, APt, -1);
 end;
 
 procedure TMapView.DrawGpsObj(const Area: TRealArea; AObj: TGPSObj);

@@ -31,6 +31,12 @@ type
     Color: TColor;
   end;
 
+  TMvPen = record
+    Style: TPenStyle;
+    Width: Integer;
+    Color: TColor;
+  end;
+
   { TMvCustomDrawingEngine }
 
   TMvCustomDrawingEngine = class(TComponent)
@@ -69,6 +75,7 @@ type
     procedure FillPixels(X1, Y1, X2, Y2: Integer; AColor: TColor); virtual; abstract;
     procedure FillRect(X1, Y1, X2, Y2: Integer); virtual; abstract;
     function GetFont: TMvFont;
+    function GetPen: TMvPen;
     procedure Line(X1, Y1, X2, Y2: Integer); virtual; abstract;
     procedure Polyline(const Points: array of TPoint); virtual; abstract;
     procedure Polygon(const Points: array of TPoint); virtual; abstract;
@@ -80,6 +87,8 @@ type
     function SaveToImage(AClass: TRasterImageClass): TRasterImage; virtual; abstract;
     procedure SetFont(AFont: TMvFont);
     procedure SetFont(AFontName: String; AFontSize: Integer; AFontStyle: TFontStyles; AFontColor: TColor);
+    procedure SetPen(APen: TMvPen);
+    procedure SetPen(APenStyle: TPenStyle; APenWidth: Integer; APenColor: TColor);
     function TextExtent(const AText: String): TSize; virtual; abstract;
     function TextHeight(const AText: String): Integer;
     procedure TextOut(X, Y: Integer; const AText: String); virtual; abstract;
@@ -590,6 +599,13 @@ begin
   Result.Color := FontColor;
 end;
 
+function TMvCustomDrawingEngine.GetPen: TMvPen;
+begin
+  Result.Style := PenStyle;
+  Result.Width := PenWidth;
+  Result.Color := PenColor;
+end;
+
 procedure TMvCustomDrawingEngine.PaintToCanvas(ACanvas: TCanvas);
 begin
   PaintToCanvas(ACanvas, Point(0, 0));
@@ -609,6 +625,19 @@ begin
   FontColor := AFontColor;
 end;
 
+procedure TMvCustomDrawingEngine.SetPen(APen: TMvPen);
+begin
+  SetPen(APen.Style, APen.Width, APen.Color);
+end;
+
+procedure TMvCustomDrawingEngine.SetPen(APenStyle: TPenStyle;
+  APenWidth: Integer; APenColor: TColor);
+begin
+  PenStyle := APenStyle;
+  PenWidth := APenWidth;
+  PenColor := APenColor;
+end;
+
 function TMvCustomDrawingEngine.TextHeight(const AText: String): Integer;
 begin
   Result := TextExtent(AText).CX;
@@ -618,7 +647,6 @@ function TMvCustomDrawingEngine.TextWidth(const AText: String): Integer;
 begin
   Result := TextExtent(AText).CY;
 end;
-
 
 end.
 
