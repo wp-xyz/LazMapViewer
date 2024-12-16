@@ -180,23 +180,22 @@ type
     procedure SetName(const AValue: TComponentName); override;
   protected
     // Dispatching events to be handled by the plugins
-    function AfterDrawObjects(AMapView: TMapView; AMapEvent: TNotifyEvent): Boolean; override;
-    function AfterPaint(AMapView: TMapView; AMapEvent: TNotifyEvent): Boolean; override;
-    function BeforeDrawObjects(AMapView: TMapView; AMapEvent: TNotifyEvent): Boolean; override;
-    function CenterMove(AMapView: TMapView; AMapEvent: TNotifyEvent): Boolean; override;
+    function AfterDrawObjects(AMapView: TMapView): Boolean; override;
+    function AfterPaint(AMapView: TMapView): Boolean; override;
+    function BeforeDrawObjects(AMapView: TMapView): Boolean; override;
+    function CenterMove(AMapView: TMapView): Boolean; override;
     function GPSItemsModified(AMapView: TMapView; ModifiedList: TGPSObjectList;
       ActualObjs: TGPSObjList; Adding: Boolean): Boolean; override;
     function MouseDown(AMapView: TMapView; AButton: TMouseButton; AShift: TShiftState;
-      X, Y: Integer; AMapEvent: TMouseEvent): Boolean; override;
-    function MouseEnter(AMapView: TMapView; AMapEvent: TNotifyEvent): Boolean; override;
-    function MouseLeave(AMapView: TMapView; AMapEvent: TNotifyEvent): Boolean; override;
-    function MouseMove(AMapView: TMapView; AShift: TShiftState; X,Y: Integer;
-      AMapEvent: TMouseMoveEvent): Boolean; override;
+      X, Y: Integer): Boolean; override;
+    function MouseEnter(AMapView: TMapView): Boolean; override;
+    function MouseLeave(AMapView: TMapView): Boolean; override;
+    function MouseMove(AMapView: TMapView; AShift: TShiftState; X,Y: Integer): Boolean; override;
     function MouseUp(AMapView: TMapView; AButton: TMouseButton; AShift: TShiftState;
-      X, Y: Integer; AMapEvent: TMouseEvent): Boolean; override;
+      X, Y: Integer): Boolean; override;
     function MouseWheel(AMapView: TMapView; AShift: TShiftState; AWheelDelta: Integer;
       AMousePos: TPoint): Boolean; override;
-    function ZoomChange(AMapView: TMapView; AMapEvent: TNotifyEvent): Boolean; override;
+    function ZoomChange(AMapView: TMapView): Boolean; override;
 //    procedure ZoomChanging(AMapView: TMapView; NewZoom: Integer; var Allow: Boolean; AMapEvent); override;
 
   public
@@ -691,8 +690,7 @@ begin
     FMapList.Add(AMapView);
 end;
 
-function TMvPluginManager.AfterDrawObjects(AMapView: TMapView;
-  AMapEvent: TNotifyEvent): Boolean;
+function TMvPluginManager.AfterDrawObjects(AMapView: TMapView): Boolean;
 var
   i: Integer;
   plugin: TMvCustomPlugin;
@@ -704,11 +702,9 @@ begin
     if HandlePlugin(plugin, AMapView) then
       plugin.AfterDrawObjects(AMapView, Result);
   end;
-  inherited AfterDrawObjects(AMapView, AMapEvent);
 end;
 
-function TMvPluginManager.AfterPaint(AMapView: TMapView;
-  AMapEvent: TNotifyEvent): Boolean;
+function TMvPluginManager.AfterPaint(AMapView: TMapView): Boolean;
 var
   i: Integer;
   plugin: TMvCustomPlugin;
@@ -720,11 +716,9 @@ begin
     if HandlePlugin(plugin, AMapView) then
       plugin.AfterPaint(AMapView, Result);
   end;
-  inherited AfterPaint(AMapView, AMapEvent);
 end;
 
-function TMvPluginManager.BeforeDrawObjects(AMapView: TMapView;
-  AMapEvent: TNotifyEvent): Boolean;
+function TMvPluginManager.BeforeDrawObjects(AMapView: TMapView): Boolean;
 var
   i: Integer;
   plugin: TMvCustomPlugin;
@@ -736,11 +730,9 @@ begin
     if HandlePlugin(plugin, AMapView) then
       plugin.BeforeDrawObjects(AMapView, Result);
   end;
-  inherited BeforeDrawObjects(AMapView, AMapEvent);
 end;
 
-function TMvPluginManager.CenterMove(AMapView: TMapView;
-  AMapEvent: TNotifyEvent): Boolean;
+function TMvPluginManager.CenterMove(AMapView: TMapView): Boolean;
 var
   i: Integer;
   plugin: TMvCustomPlugin;
@@ -752,7 +744,6 @@ begin
     if HandlePlugin(plugin, AMapView) then
       plugin.CenterMove(AMapView, Result);
   end;
-  inherited CenterMove(AMapView, AMapEvent);
 end;
 
 procedure TMvPluginManager.GetChildren(Proc: TGetChildProc; Root: TComponent);
@@ -803,7 +794,7 @@ begin
 end;
 
 function TMvPluginManager.MouseDown(AMapView: TMapView; AButton: TMouseButton;
-  AShift: TShiftState; X, Y: Integer; AMapEvent: TMouseEvent): Boolean;
+  AShift: TShiftState; X, Y: Integer): Boolean;
 var
   i: Integer;
   plugin: TMvCustomPlugin;
@@ -815,11 +806,9 @@ begin
     if HandlePlugin(plugin, AMapView) then
       plugin.MouseDown(AMapView, AButton, AShift, X, Y, Result);
   end;
-  inherited MouseDown(AMapView, AButton, AShift, X, Y, AMapEvent);
 end;
 
-function TMvPluginManager.MouseEnter(AMapView: TMapView;
-  AMapEvent: TNotifyEvent): Boolean;
+function TMvPluginManager.MouseEnter(AMapView: TMapView): Boolean;
 var
   i: Integer;
   plugin: TMvCustomPlugin;
@@ -831,11 +820,9 @@ begin
     if HandlePlugin(plugin, AMapView) then
       plugin.MouseEnter(AMapView, Result);
   end;
-  inherited MouseEnter(AMapView, AMapEvent);
 end;
 
-function TMvPluginManager.MouseLeave(AMapView: TMapView;
-  AMapEvent: TNotifyEvent): Boolean;
+function TMvPluginManager.MouseLeave(AMapView: TMapView): Boolean;
 var
   i: Integer;
   plugin: TMvCustomPlugin;
@@ -847,11 +834,10 @@ begin
     if HandlePlugin(plugin, AMapView) then
       plugin.MouseLeave(AMapView, Result);
   end;
-  inherited MouseLeave(AMapView, AMapEvent);
 end;
 
 function TMvPluginManager.MouseMove(AMapView: TMapView; AShift: TShiftState;
-  X, Y: Integer; AMapEvent: TMouseMoveEvent): Boolean;
+  X, Y: Integer): Boolean;
 var
   i: Integer;
   plugin: TMvCustomPlugin;
@@ -863,11 +849,10 @@ begin
     if HandlePlugin(plugin, AMapView) then
       plugin.MouseMove(AMapView, AShift, X, Y, Result);
   end;
-  inherited MouseMove(AMapView, AShift, X, Y, AMapEvent);
 end;
 
 function TMvPluginManager.MouseUp(AMapView: TMapView; AButton: TMouseButton;
-  AShift: TShiftState; X, Y: Integer; AMapEvent: TMouseEvent): Boolean;
+  AShift: TShiftState; X, Y: Integer): Boolean;
 var
   i: Integer;
   plugin: TMvCustomPlugin;
@@ -879,7 +864,6 @@ begin
     if HandlePlugin(plugin, AMapView) then
       plugin.MouseUp(AMapView, AButton, AShift, X, Y, Result);
   end;
-  inherited MouseUp(AMapView, AButton, AShift, X, Y, AMapEvent);
 end;
 
 function TMvPluginManager.MouseWheel(AMapView: TMapView; AShift: TShiftState;
@@ -895,7 +879,6 @@ begin
     if HandlePlugin(plugin, AMapView) then
       plugin.MouseWheel(AMapView, AShift, AWheelDelta, AMousePos, Result);
   end;
-  // No user event here; it is handled by the Mapview itself
 end;
 
 procedure TMvPluginManager.Notification(AComponent: TComponent; Operation: TOperation);
@@ -934,7 +917,7 @@ begin
     PluginList.ChangeNamePrefix(oldName, AValue);
 end;
 
-function TMvPluginManager.ZoomChange(AMapView: TMapView; AMapEvent: TNotifyEvent): Boolean;
+function TMvPluginManager.ZoomChange(AMapView: TMapView): Boolean;
 var
   i: Integer;
   plugin: TMvCustomPlugin;
@@ -946,7 +929,6 @@ begin
     if HandlePlugin(plugin, AMapView) then
       plugin.ZoomChange(AMapView, Result);
   end;
-  inherited ZoomChange(AMapView, AMapEvent);
 end;
 
                      (*

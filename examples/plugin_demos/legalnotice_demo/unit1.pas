@@ -5,7 +5,7 @@ unit Unit1;
 interface
 
 uses
-  Classes, SysUtils, Types,
+  Classes, SysUtils,
   LCLIntf, Forms, Controls, Graphics, ExtCtrls, StdCtrls, Dialogs, Spin,
   TAGraph, TATools,
   mvMapViewer, mvPluginCore, mvPlugins;

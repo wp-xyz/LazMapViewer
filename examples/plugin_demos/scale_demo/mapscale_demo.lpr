@@ -17,6 +17,7 @@ uses
 
 begin
   RequireDerivedFormResource := True;
+  Application.Title := 'MapScale_Demo';
   Application.Scaled := True;
   {$PUSH}{$WARN 5044 OFF}
   Application.MainFormOnTaskbar := True;
