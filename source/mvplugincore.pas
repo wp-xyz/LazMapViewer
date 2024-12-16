@@ -62,7 +62,7 @@ type
     procedure MouseWheel(AMapView: TMapView; AShift: TShiftState;
       AWheelDelta: Integer; AMousePos: TPoint; var Handled: Boolean); virtual;
     procedure ZoomChange(AMapView: TMapView; var Handled: Boolean); virtual;
-  //  procedure ZoomChanging(AMapView: TMapView; NewZoom: Integer; var Allow, Handled: Boolean); virtual;
+    procedure ZoomChanging(AMapView: TMapView; NewZoom: Integer; var Allow, Handled: Boolean); virtual;
   protected
     property MapView: TMapView read FMapView write SetMapView;
     property Enabled: Boolean read FEnabled write SetEnabled default true;
@@ -196,7 +196,7 @@ type
     function MouseWheel(AMapView: TMapView; AShift: TShiftState; AWheelDelta: Integer;
       AMousePos: TPoint): Boolean; override;
     function ZoomChange(AMapView: TMapView): Boolean; override;
-//    procedure ZoomChanging(AMapView: TMapView; NewZoom: Integer; var Allow: Boolean; AMapEvent); override;
+    function ZoomChanging(AMapView: TMapView; NewZoom: Integer; var Allow: Boolean): Boolean; override;
 
   public
     constructor Create(AOwner: TComponent); override;
@@ -424,12 +424,12 @@ begin
   Unused(AMapView, Handled);
 end;
 
-{
 procedure TMvCustomPlugin.ZoomChanging(AMapView: TMapView; NewZoom: Integer;
   var Allow, Handled: Boolean);
 begin
+  Unused(AMapView, Handled);
+  Unused(NewZoom, Allow);
 end;
-}
 
 
 { TMvDrawPlugin }
@@ -931,24 +931,20 @@ begin
   end;
 end;
 
-                     (*
-procedure TMvPluginManager.ZoomChanging(AMapView: TMapView; NewZoom: Integer;
-  var Allow: Boolean; AMapEvent: TNotifyEvent);
+function TMvPluginManager.ZoomChanging(AMapView: TMapView; NewZoom: Integer;
+  var Allow: Boolean): Boolean;
 var
   i: Integer;
-  handled: Boolean;
-  plugin: TMvPlugin;
+  plugin: TMvCustomPlugin;
 begin
-  handled := false;
+  Result := false;
   for i := 0 to FPluginList.Count-1 do
   begin
     plugin := Item[i];
     if HandlePlugin(plugin, AMapView) then
-      plugin.ZoomChanging(AMapView, NewZoom, Allow, handled);
+      plugin.ZoomChanging(AMapView, NewZoom, Allow, Result);
   end;
-  if not handled then
-    inherited ZoomChanging(AMapView, NewZoom, Allow, AMapEvent);
-end;                   *)
+end;
 
 
 { Plugin registration }

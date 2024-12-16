@@ -456,6 +456,7 @@ type
     function MouseWheel(AMapView: TMapView; AShift: TShiftState; AWheelDelta: Integer;
       AMousePos: TPoint): Boolean; virtual;
     function ZoomChange(AMapView: TMapView): Boolean; virtual;
+    function ZoomChanging(AMapView: TMapView; NewZoom: Integer; var Allow: Boolean): Boolean; virtual;
   public
   end;
 
@@ -497,6 +498,7 @@ type
       FZoomMin: Integer;
       FOnCenterMove: TNotifyEvent;
       FOnZoomChange: TNotifyEvent;
+      FOnZoomChanging: TZoomChangingEvent;
       FBeforeDrawObjectsEvent: TNotifyEvent;
       FAfterDrawObjectsEvent: TNotifyEvent;
       FAfterPaintEvent: TNotifyEvent;
@@ -522,7 +524,7 @@ type
       function GetOnCenterMoving: TCenterMovingEvent;
       function GetOnChange: TNotifyEvent;
 //      function GetOnZoomChange: TNotifyEvent;
-      function GetOnZoomChanging: TZoomChangingEvent;
+//      function GetOnZoomChanging: TZoomChangingEvent;
       function GetUseThreads: boolean;
       function GetZoom: integer;
       function GetZoomToCursor: Boolean;
@@ -551,7 +553,7 @@ type
       procedure SetOnCenterMoving(AValue: TCenterMovingEvent);
       procedure SetOnChange(AValue: TNotifyEvent);
 //      procedure SetOnZoomChange(AValue: TNotifyEvent);
-      procedure SetOnZoomChanging(AValue: TZoomChangingEvent);
+//      procedure SetOnZoomChanging(AValue: TZoomChangingEvent);
       procedure SetOptions(AValue: TMapViewOptions);
       procedure SetPluginManager(AValue: TMvCustomPluginManager);
       procedure SetPOIImage(const AValue: TCustomBitmap);
@@ -580,6 +582,7 @@ type
         MousePos: TPoint): Boolean; override;
       procedure DoOnResize; override;
       procedure DoZoomChange(Sender: TObject);
+      procedure DoZoomChanging(Sender: TObject; NewZoom: Integer; var Allow: Boolean);
       function FindObjsAtScreenPt(X, Y: Integer; ATolerance: Integer; AVisibleOnly: Boolean): TGPSObjArray;
       function IsActive: Boolean; inline;
       procedure MouseDown(Button: TMouseButton; Shift: TShiftState;
@@ -695,8 +698,8 @@ type
       property OnBeforeDrawObjects: TNotifyEvent read FBeforeDrawObjectsEvent write FBeforeDrawObjectsEvent;
       property OnCenterMove: TNotifyEvent read {Get}FOnCenterMove write {Set}FOnCenterMove;
       property OnCenterMoving: TCenterMovingEvent read GetOnCenterMoving write SetOnCenterMoving;
-      property OnZoomChange: TNotifyEvent read {Get}FOnZoomChange write {Set}FOnZoomChange;
-      property OnZoomChanging: TZoomChangingEvent read GetOnZoomChanging write SetOnZoomChanging;
+      property OnZoomChange: TNotifyEvent read FOnZoomChange write FOnZoomChange;
+      property OnZoomChanging: TZoomChangingEvent read FOnZoomChanging write FOnZoomChanging;
       property OnChange: TNotifyEvent read GetOnChange write SetOnChange;
       property OnDrawGpsPoint: TDrawGpsPointEvent read FOnDrawGpsPoint write FOnDrawGpsPoint;
       property OnEditSelectionCompleted: TNotifyEvent read FOnEditSelectionCompleted write FOnEditSelectionCompleted;
@@ -2218,6 +2221,13 @@ begin
     FOnZoomChange(Self);
 end;
 
+procedure TMapView.DoZoomChanging(Sender: TObject; NewZoom: Integer; var Allow: Boolean);
+begin
+  GetPluginManager.ZoomChanging(Self, NewZoom, Allow);
+  if Assigned(FOnZoomChanging) then
+    FOnZoomChanging(Self, NewZoom, Allow);
+end;
+
 function TMapView.GetOnChange: TNotifyEvent;
 begin
   Result := Engine.OnChange;
@@ -2228,12 +2238,12 @@ function TMapView.GetOnZoomChange: TNotifyEvent;
 begin
   Result := Engine.OnZoomChange;
 end;
-}
 
 function TMapView.GetOnZoomChanging: TZoomChangingEvent;
 begin
   Result := Engine.OnZoomChanging;
 end;
+}
 
 function TMapView.GetUseThreads: boolean;
 begin
@@ -2410,12 +2420,12 @@ begin
   FOnZoomChange := AValue;
   Engine.OnZoomChange := @DoZoomChangeHandler;
 end;
- }
+
 procedure TMapView.SetOnZoomChanging(AValue: TZoomChangingEvent);
 begin
   Engine.OnZoomChanging := AValue;
 end;
-
+ }
 procedure TMapView.SetOptions(AValue: TMapViewOptions);
 begin
   if FOptions = AValue then Exit;
@@ -3317,6 +3327,7 @@ begin
   FEngine.OnEraseBackground := @DoEraseBackground;
   FEngine.OnTileDownloaded := @DoTileDownloaded;
   FEngine.OnZoomChange := @DoZoomChange;
+  FEngine.OnZoomChanging := @DoZoomChanging;
   FEngine.DrawPreviewTiles := True;
   FEngine.DrawTitleInGuiThread := false;
   FEngine.DownloadEngine := FBuiltinDownloadEngine;
@@ -4172,6 +4183,7 @@ begin
   DE.PenWidth := 3;
   DE.BrushColor := clGray;
   DE.BrushStyle := bsSolid;
+  DE.Opacity := 1.0;
 
   if Assigned(FLit) then
     DE.Rectangle(FPt.X - 5, FPt.Y - 5, FPt.X + 5, FPt.Y + 5);
@@ -4466,6 +4478,13 @@ function TMvCustomPluginManager.ZoomChange(AMapView: TMapView): Boolean;
 begin
   Unused(AMapView);
   Result := false;
+end;
+
+function TMvCustomPluginManager.ZoomChanging(AMapView: TMapView;
+  NewZoom: Integer; var Allow: Boolean): Boolean;
+begin
+  Unused(AMapView, NewZoom, Allow);
+  Result := False;
 end;
 
 end.

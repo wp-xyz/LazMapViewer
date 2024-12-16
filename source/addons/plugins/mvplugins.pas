@@ -127,6 +127,10 @@ type
   end;
 
 type
+  TMvPluginGPSItemsModifiedEvent = procedure (Sender: TObject; AMapView: TMapView;
+    ChangedList: TGPSObjectList; ActualObjs: TGPSObjList; Adding: Boolean;
+    var Handled: Boolean) of Object;
+
   TMvPluginNotifyEvent = procedure (Sender : TObject; AMapView: TMapView;
     var Handled: Boolean) of Object;
 
@@ -139,9 +143,8 @@ type
   TMvPluginMouseWheelEvent = procedure (Sender: TObject; AMapView: TMapView; AShift: TShiftState;
     AWheelDelta: Integer; AMousePos: TPoint; var Handled: Boolean) of object;
 
-  TMvPluginGPSItemsModifiedEvent = procedure (Sender: TObject; AMapView: TMapView;
-    ChangedList: TGPSObjectList; ActualObjs: TGPSObjList; Adding: Boolean;
-    var Handled: Boolean) of Object;
+  TMvPluginZoomChangingEvent = procedure (Sender: TObject; AMapView: TMapView;
+    NewZoom: Integer; var Allow, Handled: Boolean) of object;
 
   { TUserDefinedPlugin }
 
@@ -159,6 +162,7 @@ type
     FMouseUpEvent : TMvPluginMouseEvent;
     FMouseWheelEvent : TMvPluginMouseWheelEvent;
     FZoomChangeEvent : TMvPluginNotifyEvent;
+    FZoomChangingEvent : TMvPluginZoomChangingEvent;
   protected
     procedure AfterDrawObjects(AMapView: TMapView; var Handled: Boolean); override;
     procedure AfterPaint(AMapView: TMapView; var Handled: Boolean); override;
@@ -177,6 +181,7 @@ type
     procedure MouseWheel(AMapView: TMapView; AShift: TShiftState;
       AWheelDelta: Integer; AMousePos: TPoint; var Handled: Boolean); override;
     procedure ZoomChange(AMapView: TMapView; var Handled: Boolean); override;
+    procedure ZoomChanging(AMapView: TMapView; NewZoom: Integer; var Allow, Handled: Boolean); override;
   public
   published
     property OnAfterDrawObjects : TMvPluginNotifyEvent read FAfterDrawObjectsEvent write FAfterDrawObjectsEvent;
@@ -191,6 +196,7 @@ type
     property OnMouseUp : TMvPluginMouseEvent read FMouseUpEvent write FMouseUpEvent;
     property OnMouseWheel : TMvPluginMouseWheelEvent read FMouseWheelEvent write FMouseWheelEvent;
     property OnZoomChange : TMvPluginNotifyEvent read FZoomChangeEvent write FZoomChangeEvent;
+    property OnZoomChanging: TMvPluginZoomChangingEvent read FZoomChangingEvent write FZoomChangingEvent;
 
     // inherited
     property Enabled;
@@ -657,11 +663,19 @@ begin
     FCenterMoveEvent(Self, AMapView, Handled);
 end;
 
+procedure TUserDefinedPlugin.GPSItemsModified(AMapView: TMapView;
+  ChangedList: TGPSObjectList; ActualObjs: TGPSObjList; Adding: Boolean;
+  var Handled: Boolean);
+begin
+  if Assigned(FGPSItemsModifiedEvent) then
+    FGPSItemsModifiedEvent(Self, AMapView, ChangedList, ActualObjs, Adding, Handled);
+end;
+
 procedure TUserDefinedPlugin.MouseDown(AMapView: TMapView; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer; var Handled: Boolean);
 begin
   if Assigned(FMouseDownEvent) then
-    FMouseDownEvent(Self,AMapView, Button, Shift, X,Y, Handled);
+    FMouseDownEvent(Self, AMapView, Button, Shift, X,Y, Handled);
 end;
 
 procedure TUserDefinedPlugin.MouseEnter(AMapView: TMapView; var Handled: Boolean);
@@ -703,12 +717,11 @@ begin
     FZoomChangeEvent(Self, AMapView, Handled);
 end;
 
-procedure TUserDefinedPlugin.GPSItemsModified(AMapView: TMapView;
-  ChangedList: TGPSObjectList; ActualObjs: TGPSObjList; Adding: Boolean;
-  var Handled: Boolean);
+procedure TUserDefinedPlugin.ZoomChanging(AMapView: TMapView; NewZoom: Integer;
+  var Allow, Handled: Boolean);
 begin
-  if Assigned(FGPSItemsModifiedEvent) then
-    FGPSItemsModifiedEvent(Self,AMapView, ChangedList, ActualObjs, Adding, Handled);
+  if Assigned(FZoomChangingEvent) then
+    FZoomChangingEvent(Self, AMapView, NewZoom, Allow, Handled);
 end;
 
 
