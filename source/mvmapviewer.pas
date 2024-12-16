@@ -444,6 +444,8 @@ type
     function AfterPaint(AMapView: TMapView): Boolean; virtual;
     function BeforeDrawObjects(AMapView: TMapView): Boolean; virtual;
     function CenterMove(AMapView: TMapView): Boolean; virtual;
+    function CenterMoving(AMapView: TMapView; var NewCenter: TRealPoint;
+      var Allow: Boolean): Boolean; virtual;
     function GPSItemsModified(AMapView: TMapView; ModifiedList: TGPSObjectList;
       ActualObjs: TGPSObjList; Adding: Boolean): Boolean; virtual;
     function MouseDown(AMapView: TMapView; AButton: TMouseButton; AShift: TShiftState;
@@ -497,6 +499,7 @@ type
       FZoomMax: Integer;
       FZoomMin: Integer;
       FOnCenterMove: TNotifyEvent;
+      FOnCenterMoving: TCenterMovingEvent;
       FOnZoomChange: TNotifyEvent;
       FOnZoomChanging: TZoomChangingEvent;
       FBeforeDrawObjectsEvent: TNotifyEvent;
@@ -521,7 +524,7 @@ type
       function GetLayers: TMapLayers;
       function GetMapProvider: String;
 //      function GetOnCenterMove: TNotifyEvent;
-      function GetOnCenterMoving: TCenterMovingEvent;
+//      function GetOnCenterMoving: TCenterMovingEvent;
       function GetOnChange: TNotifyEvent;
 //      function GetOnZoomChange: TNotifyEvent;
 //      function GetOnZoomChanging: TZoomChangingEvent;
@@ -550,7 +553,7 @@ type
       procedure SetLayers(const ALayers: TMapLayers);
       procedure SetMapProvider(AValue: String);
 //      procedure SetOnCenterMove(AValue: TNotifyEvent);
-      procedure SetOnCenterMoving(AValue: TCenterMovingEvent);
+//      procedure SetOnCenterMoving(AValue: TCenterMovingEvent);
       procedure SetOnChange(AValue: TNotifyEvent);
 //      procedure SetOnZoomChange(AValue: TNotifyEvent);
 //      procedure SetOnZoomChanging(AValue: TZoomChangingEvent);
@@ -573,13 +576,13 @@ type
       procedure ActivateEngine;
       procedure DblClick; override;
       procedure DoCenterMove(Sender: TObject);
+      procedure DoCenterMoving(Sender: TObject; var NewCenter: TRealPoint; var Allow: Boolean);
       procedure DoDrawStretchedTile(const TileId: TTileID; X, Y: Integer; TileImg: TPictureCacheItem; const R: TRect);
       procedure DoDrawTile(const TileId: TTileId; X,Y: integer; TileImg: TPictureCacheItem);
       procedure DoDrawTileInfo(const {%H-}TileID: TTileID; X,Y: Integer);
       procedure DoEraseBackground(const R: TRect);
       procedure DoTileDownloaded(const {%H-}TileId: TTileId);
-      function DoMouseWheel(Shift: TShiftState; WheelDelta: Integer;
-        MousePos: TPoint): Boolean; override;
+      function DoMouseWheel(Shift: TShiftState; WheelDelta: Integer; MousePos: TPoint): Boolean; override;
       procedure DoOnResize; override;
       procedure DoZoomChange(Sender: TObject);
       procedure DoZoomChanging(Sender: TObject; NewZoom: Integer; var Allow: Boolean);
@@ -696,8 +699,8 @@ type
       property OnAfterDrawObjects: TNotifyEvent read FAfterDrawObjectsEvent write FAfterDrawObjectsEvent;
       property OnAfterPaint: TNotifyEvent read FAfterPaintEvent write FAfterPaintEvent;
       property OnBeforeDrawObjects: TNotifyEvent read FBeforeDrawObjectsEvent write FBeforeDrawObjectsEvent;
-      property OnCenterMove: TNotifyEvent read {Get}FOnCenterMove write {Set}FOnCenterMove;
-      property OnCenterMoving: TCenterMovingEvent read GetOnCenterMoving write SetOnCenterMoving;
+      property OnCenterMove: TNotifyEvent read FOnCenterMove write FOnCenterMove;
+      property OnCenterMoving: TCenterMovingEvent read FOnCenterMoving write FOnCenterMoving;
       property OnZoomChange: TNotifyEvent read FOnZoomChange write FOnZoomChange;
       property OnZoomChanging: TZoomChangingEvent read FOnZoomChanging write FOnZoomChanging;
       property OnChange: TNotifyEvent read GetOnChange write SetOnChange;
@@ -2207,12 +2210,12 @@ function TMapView.GetOnCenterMove: TNotifyEvent;
 begin
   Result := Engine.OnCenterMove;
 end;
-}
 
 function TMapView.GetOnCenterMoving: TCenterMovingEvent;
 begin
   Result := Engine.OnCenterMoving;
 end;
+}
 
 procedure TMapView.DoZoomChange(Sender: TObject);
 begin
@@ -2402,12 +2405,12 @@ end;
 procedure TMapView.SetOnCenterMove(AValue: TNotifyEvent);
 begin
   Engine.OnCenterMove := AValue;
-end;                               }
+end;
 
 procedure TMapView.SetOnCenterMoving(AValue: TCenterMovingEvent);
 begin
   Engine.OnCenterMoving := AValue;
-end;
+end;                               }
 
 procedure TMapView.SetOnChange(AValue: TNotifyEvent);
 begin
@@ -3234,6 +3237,14 @@ begin
     FOnCenterMove(Self);
 end;
 
+procedure TMapView.DoCenterMoving(Sender: TObject; var NewCenter: TRealPoint;
+  var Allow: Boolean);
+begin
+  GetPluginManager.CenterMoving(Self, NewCenter, Allow);
+  if Assigned(FOnCenterMoving) then
+    FOnCenterMoving(Self, NewCenter, Allow);
+end;
+
 procedure TMapView.DoDrawStretchedTile(const TileId: TTileID; X, Y: Integer;
   TileImg: TPictureCacheItem; const R: TRect);
 begin
@@ -3322,6 +3333,7 @@ begin
   {FEngine.}CachePath := 'cache/';
   {FEngine.}CacheOnDisk := true;
   FEngine.OnCenterMove := @DoCenterMove;
+  FEngine.OnCenterMoving := @DoCenterMoving;
   FEngine.OnDrawTile := @DoDrawTile;
   FEngine.OnDrawStretchedTile := @DoDrawStretchedTile;
   FEngine.OnEraseBackground := @DoEraseBackground;
@@ -4416,6 +4428,13 @@ function TMvCustomPluginManager.CenterMove(AMapView: TMapView): Boolean;
 begin
   Unused(AMapView);
   Result := False;
+end;
+
+function TMvCustomPluginManager.CenterMoving(AMapView: TMapView;
+  var NewCenter: TRealPoint; var Allow: Boolean): Boolean;
+begin
+  Unused(AMapView, NewCenter, Allow);
+  Result := false;
 end;
 
 function TMvCustomPluginManager.GPSItemsModified(AMapView: TMapView;

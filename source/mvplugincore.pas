@@ -49,6 +49,8 @@ type
     procedure AfterPaint(AMapView: TMapView; var Handled: Boolean); virtual;
     procedure BeforeDrawObjects(AMapView: TMapView; var Handled: Boolean); virtual;
     procedure CenterMove(AMapView: TMapView; var Handled: Boolean); virtual;
+    procedure CenterMoving(AMapView: TMapView; var NewCenter: TRealPoint;
+      var Allow, Handled: Boolean); virtual;
     procedure GPSItemsModified(AMapView: TMapView; ModifiedList: TGPSObjectList;
       ActualObjs: TGPSObjList; Adding: Boolean; var Handled: Boolean); virtual;
     procedure MouseDown(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
@@ -184,6 +186,8 @@ type
     function AfterPaint(AMapView: TMapView): Boolean; override;
     function BeforeDrawObjects(AMapView: TMapView): Boolean; override;
     function CenterMove(AMapView: TMapView): Boolean; override;
+    function CenterMoving(AMapView: TMapView; var NewCenter: TRealPoint;
+      var Allow: Boolean): Boolean; override;
     function GPSItemsModified(AMapView: TMapView; ModifiedList: TGPSObjectList;
       ActualObjs: TGPSObjList; Adding: Boolean): Boolean; override;
     function MouseDown(AMapView: TMapView; AButton: TMouseButton; AShift: TShiftState;
@@ -287,6 +291,13 @@ end;
 procedure TMvCustomPlugin.CenterMove(AMapView: TMapView; var Handled: Boolean);
 begin
   Unused(AMapView, Handled);
+end;
+
+procedure TMvCustomPlugin.CenterMoving(AMapView: TMapView; var NewCenter: TRealPoint;
+  var Allow, Handled: Boolean);
+begin
+  Unused(AMapView, Handled);
+  Unused(NewCenter, Allow);
 end;
 
 function TMvCustomPlugin.GetIndex: Integer;
@@ -743,6 +754,21 @@ begin
     plugin := Item[i];
     if HandlePlugin(plugin, AMapView) then
       plugin.CenterMove(AMapView, Result);
+  end;
+end;
+
+function TMvPluginManager.CenterMoving(AMapView: TMapView; var NewCenter: TRealPoint;
+  var Allow: Boolean): Boolean;
+var
+  i: Integer;
+  plugin: TMvCustomPlugin;
+begin
+  Result := false;
+  for i := 0 to FPluginList.Count-1 do
+  begin
+    plugin := Item[i];
+    if HandlePlugin(plugin, AMapView) then
+      plugin.CenterMoving(AMapView, NewCenter, Allow, Result);
   end;
 end;
 
