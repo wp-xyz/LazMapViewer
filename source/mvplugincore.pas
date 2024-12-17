@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, StrUtils, Contnrs, Math, LazLoggerBase,
   Graphics, Controls, Dialogs,
-  mvMapViewer, mvTypes, mvGpsObj, mvClassRegistration;
+  mvMapViewer, mvTypes, mvGpsObj, mvClassRegistration, mvDrawingEngine;
 
 type
   TMvCustomPlugin = class;
@@ -51,6 +51,8 @@ type
     procedure CenterMove(AMapView: TMapView; var Handled: Boolean); virtual;
     procedure CenterMoving(AMapView: TMapView; var NewCenter: TRealPoint;
       var Allow, Handled: Boolean); virtual;
+    procedure DrawGPSPoint(AMapView: TMapView; ADrawingEngine: TMvCustomDrawingEngine;
+      APoint: TGPSPoint; var Handled: Boolean); virtual;
     procedure GPSItemsModified(AMapView: TMapView; ModifiedList: TGPSObjectList;
       ActualObjs: TGPSObjList; Adding: Boolean; var Handled: Boolean); virtual;
     procedure MouseDown(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
@@ -188,6 +190,8 @@ type
     function CenterMove(AMapView: TMapView): Boolean; override;
     function CenterMoving(AMapView: TMapView; var NewCenter: TRealPoint;
       var Allow: Boolean): Boolean; override;
+    function DrawGPSPoint(AMapView: TMapView; ADrawingEngine: TMvCustomDrawingEngine;
+      APoint: TGPSPoint): Boolean; override;
     function GPSItemsModified(AMapView: TMapView; ModifiedList: TGPSObjectList;
       ActualObjs: TGPSObjList; Adding: Boolean): Boolean; override;
     function MouseDown(AMapView: TMapView; AButton: TMouseButton; AShift: TShiftState;
@@ -298,6 +302,13 @@ procedure TMvCustomPlugin.CenterMoving(AMapView: TMapView; var NewCenter: TRealP
 begin
   Unused(AMapView, Handled);
   Unused(NewCenter, Allow);
+end;
+
+procedure TMvCustomPlugin.DrawGPSPoint(AMapView: TMapView;
+  ADrawingEngine: TMvCustomDrawingEngine; APoint: TGPSPoint; var Handled: Boolean);
+begin
+  Unused(AMapView, Handled);
+  Unused(ADrawingEngine, APoint);
 end;
 
 function TMvCustomPlugin.GetIndex: Integer;
@@ -769,6 +780,21 @@ begin
     plugin := Item[i];
     if HandlePlugin(plugin, AMapView) then
       plugin.CenterMoving(AMapView, NewCenter, Allow, Result);
+  end;
+end;
+
+function TMvPluginManager.DrawGPSPoint(AMapView: TMapView;
+  ADrawingEngine: TMvCustomDrawingEngine; APoint: TGPSPoint): Boolean;
+var
+  i: Integer;
+  plugin: TMvCustomPlugin;
+begin
+  Result := false;
+  for i := 0 to FPluginList.Count-1 do
+  begin
+    plugin := Item[i];
+    if HandlePlugin(plugin, AMapView) then
+      plugin.DrawGPSPoint(AMapView, ADrawingEngine, APoint, Result);
   end;
 end;
 

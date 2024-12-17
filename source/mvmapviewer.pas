@@ -446,6 +446,8 @@ type
     function CenterMove(AMapView: TMapView): Boolean; virtual;
     function CenterMoving(AMapView: TMapView; var NewCenter: TRealPoint;
       var Allow: Boolean): Boolean; virtual;
+    function DrawGPSPoint(AMapView: TMapView; ADrawingEngine: TMvCustomDrawingEngine;
+      APoint: TGPSPoint): Boolean; virtual;
     function GPSItemsModified(AMapView: TMapView; ModifiedList: TGPSObjectList;
       ActualObjs: TGPSObjList; Adding: Boolean): Boolean; virtual;
     function MouseDown(AMapView: TMapView; AButton: TMouseButton; AShift: TShiftState;
@@ -3083,8 +3085,10 @@ var
   end;
 
 begin
-  if Assigned(FOnDrawGpsPoint) then begin
     // Custom-draw the point. Note that cyclic points must be handled in the event handler.
+  if GetPluginManager.DrawGpsPoint(Self, DrawingEngine, APt) then
+    exit;
+  if Assigned(FOnDrawGpsPoint) then begin
     FOnDrawGpsPoint(Self, DrawingEngine, APt);
     exit;
   end;
@@ -4414,6 +4418,13 @@ function TMvCustomPluginManager.CenterMoving(AMapView: TMapView;
   var NewCenter: TRealPoint; var Allow: Boolean): Boolean;
 begin
   Unused(AMapView, NewCenter, Allow);
+  Result := false;
+end;
+
+function TMvCustomPluginManager.DrawGPSPoint(AMapView: TMapView;
+  ADrawingEngine: TMvCustomDrawingEngine; APoint: TGPSPoint): Boolean;
+begin
+  Unused(AMapView, ADrawingEngine, APoint);
   Result := false;
 end;
 
