@@ -700,7 +700,7 @@ type
       property POIImagesWidth: Integer read FPOIImagesWidth write SetPOIImagesWidth default 0;
       property POITextBgColor: TColor read FPOITextBgColor write SetPOITextBgColor default clNone;
       property PopupMenu;
-      property UseThreads: boolean read GetUseThreads write SetUseThreads default false;
+      property UseThreads: boolean read GetUseThreads write SetUseThreads default true;
       property Width default 150;
       property Zoom: integer read GetZoom write SetZoom default 1;
       property ZoomMax: Integer read FZoomMax write SetZoomMax default 19;
@@ -3371,6 +3371,8 @@ begin
   FCenter := TMapCenter.Create(Self);
   FCenter.Longitude := 0.0;
   FCenter.Latitude := 0.0;
+
+  UseThreads := true;
 
   FZoomMin := 1;
   FZoomMax := 19;
