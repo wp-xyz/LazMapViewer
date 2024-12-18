@@ -53,6 +53,8 @@ type
       var Allow, Handled: Boolean); virtual;
     procedure DrawGPSPoint(AMapView: TMapView; ADrawingEngine: TMvCustomDrawingEngine;
       APoint: TGPSPoint; var Handled: Boolean); virtual;
+    procedure DrawMissingTile(AMapView: TMapView; ADrawingEngine: TMvCustomDrawingEngine;
+      const ARect: TRect; var Handled: Boolean); virtual;
     procedure GPSItemsModified(AMapView: TMapView; ModifiedList: TGPSObjectList;
       ActualObjs: TGPSObjList; Adding: Boolean; var Handled: Boolean); virtual;
     procedure MouseDown(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
@@ -192,6 +194,8 @@ type
       var Allow: Boolean): Boolean; override;
     function DrawGPSPoint(AMapView: TMapView; ADrawingEngine: TMvCustomDrawingEngine;
       APoint: TGPSPoint): Boolean; override;
+    function DrawMissingTile(AMapView: TMapView; ADrawingEngine: TMvCustomDrawingEngine;
+      const ARect: TRect): Boolean; override;
     function GPSItemsModified(AMapView: TMapView; ModifiedList: TGPSObjectList;
       ActualObjs: TGPSObjList; Adding: Boolean): Boolean; override;
     function MouseDown(AMapView: TMapView; AButton: TMouseButton; AShift: TShiftState;
@@ -309,6 +313,13 @@ procedure TMvCustomPlugin.DrawGPSPoint(AMapView: TMapView;
 begin
   Unused(AMapView, Handled);
   Unused(ADrawingEngine, APoint);
+end;
+
+procedure TMvCustomPlugin.DrawMissingTile(AMapView: TMapView;
+  ADrawingEngine: TMvCustomDrawingEngine; const ARect: TRect; var Handled: Boolean);
+begin
+  Unused(AMapView, Handled);
+  Unused(ADrawingEngine, ARect);
 end;
 
 function TMvCustomPlugin.GetIndex: Integer;
@@ -795,6 +806,21 @@ begin
     plugin := Item[i];
     if HandlePlugin(plugin, AMapView) then
       plugin.DrawGPSPoint(AMapView, ADrawingEngine, APoint, Result);
+  end;
+end;
+
+function TMvPluginManager.DrawMissingTile(AMapView: TMapView;
+  ADrawingEngine: TMvCustomDrawingEngine; const ARect: TRect): Boolean;
+var
+  i: Integer;
+  plugin: TMvCustomPlugin;
+begin
+  Result := false;
+  for i := 0 to FPluginList.Count-1 do
+  begin
+    plugin := Item[i];
+    if HandlePlugin(plugin, AMapView) then
+      plugin.DrawMissingTile(AMapView, ADrawingEngine, ARect, Result);
   end;
 end;
 

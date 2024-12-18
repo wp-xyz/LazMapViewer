@@ -38,6 +38,9 @@ Type
   TDrawGpsPointEvent = procedure (Sender: TObject;
     ADrawer: TMvCustomDrawingEngine; APoint: TGpsPoint) of object;
 
+  TDrawMissingTileEvent = procedure (Sender: TObject;
+    ADrawer: TMvCustomDrawingEngine; const ARect: TRect) of object;
+
   TMapViewOption =
   (
     mvoEditorEnabled,       // Point/Track editor enabled
@@ -448,6 +451,8 @@ type
       var Allow: Boolean): Boolean; virtual;
     function DrawGPSPoint(AMapView: TMapView; ADrawingEngine: TMvCustomDrawingEngine;
       APoint: TGPSPoint): Boolean; virtual;
+    function DrawMissingTile(AMapView: TMapView; ADrawingEngine: TMvCustomDrawingEngine;
+      const ARect: TRect): Boolean; virtual;
     function GPSItemsModified(AMapView: TMapView; ModifiedList: TGPSObjectList;
       ActualObjs: TGPSObjList; Adding: Boolean): Boolean; virtual;
     function MouseDown(AMapView: TMapView; AButton: TMouseButton; AShift: TShiftState;
@@ -475,11 +480,6 @@ type
       FBuiltinDownloadEngine: TMvCustomDownloadEngine;
       FBuiltinPluginManager: TMvCustomPluginManager;
       FPluginManager: TMvCustomPluginManager;
-      FOnEditDrag: TNotifyEvent;
-      FOnEditEndDrag: TNotifyEvent;
-      FOnEditIsDirty: TNotifyEvent;
-      FOnEditSelectionCompleted: TNotifyEvent;
-      FOnEditStartDrag: TNotifyEvent;
       FEngine: TMapViewerEngine;
       FBuiltinDrawingEngine: TMvCustomDrawingEngine;
       FDrawingEngine: TMvCustomDrawingEngine;
@@ -490,7 +490,6 @@ type
       FOptions: TMapViewOptions;
       FPOIImage: TCustomBitmap;
       FPOITextBgColor: TColor;
-      FOnDrawGpsPoint: TDrawGpsPointEvent;
       FDebugTiles: Boolean;
       FDefaultTrackColor: TColor;
       FDefaultTrackWidth: Integer;
@@ -502,6 +501,13 @@ type
       FZoomMin: Integer;
       FOnCenterMove: TNotifyEvent;
       FOnCenterMoving: TCenterMovingEvent;
+      FOnDrawGpsPoint: TDrawGpsPointEvent;
+      FOnDrawMissingTile: TDrawMissingTileEvent;
+      FOnEditDrag: TNotifyEvent;
+      FOnEditEndDrag: TNotifyEvent;
+      FOnEditIsDirty: TNotifyEvent;
+      FOnEditSelectionCompleted: TNotifyEvent;
+      FOnEditStartDrag: TNotifyEvent;
       FOnZoomChange: TNotifyEvent;
       FOnZoomChanging: TZoomChangingEvent;
       FBeforeDrawObjectsEvent: TNotifyEvent;
@@ -579,6 +585,7 @@ type
       procedure DblClick; override;
       procedure DoCenterMove(Sender: TObject);
       procedure DoCenterMoving(Sender: TObject; var NewCenter: TRealPoint; var Allow: Boolean);
+      procedure DoDrawMissingTile(const ARect: TRect);
       procedure DoDrawPoint(const Area: TRealArea; APt: TGPSPoint; AImageIndex: Integer);
       procedure DoDrawStretchedTile(const TileId: TTileID; X, Y: Integer; TileImg: TPictureCacheItem; const R: TRect);
       procedure DoDrawTile(const TileId: TTileId; X,Y: integer; TileImg: TPictureCacheItem);
@@ -704,15 +711,16 @@ type
       property OnBeforeDrawObjects: TNotifyEvent read FBeforeDrawObjectsEvent write FBeforeDrawObjectsEvent;
       property OnCenterMove: TNotifyEvent read FOnCenterMove write FOnCenterMove;
       property OnCenterMoving: TCenterMovingEvent read FOnCenterMoving write FOnCenterMoving;
-      property OnZoomChange: TNotifyEvent read FOnZoomChange write FOnZoomChange;
-      property OnZoomChanging: TZoomChangingEvent read FOnZoomChanging write FOnZoomChanging;
       property OnChange: TNotifyEvent read GetOnChange write SetOnChange;
       property OnDrawGpsPoint: TDrawGpsPointEvent read FOnDrawGpsPoint write FOnDrawGpsPoint;
+      property OnDrawMissingTile: TDrawMissingTileEvent read FOnDrawMissingTile write FOnDrawMissingTile;
       property OnEditSelectionCompleted: TNotifyEvent read FOnEditSelectionCompleted write FOnEditSelectionCompleted;
       property OnEditStartDrag: TNotifyEvent read FOnEditStartDrag write FOnEditStartDrag;
       property OnEditDrag: TNotifyEvent read FOnEditDrag write FOnEditDrag;
       property OnEditEndDrag: TNotifyEvent read FOnEditEndDrag write FOnEditEndDrag;
       property OnEditIsDirty: TNotifyEvent read FOnEditIsDirty write FOnEditIsDirty;
+      property OnZoomChange: TNotifyEvent read FOnZoomChange write FOnZoomChange;
+      property OnZoomChanging: TZoomChangingEvent read FOnZoomChanging write FOnZoomChanging;
       property OnMouseDown;
       property OnMouseEnter;
       property OnMouseLeave;
@@ -2590,11 +2598,11 @@ begin
         FDragger.MouseDown(FEditMark, X, Y);
     end
     // With editor enabled, dragging is with the middle button
-    else if (Button = mbMiddle) and DraggingEnabled and
-            (not lHandled) then
+    else if (Button = mbMiddle) and DraggingEnabled and (not lHandled) then
       StartDragging(X, Y);
   end
   else
+  begin
     // With editor disabled, dragging is with the left button
     if IsActive and DraggingEnabled and
        (Button = mbLeft) and (not lHandled) then
@@ -2602,6 +2610,7 @@ begin
         Engine.MouseDown(self,Button,Shift,X,Y);
         Invalidate;
       end;
+  end;
 end;
 
 procedure TMapView.MouseUp(Button: TMouseButton; Shift: TShiftState;
@@ -3235,7 +3244,7 @@ begin
   if Assigned(TileImg) then
     DrawingEngine.DrawScaledCacheItem(Rect(X, Y, X + TileSize.CX, Y + TileSize.CY), R, TileImg)
   else
-    DrawingEngine.FillPixels(X, Y, X + TileSize.CX, Y + TileSize.CY, InactiveColor);
+    DoDrawMissingTile(Rect(X, Y, X+TileSize.CX, Y+TileSize.CY));
 
   if FDebugTiles then
     DoDrawTileInfo(TileID, X, Y);
@@ -3247,12 +3256,23 @@ begin
   if Assigned(TileImg) then
     DrawingEngine.DrawCacheItem(X, Y, TileImg)
   else
-    DrawingEngine.FillPixels(X, Y, X + TileSize.CX, Y + TileSize.CY, InactiveColor);
+    DoDrawMissingTile(Rect(X, Y, X+TileSize.CX, Y+TileSize.CY));
 
   if FDebugTiles then
     DoDrawTileInfo(TileID, X, Y);
-
 end;
+
+procedure TMapView.DoDrawMissingTile(const ARect: TRect);
+var
+  lHandled: Boolean;
+begin
+  lHandled := PluginManager.DrawMissingTile(Self, DrawingEngine, ARect);
+  if (not lHandled) and Assigned(FOnDrawMissingTile) then
+    FOnDrawMissingTile(Self, DrawingEngine, ARect)
+  else
+    DrawingEngine.FillPixels(ARect.Left, ARect.Top, ARect.Right, ARect.Bottom, InactiveColor);
+end;
+
 
 procedure TMapView.DoDrawTileInfo(const TileID: TTileID; X, Y: Integer);
 begin
@@ -4425,6 +4445,13 @@ function TMvCustomPluginManager.DrawGPSPoint(AMapView: TMapView;
   ADrawingEngine: TMvCustomDrawingEngine; APoint: TGPSPoint): Boolean;
 begin
   Unused(AMapView, ADrawingEngine, APoint);
+  Result := false;
+end;
+
+function TMvCustomPluginManager.DrawMissingTile(AMapView: TMapView;
+  ADrawingEngine: TMvCustomDrawingEngine; const ARect: TRect): Boolean;
+begin
+  Unused(AMapView, ADrawingEngine, ARect);
   Result := false;
 end;
 
