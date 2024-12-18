@@ -154,6 +154,7 @@ type
       function LonLatToScreen(APt: TRealPoint): TPoint; deprecated 'Use LatLonToScreen';
       function LatLonToWorldScreen(APt: TRealPoint): TPoint;
       function LonLatToWorldScreen(APt: TRealPoint): TPoint; deprecated 'Use LatLonToWorldScreen';
+      procedure PrepareCache(AMapProvider: TMapProvider);
       function ReadProvidersFromXML(AFileName: String; out AMsg: String): Boolean;
       procedure Redraw;
       Procedure RegisterProviders;
@@ -946,6 +947,11 @@ Begin
   SetCenter(nCenter);
 end;
 
+procedure TMapViewerEngine.PrepareCache(AMapProvider: TMapProvider);
+begin
+  Cache.Prepare(AMapProvider);
+end;
+
 function TMapViewerEngine.ReadProvidersFromXML(AFileName: String;
   out AMsg: String): Boolean;
 
@@ -1263,7 +1269,7 @@ end;
 
 procedure TMapViewerEngine.SetCachePath(AValue: String);
 begin
-  Cache.BasePath := aValue;
+  Cache.BasePath := SetDirSeparators(aValue);
 end;
 
 procedure TMapViewerEngine.SetCenter(ACenter: TRealPoint);
@@ -1315,6 +1321,7 @@ begin
   MapWin.MapProvider := Provider;
   if Assigned(Provider) then
   begin
+    PrepareCache(Provider);
     ConstraintZoom(MapWin);
     CalculateWin(MapWin);
     Redraw(MapWin);

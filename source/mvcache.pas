@@ -65,6 +65,7 @@ Type
      Procedure GetFromCache(MapProvider: TMapProvider; const TileId: TTileId; out item: TPictureCacheItem);
      function GetPreviewFromCache(MapProvider: TMapProvider; var TileId: TTileId; out ARect: TRect): boolean;
      function InCache(MapProvider: TMapProvider; const TileId: TTileId): Boolean;
+     procedure Prepare(MapProvider: TMapProvider);
 
      property UseDisk: Boolean read FUseDisk write FUseDisk;
      property BasePath: String read FBasePath write FBasePath;
@@ -82,6 +83,7 @@ uses
 const
   MEMCACHE_MAX = 64; // Tiles kept in memory
   MEMCACHE_SWEEP_CNT = 10; // Max tiles to be swept at once
+  FLAT_CACHE = false;   // all cache files in flat folder, or grouped by provider and zoom
 
 function IsValidPNG(AStream: TStream): Boolean;
 var
@@ -303,10 +305,14 @@ end;
 
 function TPictureCache.GetFileName(MapProvider: TMapProvider;
   const  TileId: TTileId): String;
+var
+  prov: String;
 begin
-  Result := Format('%s_%d_%d_%d',
-    [MapProvider2FileName(MapProvider), TileId.X, TileId.Y, TileId.Z]
-  );
+  prov := MapProvider2FileName(MapProvider);
+  if FLAT_CACHE then
+    Result := Format('%s_%d_%d_%d', [prov, TileId.X, TileId.Y, TileId.Z])
+  else
+    Result := SetDirSeparators(Format('%s/%d/%d_%d', [prov, TileID.Z, TileID.X, TileID.Y]));
 end;
 
 procedure TPictureCache.CheckCacheSize(Sender: TObject);
@@ -361,7 +367,9 @@ begin
   begin
     if Assigned(item) then
     begin
-      lFile := TFileStream.Create(BasePath + FileName, fmCreate);
+      FileName := BasePath + FileName;
+      ForceDirectories(ExtractFileDir(FileName));    // <--- to be removed !!!
+      lFile := TFileStream.Create(FileName, fmCreate);
       try
         Stream.Position := 0;
         lFile.CopyFrom(Stream, 0);
@@ -479,6 +487,26 @@ begin
      Result := True
   else
      Result := DiskCached(FileName);
+end;
+
+{ Makes sure that the subfolders needed by the given map provider exist in
+  the cache directory. }
+procedure TPictureCache.Prepare(MapProvider: TMapProvider);
+var
+  prov, dir: String;
+  zoom, zoomMin, zoomMax: Integer;
+begin
+  if (not FLAT_CACHE) or (MapProvider = nil) then
+    exit;
+  prov := MapProvider2FileName(MapProvider);
+  dir := BasePath + prov;
+  ForceDirectories(dir);
+  MapProvider.GetZoomInfos(zoomMin, zoomMax);
+  for zoom := zoomMin to zoomMax do
+  begin
+    if not DirectoryExists(dir + IntToStr(zoom)) then
+      CreateDir(dir + IntToStr(zoom));
+  end;
 end;
 
 end.

@@ -5,6 +5,7 @@
     (C) 2014 ti_dic@hotmail.com
     (C) 2019 Werner Pamler (user wp at Lazarus forum https://forum.lazarus.freepascal.org)
     (C) 2023 Yuliyan Ivanov (user alpine at Lazarus forum https://forum.lazarus.freepascal.org)
+    (C) 2024 Ekkehard Domning (edo-at-domis.de)
 
   License: modified LGPL with linking exception (like RTL, FCL and LCL)
 
@@ -13,8 +14,6 @@
 
   See also: https://wiki.lazarus.freepascal.org/FPC_modified_LGPL
 }
-
-// ToDo: Make Active work at designtime.
 
 // "Deprecated" warnings:
 // - function names containing "LonLat" were copied and named to contain "LatLon"
@@ -2216,18 +2215,6 @@ begin
   result := Engine.MapProvider;
 end;
 
-{
-function TMapView.GetOnCenterMove: TNotifyEvent;
-begin
-  Result := Engine.OnCenterMove;
-end;
-
-function TMapView.GetOnCenterMoving: TCenterMovingEvent;
-begin
-  Result := Engine.OnCenterMoving;
-end;
-}
-
 procedure TMapView.DoZoomChange(Sender: TObject);
 begin
   GetPluginManager.ZoomChange(Self);
@@ -3629,7 +3616,6 @@ begin
     ATolerance := POINT_DELTA;
   Result := FindObjsAtScreenPt(X, Y, ATolerance, true);
 end;
-
 
 procedure TMapView.CenterOnObj(obj: TGPSObj);
 var
