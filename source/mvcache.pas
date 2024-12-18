@@ -81,9 +81,9 @@ uses
   GraphType, DateUtils, FPReadJPEG;
 
 const
-  MEMCACHE_MAX = 64; // Tiles kept in memory
+  MEMCACHE_MAX = 64;       // Tiles kept in memory
   MEMCACHE_SWEEP_CNT = 10; // Max tiles to be swept at once
-  FLAT_CACHE = false;   // all cache files in flat folder, or grouped by provider and zoom
+  FLAT_CACHE = false;      // all cache files in flat folder, or grouped by provider and zoom
 
 function IsValidPNG(AStream: TStream): Boolean;
 var
@@ -349,6 +349,7 @@ begin
   FileName := GetFileName(MapProvider, TileId);
   EnterCrit;
   try
+    item := FCacheItemClass.Create(Stream); //GetNewImgFor(Stream);
     idx := Cache.IndexOf(FileName);
     if idx <> -1 then
       Cache.Objects[idx].Free
@@ -357,7 +358,6 @@ begin
       Cache.Insert(0, FileName);
       idx := 0;
     end;
-    item:= FCacheItemClass.Create(Stream); //GetNewImgFor(Stream);
     Cache.Objects[idx]:=item;
   finally
     LeaveCrit;

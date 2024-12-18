@@ -27,7 +27,8 @@ interface
 
 uses
   Classes, SysUtils, Types, fgl, FPImage,
-  Controls, GraphType, Graphics, IntfGraphics,
+  LazFileUtils, GraphType,
+  Controls, Graphics, IntfGraphics,
   Forms, ImgList, LCLVersion,
   mvTypes, mvGeoMath, mvGPSObj, mvDragObj, mvCache, mvExtraData,
   mvEngine, mvMapProvider, mvDownloadEngine, mvDrawingEngine;
@@ -3253,7 +3254,7 @@ procedure TMapView.DoDrawMissingTile(ATileID: TTileID; ARect: TRect);
 var
   lHandled: Boolean;
 begin
-  lHandled := PluginManager.DrawMissingTile(Self, DrawingEngine, ATileID, ARect);
+  lHandled := GetPluginManager.DrawMissingTile(Self, DrawingEngine, ATileID, ARect);
   if (not lHandled) and Assigned(FOnDrawMissingTile) then
     FOnDrawMissingTile(Self, DrawingEngine, ATileID, ARect)
   else
@@ -3805,7 +3806,7 @@ begin
     clProfile: Result := Concat(GetUserDir, LazMVCacheFolder);
     clTemp: Result := Concat(GetTempDir(True), LazMVCacheFolder);
   otherwise
-    Result := ACustomPath;
+    Result := AppendPathDelim(ACustomPath);
   end;
 end;
 
