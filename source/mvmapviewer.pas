@@ -39,7 +39,7 @@ Type
     ADrawer: TMvCustomDrawingEngine; APoint: TGpsPoint) of object;
 
   TDrawMissingTileEvent = procedure (Sender: TObject;
-    ADrawer: TMvCustomDrawingEngine; const ARect: TRect) of object;
+    ADrawer: TMvCustomDrawingEngine; ATileID: TTileID; ARect: TRect) of object;
 
   TMapViewOption =
   (
@@ -452,7 +452,7 @@ type
     function DrawGPSPoint(AMapView: TMapView; ADrawingEngine: TMvCustomDrawingEngine;
       APoint: TGPSPoint): Boolean; virtual;
     function DrawMissingTile(AMapView: TMapView; ADrawingEngine: TMvCustomDrawingEngine;
-      const ARect: TRect): Boolean; virtual;
+      ATileID: TTileID; ARect: TRect): Boolean; virtual;
     function GPSItemsModified(AMapView: TMapView; ModifiedList: TGPSObjectList;
       ActualObjs: TGPSObjList; Adding: Boolean): Boolean; virtual;
     function MouseDown(AMapView: TMapView; AButton: TMouseButton; AShift: TShiftState;
@@ -585,7 +585,7 @@ type
       procedure DblClick; override;
       procedure DoCenterMove(Sender: TObject);
       procedure DoCenterMoving(Sender: TObject; var NewCenter: TRealPoint; var Allow: Boolean);
-      procedure DoDrawMissingTile(const ARect: TRect);
+      procedure DoDrawMissingTile(ATileID: TTileID; ARect: TRect);
       procedure DoDrawPoint(const Area: TRealArea; APt: TGPSPoint; AImageIndex: Integer);
       procedure DoDrawStretchedTile(const TileId: TTileID; X, Y: Integer; TileImg: TPictureCacheItem; const R: TRect);
       procedure DoDrawTile(const TileId: TTileId; X,Y: integer; TileImg: TPictureCacheItem);
@@ -3244,7 +3244,7 @@ begin
   if Assigned(TileImg) then
     DrawingEngine.DrawScaledCacheItem(Rect(X, Y, X + TileSize.CX, Y + TileSize.CY), R, TileImg)
   else
-    DoDrawMissingTile(Rect(X, Y, X+TileSize.CX, Y+TileSize.CY));
+    DoDrawMissingTile(TileID, Rect(X, Y, X+TileSize.CX, Y+TileSize.CY));
 
   if FDebugTiles then
     DoDrawTileInfo(TileID, X, Y);
@@ -3256,19 +3256,19 @@ begin
   if Assigned(TileImg) then
     DrawingEngine.DrawCacheItem(X, Y, TileImg)
   else
-    DoDrawMissingTile(Rect(X, Y, X+TileSize.CX, Y+TileSize.CY));
+    DoDrawMissingTile(TileID, Rect(X, Y, X+TileSize.CX, Y+TileSize.CY));
 
   if FDebugTiles then
     DoDrawTileInfo(TileID, X, Y);
 end;
 
-procedure TMapView.DoDrawMissingTile(const ARect: TRect);
+procedure TMapView.DoDrawMissingTile(ATileID: TTileID; ARect: TRect);
 var
   lHandled: Boolean;
 begin
-  lHandled := PluginManager.DrawMissingTile(Self, DrawingEngine, ARect);
+  lHandled := PluginManager.DrawMissingTile(Self, DrawingEngine, ATileID, ARect);
   if (not lHandled) and Assigned(FOnDrawMissingTile) then
-    FOnDrawMissingTile(Self, DrawingEngine, ARect)
+    FOnDrawMissingTile(Self, DrawingEngine, ATileID, ARect)
   else
     DrawingEngine.FillPixels(ARect.Left, ARect.Top, ARect.Right, ARect.Bottom, InactiveColor);
 end;
@@ -4449,9 +4449,10 @@ begin
 end;
 
 function TMvCustomPluginManager.DrawMissingTile(AMapView: TMapView;
-  ADrawingEngine: TMvCustomDrawingEngine; const ARect: TRect): Boolean;
+  ADrawingEngine: TMvCustomDrawingEngine; ATileID: TTileID; ARect: TRect): Boolean;
 begin
-  Unused(AMapView, ADrawingEngine, ARect);
+  Unused(AMapView, ADrawingEngine);
+  Unused(ATileID, ARect);
   Result := false;
 end;
 

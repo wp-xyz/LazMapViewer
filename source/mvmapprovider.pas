@@ -15,16 +15,10 @@ unit mvMapProvider;
 interface
 
 uses
-  Classes, SysUtils, laz2_dom;
+  Classes, SysUtils, laz2_dom,
+  mvTypes;
 
 type
-
-  { TTileId }
-
-  TTileId = record
-    X, Y: int64;
-    Z: integer;
-  end;
 
   TGetSvrStr = function (id: integer): string;
   TGetValStr = function (const Tile: TTileId): String;

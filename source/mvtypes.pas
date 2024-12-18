@@ -66,6 +66,12 @@ Type
     function Union(const Area: TRealArea): TRealArea;
   end;
 
+  { TTileId }
+  TTileId = record
+    X, Y: int64;
+    Z: integer;
+  end;
+
 function RealPoint(Lat, Lon: Double): TRealPoint;
 
 // Call this to silence 'parameter is unused' hint

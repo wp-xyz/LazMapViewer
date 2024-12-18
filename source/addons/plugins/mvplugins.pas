@@ -134,7 +134,8 @@ type
     ADrawingEngine: TMvCustomDrawingEngine; APoint: TGPSPoint; var Handled: Boolean) of object;
 
   TMvPluginDrawMissingTileEvent = procedure (Sender: TObject; AMapView: TMapView;
-    ADrawingEngine: TMvCustomDrawingEngine; const ARect: TRect; var Handled: Boolean) of object;
+    ADrawingEngine: TMvCustomDrawingEngine; ATileID: TTileID; ARect: TRect;
+    var Handled: Boolean) of object;
 
   TMvPluginGPSItemsModifiedEvent = procedure (Sender: TObject; AMapView: TMapView;
     ChangedList: TGPSObjectList; ActualObjs: TGPSObjList; Adding: Boolean;
@@ -185,7 +186,7 @@ type
     procedure DrawGPSPoint(AMapView: TMapView; ADrawingEngine: TMvCustomDrawingEngine;
       APoint: TGPSPoint; var Handled: Boolean); override;
     procedure DrawMissingTile(AMapView: TMapView; ADrawingEngine: TMvCustomDrawingEngine;
-      const ARect: TRect; var Handled: Boolean); override;
+      ATileID: TTileID; ARect: TRect; var Handled: Boolean); override;
     procedure GPSItemsModified(AMapView: TMapView; ChangedList: TGPSObjectList;
       ActualObjs: TGPSObjList; Adding: Boolean; var Handled: Boolean); override;
     procedure MouseDown(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
@@ -698,10 +699,11 @@ begin
 end;
 
 procedure TUserDefinedPlugin.DrawMissingTile(AMapView: TMapView;
-  ADrawingEngine: TMvCustomDrawingEngine; const ARect: TRect; var Handled: Boolean);
+  ADrawingEngine: TMvCustomDrawingEngine; ATileID: TTileID; ARect: TRect;
+  var Handled: Boolean);
 begin
   if Assigned(FDrawMissingTileEvent) then
-    FDrawMissingTileEvent(Self, AMapView, ADrawingEngine, ARect, Handled);
+    FDrawMissingTileEvent(Self, AMapView, ADrawingEngine, ATileID, ARect, Handled);
 end;
 
 procedure TUserDefinedPlugin.GPSItemsModified(AMapView: TMapView;
