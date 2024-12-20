@@ -263,9 +263,9 @@ var
 begin
   Result := Nil;
   P := GetComponent(0);
-  if (P is TPointOfInterest) then
+  if (P is TMapPointOfInterest) then
   begin
-    Result := TPointOfInterest(P).View.POIImages;
+    Result := TMapPointOfInterest(P).View.POIImages;
   end;
 end;
 

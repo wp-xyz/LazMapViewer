@@ -7,7 +7,7 @@ object MainForm: TMainForm
   ClientHeight = 662
   ClientWidth = 942
   ShowHint = True
-  LCLVersion = '3.99.0.0'
+  LCLVersion = '4.99.0.0'
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   object MapView: TMapView
@@ -29,6 +29,7 @@ object MainForm: TMainForm
         MapProvider = 'Open Topo Map'
         Opacity = 0.100000001490116
         PointsOfInterest = <>
+        Areas = <>
         Tracks = <>
       end    
       item
@@ -50,6 +51,7 @@ object MainForm: TMainForm
             Caption = 'CSN436'
             Visible = False
           end>
+        Areas = <>
         Tracks = <        
           item
             Caption = 'CSN436'
@@ -5869,6 +5871,7 @@ object MainForm: TMainForm
             Caption = 'UAL3755'
             Visible = False
           end>
+        Areas = <>
         Tracks = <        
           item
             Caption = 'UAL3755'
@@ -6893,6 +6896,7 @@ object MainForm: TMainForm
             Caption = 'DAL773'
             Visible = False
           end>
+        Areas = <>
         Tracks = <        
           item
             Caption = 'DAL773'
@@ -11415,6 +11419,7 @@ object MainForm: TMainForm
           item
             Caption = 'DAL2049'
           end>
+        Areas = <>
         Tracks = <        
           item
             Caption = 'DAL2049'
@@ -13655,6 +13660,7 @@ object MainForm: TMainForm
           item
             Caption = 'DLH441'
           end>
+        Areas = <>
         Tracks = <        
           item
             Caption = 'DLH441'
@@ -19143,6 +19149,7 @@ object MainForm: TMainForm
           item
             Caption = 'QFA28'
           end>
+        Areas = <>
         Tracks = <        
           item
             Caption = 'QFA28'
@@ -21622,6 +21629,7 @@ object MainForm: TMainForm
           item
             Caption = 'QFA95'
           end>
+        Areas = <>
         Tracks = <        
           item
             Caption = 'QFA95'
@@ -27855,7 +27863,6 @@ object MainForm: TMainForm
     POIImages = ilPOIs
     POIImagesWidth = 32
     POITextBgColor = clCream
-    UseThreads = True
     Zoom = 4
     ZoomMax = 10
     OnZoomChange = MapViewZoomChange

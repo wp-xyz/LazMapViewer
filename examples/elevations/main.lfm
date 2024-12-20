@@ -7,23 +7,8 @@ object MainForm: TMainForm
   ClientHeight = 515
   ClientWidth = 991
   ShowHint = True
-  LCLVersion = '3.99.0.0'
+  LCLVersion = '4.99.0.0'
   OnCreate = FormCreate
-  object MapView: TMapView
-    Left = 0
-    Height = 515
-    Top = 0
-    Width = 614
-    Align = alClient
-    DownloadEngine = MapView.BuiltInDLE
-    DrawingEngine = MapView.BuiltInDE
-    Layers = <>
-    Font.Color = clBlack
-    MapProvider = 'OpenStreetMap Mapnik'
-    UseThreads = True
-    OnDrawGpsPoint = MapViewDrawGpsPoint
-    OnMouseDown = MapViewMouseDown
-  end
   object Panel1: TPanel
     Left = 622
     Height = 503
@@ -37,7 +22,7 @@ object MainForm: TMainForm
     BevelOuter = bvNone
     ClientHeight = 503
     ClientWidth = 363
-    TabOrder = 1
+    TabOrder = 0
     object Log: TMemo
       AnchorSideLeft.Control = Panel1
       AnchorSideTop.Control = Splitter1
@@ -114,22 +99,23 @@ object MainForm: TMainForm
       Width = 166
       Caption = 'Elevation datasets, provided by '
     end
-    object lblURL: TLabel
+    object OpenTopoDataLink: TLabel
       AnchorSideLeft.Control = lblDatasets
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Panel1
       Cursor = crHandPoint
       Left = 166
       Height = 15
+      Hint = 'https://www.opentopodata.org/'
       Top = 0
       Width = 166
       Caption = 'https://www.opentopodata.org'
       Font.Color = clBlue
       ParentColor = False
       ParentFont = False
-      OnClick = lblURLClick
-      OnMouseEnter = lblURLMouseEnter
-      OnMouseLeave = lblURLMouseLeave
+      OnClick = URLClick
+      OnMouseEnter = URLMouseEnter
+      OnMouseLeave = URLMouseLeave
     end
     object Splitter1: TSplitter
       AnchorSideLeft.Control = Panel1
@@ -178,6 +164,137 @@ object MainForm: TMainForm
     Align = alRight
     ResizeAnchor = akRight
     ResizeStyle = rsPattern
+  end
+  object MapPanel: TPanel
+    Left = 0
+    Height = 515
+    Top = 0
+    Width = 614
+    Align = alClient
+    BevelOuter = bvNone
+    ClientHeight = 515
+    ClientWidth = 614
+    TabOrder = 2
+    object MapView: TMapView
+      Left = 0
+      Height = 484
+      Top = 0
+      Width = 614
+      Align = alClient
+      DownloadEngine = MapView.BuiltInDLE
+      DrawingEngine = MapView.BuiltInDE
+      Layers = <>
+      Font.Color = clBlack
+      OnDrawGpsPoint = MapViewDrawGpsPoint
+      OnMouseDown = MapViewMouseDown
+    end
+    object Panel2: TPanel
+      Left = 8
+      Height = 15
+      Top = 492
+      Width = 598
+      Align = alBottom
+      AutoSize = True
+      BorderSpacing.Around = 8
+      BevelOuter = bvNone
+      ClientHeight = 15
+      ClientWidth = 598
+      TabOrder = 1
+      object lblMapData: TLabel
+        AnchorSideLeft.Control = Panel2
+        AnchorSideTop.Control = Panel2
+        Left = 0
+        Height = 15
+        Top = 0
+        Width = 70
+        Caption = 'Map data: (c)'
+      end
+      object MapDataLink: TLabel
+        AnchorSideLeft.Control = lblMapData
+        AnchorSideLeft.Side = asrBottom
+        AnchorSideTop.Control = Panel2
+        Cursor = crHandPoint
+        Left = 76
+        Height = 15
+        Hint = 'https://openstreetmap.org/copyright'
+        Top = 0
+        Width = 151
+        BorderSpacing.Left = 6
+        Caption = 'OpenStreetMap contributors'
+        Font.Color = clBlue
+        ParentFont = False
+        OnClick = URLClick
+        OnMouseEnter = URLMouseEnter
+        OnMouseLeave = URLMouseLeave
+      end
+      object lblMapPresentation: TLabel
+        AnchorSideLeft.Control = MapDataLink
+        AnchorSideLeft.Side = asrBottom
+        AnchorSideTop.Control = Panel2
+        Left = 251
+        Height = 15
+        Top = 0
+        Width = 71
+        BorderSpacing.Left = 24
+        Caption = 'Map style: (c)'
+      end
+      object MapStyleLink: TLabel
+        AnchorSideLeft.Control = lblMapPresentation
+        AnchorSideLeft.Side = asrBottom
+        AnchorSideTop.Control = Panel2
+        Cursor = crHandPoint
+        Left = 328
+        Height = 15
+        Hint = 'http://opentopomap.org/'
+        Top = 0
+        Width = 86
+        BorderSpacing.Left = 6
+        Caption = 'Open Topo Map'
+        Font.Color = clBlue
+        ParentFont = False
+        OnClick = URLClick
+        OnMouseEnter = URLMouseEnter
+        OnMouseLeave = URLMouseLeave
+      end
+      object Label2: TLabel
+        AnchorSideLeft.Control = MapStyleLink
+        AnchorSideLeft.Side = asrBottom
+        AnchorSideTop.Control = Panel2
+        Left = 422
+        Height = 15
+        Top = 0
+        Width = 4
+        BorderSpacing.Left = 8
+        Caption = '('
+      end
+      object MapLicenseLink: TLabel
+        AnchorSideLeft.Control = Label2
+        AnchorSideLeft.Side = asrBottom
+        AnchorSideTop.Control = Panel2
+        Cursor = crHandPoint
+        Left = 426
+        Height = 15
+        Hint = 'https://creativecommons.org/licenses/by-sa/3.0/'
+        Top = 0
+        Width = 54
+        Caption = 'CC-BY-SA'
+        Font.Color = clBlue
+        ParentFont = False
+        OnClick = URLClick
+        OnMouseEnter = URLMouseEnter
+        OnMouseLeave = URLMouseLeave
+      end
+      object Label3: TLabel
+        AnchorSideLeft.Control = MapLicenseLink
+        AnchorSideLeft.Side = asrBottom
+        AnchorSideTop.Control = Panel2
+        Left = 480
+        Height = 15
+        Top = 0
+        Width = 4
+        Caption = ')'
+      end
+    end
   end
   object ImageList1: TImageList
     Scaled = True

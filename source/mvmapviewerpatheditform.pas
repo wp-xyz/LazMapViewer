@@ -85,7 +85,7 @@ end;
 procedure TMapViewerPathEditForm.actNewPOIExecute(Sender: TObject);
 var
   CP: TMapPoint;
-  NP: TPointOfInterest;
+  NP: TMapPointOfInterest;
   R: TRealPoint;
   V: TMapView;
 begin
@@ -94,12 +94,12 @@ begin
     Exit;
 
   CP := MapView.EditMark.CurrentPoint;
-  NP := MapLayer.PointsOfInterest.Add as TPointOfInterest;
+  NP := MapLayer.PointsOfInterest.Add as TMapPointOfInterest;
   NP.Assign(CP);
-  if CP is TPointOfInterest then
+  if CP is TMapPointOfInterest then
   begin
-    NP.Caption := TPointOfInterest(CP).Caption;
-    NP.ImageIndex := TPointOfInterest(CP).ImageIndex;
+    NP.Caption := TMapPointOfInterest(CP).Caption;
+    NP.ImageIndex := TMapPointOfInterest(CP).ImageIndex;
   end;
   R := MapView.ScreenToLatLon(CP.ToScreen + Point(10, 10));
   NP.Latitude := R.Lat;
@@ -289,7 +289,7 @@ begin
   Pt := MapView.EditMark.CurrentPoint;
   PtCol := Pt.Collection;
 
-  if not (Pt is TPointOfInterest) then
+  if not (Pt is TMapPointOfInterest) then
     if PtCol.Count < 3 then
       ; // TODO Just 3 points left?
 

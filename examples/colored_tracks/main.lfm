@@ -6,7 +6,7 @@ object MainForm: TMainForm
   Caption = 'MainForm'
   ClientHeight = 619
   ClientWidth = 933
-  LCLVersion = '3.99.0.0'
+  LCLVersion = '4.99.0.0'
   OnActivate = FormActivate
   object MapView: TMapView
     Left = 0
@@ -19,7 +19,6 @@ object MainForm: TMainForm
     Layers = <>
     Font.Color = clBlack
     MapProvider = 'OpenStreetMap Mapnik'
-    UseThreads = True
     OnZoomChange = MapViewZoomChange
   end
   object ParamsPanel: TPanel
@@ -41,7 +40,7 @@ object MainForm: TMainForm
       Left = 0
       Height = 19
       Top = 19
-      Width = 155
+      Width = 157
       Caption = 'Trans-Yosemite Tour (red)'
       Checked = True
       State = cbChecked
@@ -52,10 +51,10 @@ object MainForm: TMainForm
       AnchorSideLeft.Control = cbRedTour
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = cbRedTour
-      Left = 179
+      Left = 181
       Height = 19
       Top = 19
-      Width = 136
+      Width = 137
       BorderSpacing.Left = 24
       Caption = 'Bear Valley Tour (blue)'
       Checked = True
@@ -67,10 +66,10 @@ object MainForm: TMainForm
       AnchorSideLeft.Control = cbBlueTour
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = cbRedTour
-      Left = 339
+      Left = 342
       Height = 19
       Top = 19
-      Width = 156
+      Width = 158
       BorderSpacing.Left = 24
       Caption = 'Triangle Loop Tour (black)'
       Checked = True
@@ -115,13 +114,12 @@ object MainForm: TMainForm
       ItemHeight = 15
       ItemIndex = 0
       Items.Strings = (
-        'Google Maps'
-        'Google Satellite'
+        'OpenStreetMap Mapnik'
         'Open Topo Map'
       )
       Style = csDropDownList
       TabOrder = 3
-      Text = 'Google Maps'
+      Text = 'OpenStreetMap Mapnik'
       OnChange = cbProvidersChange
     end
     object lblProviders: TLabel

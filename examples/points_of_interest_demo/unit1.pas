@@ -50,9 +50,9 @@ end;
 procedure TForm1.AddPointOfInterest(ALayer: TMapLayer; APoint: TRealPoint;
   ACaption: String; AImageIndex: Integer);
 var
-  poi: TPointOfInterest;
+  poi: TMapPointOfInterest;
 begin
-  poi := ALayer.PointsOfInterest.Add as TPointOfInterest;
+  poi := ALayer.PointsOfInterest.Add as TMapPointOfInterest;
   poi.RealPoint := APoint;
   poi.Caption := ACaption;
   poi.ImageIndex := AImageIndex;

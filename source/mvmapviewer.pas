@@ -62,8 +62,8 @@ type
   TMapPoint = class;
   TMapLayer = class;
   TMapLayers = class;
-  TPointOfInterest = class;
-  TPointsOfInterest = class;
+  TMapPointOfInterest = class;
+  TMapPointsOfInterest = class;
   TMapTrack = class;
   TMapTracks = class;
   TMapArea = class;
@@ -74,7 +74,7 @@ type
   TMvCustomPluginManager = class;
 
   TPointOfInterestDrawEvent = procedure(Sender: TObject;
-    ADrawer: TMvCustomDrawingEngine; APoint: TPointOfInterest) of object;
+    ADrawer: TMvCustomDrawingEngine; APoint: TMapPointOfInterest) of object;
 
   TMapTrackDrawEvent = procedure(Sender: TObject;
     ADrawer: TMvCustomDrawingEngine; ATrack: TMapTrack) of object;
@@ -165,7 +165,7 @@ type
     FUseThreads: Boolean;
     FMapProvider: String;
     FOpacity: Single;
-    FPointsOfInterest: TPointsOfInterest;
+    FPointsOfInterest: TMapPointsOfInterest;
     FAreas: TMapAreas;
     FTracks: TMapTracks;
   private
@@ -174,14 +174,14 @@ type
     function GetView: TMapView; override;
     function GetLayer: TMapLayer; override;
     function GetMapProvider: String;
-    function GetPointsOfInterest: TPointsOfInterest;
+    function GetPointsOfInterest: TMapPointsOfInterest;
     function GetTracks: TMapTracks;
     function GetUseThreads: Boolean;
     procedure SetAreas(AValue: TMapAreas);
     procedure SetDrawMode(AValue: TItemDrawMode);
     procedure SetMapProvider(AValue: String);
     procedure SetOpacity(AValue: Single);
-    procedure SetPointsOfInterest(AValue: TPointsOfInterest);
+    procedure SetPointsOfInterest(AValue: TMapPointsOfInterest);
     procedure SetTracks(AValue: TMapTracks);
     procedure SetUseThreads(AValue: Boolean);
   protected
@@ -190,7 +190,7 @@ type
     constructor Create(ACollection: TCollection); override;
     destructor Destroy; override;
     function HitTest(constref Area: TRealArea): TMapObjectList; override;
-    function AddPointOfInterest(APoint: TRealPoint; ACaption: String = ''): TPointOfInterest;
+    function AddPointOfInterest(APoint: TRealPoint; ACaption: String = ''): TMapPointOfInterest;
     procedure AssignFromGPSList(AList: TGPSObjectList);
     property ComboLayer: TGPSComboLayer read FComboLayer;
   published
@@ -198,7 +198,7 @@ type
     property UseThreads: Boolean read GetUseThreads write SetUseThreads default True;
     property DrawMode: TItemDrawMode read FDrawMode write SetDrawMode default idmUseOpacity;
     property Opacity: Single read FOpacity write SetOpacity default 0.25;
-    property PointsOfInterest: TPointsOfInterest read GetPointsOfInterest write SetPointsOfInterest;
+    property PointsOfInterest: TMapPointsOfInterest read GetPointsOfInterest write SetPointsOfInterest;
     property Areas: TMapAreas read GetAreas write SetAreas;
     property Tracks: TMapTracks read GetTracks write SetTracks;
   end;
@@ -314,9 +314,9 @@ type
     procedure FixOrder(APrevIndex, AIndex: Integer); override;
   end;
 
-  { TPointOfInterest }
+  { TMapPointOfInterest }
 
-  TPointOfInterest = class(TMapPoint)
+  TMapPointOfInterest = class(TMapPoint)
   private
     FImageIndex: TImageIndex;
     FOnDrawPoint: TPointOfInterestDrawEvent;
@@ -335,9 +335,9 @@ type
     property OnDrawPoint: TPointOfInterestDrawEvent read FOnDrawPoint write SetOnDrawPoint;
   end;
 
-  { TPointsOfInterest }
+  { TMapPointsOfInterest }
 
-  TPointsOfInterest = class(specialize TMapCollection<TPointOfInterest, TMapLayer>)
+  TMapPointsOfInterest = class(specialize TMapCollection<TMapPointOfInterest, TMapLayer>)
   protected
     function GetLayer: TMapLayer; override;
   end;
@@ -1543,9 +1543,9 @@ begin
   end;
 end;
 
-{ TPointsOfInterest }
+{ TMapPointsOfInterest }
 
-function TPointsOfInterest.GetLayer: TMapLayer;
+function TMapPointsOfInterest.GetLayer: TMapLayer;
 begin
   Result := MCOwner;
 end;
@@ -1681,16 +1681,16 @@ begin
     inherited AssignTo(Dest);
 end;
 
-{ TPointOfInterest }
+{ TMapPointOfInterest }
 
-procedure TPointOfInterest.SetImageIndex(AValue: TImageIndex);
+procedure TMapPointOfInterest.SetImageIndex(AValue: TImageIndex);
 begin
   if FImageIndex = AValue then Exit;
   FImageIndex := AValue;
   ItemChanged;
 end;
 
-procedure TPointOfInterest.SetOnDrawPoint(AValue: TPointOfInterestDrawEvent);
+procedure TMapPointOfInterest.SetOnDrawPoint(AValue: TPointOfInterestDrawEvent);
 begin
   if CompareMem(@FOnDrawPoint, @AValue, SizeOf(TMethod)) then
     Exit;
@@ -1701,42 +1701,42 @@ begin
   ItemChanged;
 end;
 
-procedure TPointOfInterest.DrawPoint(Sender: TObject; AGPSObj: TGPSObj;
+procedure TMapPointOfInterest.DrawPoint(Sender: TObject; AGPSObj: TGPSObj;
   AArea: TRealArea);
 begin
   if Assigned(FOnDrawPoint) then
     FOnDrawPoint(Sender, View.DrawingEngine, Self);
 end;
 
-procedure TPointOfInterest.ItemChanged;
+procedure TMapPointOfInterest.ItemChanged;
 begin
   TGPSPointOfInterest(FPoint).ImageIndex := FImageIndex;
   inherited ItemChanged;
 end;
 
-function TPointOfInterest.CreatePoint: TGPSPoint;
+function TMapPointOfInterest.CreatePoint: TGPSPoint;
 begin
   Result := TGPSPointOfInterest.Create(FLongitude, FLatitude);
   Layer.ComboLayer.Add(Result, Pred(_TILELAYERS_ID_), Self.Index + BASE_Z_POI);
 end;
 
-procedure TPointOfInterest.DestroyPoint;
+procedure TMapPointOfInterest.DestroyPoint;
 begin
   if Assigned(FPoint) then
     Layer.ComboLayer.Delete(FPoint);
 end;
 
-constructor TPointOfInterest.Create(ACollection: TCollection);
+constructor TMapPointOfInterest.Create(ACollection: TCollection);
 begin
   inherited Create(ACollection);
   FImageIndex := -1;
 end;
 
-procedure TPointOfInterest.AssignTo(Dest: TPersistent);
+procedure TMapPointOfInterest.AssignTo(Dest: TPersistent);
 begin
   inherited AssignTo(Dest);
-  if Dest is TPointOfInterest then
-    TPointOfInterest(Dest).ImageIndex := Self.ImageIndex;
+  if Dest is TMapPointOfInterest then
+    TMapPointOfInterest(Dest).ImageIndex := Self.ImageIndex;
 end;
 
 { TMapCenter }
@@ -1787,7 +1787,7 @@ end;
 //    else Result := Nil;
 //end;
 
-function TMapLayer.GetPointsOfInterest: TPointsOfInterest;
+function TMapLayer.GetPointsOfInterest: TMapPointsOfInterest;
 begin
   Result := FPointsOfInterest;
 end;
@@ -1874,7 +1874,7 @@ begin
   ItemChanged;
 end;
 
-procedure TMapLayer.SetPointsOfInterest(AValue: TPointsOfInterest);
+procedure TMapLayer.SetPointsOfInterest(AValue: TMapPointsOfInterest);
 begin
   FPointsOfInterest.Assign(AValue);
 end;
@@ -1914,7 +1914,7 @@ begin
   FVisible := True;
   FTag := 0;
 
-  FPointsOfInterest := TPointsOfInterest.Create(Self, BASE_Z_POI);
+  FPointsOfInterest := TMapPointsOfInterest.Create(Self, BASE_Z_POI);
   FAreas := TMapAreas.Create(Self, BASE_Z_AREA);
   FTracks := TMapTracks.Create(Self, BASE_Z_TRACK);
   FComboLayer := TGPSComboLayer.Create;
@@ -1941,9 +1941,9 @@ begin
   Result := TMapObjectList.AddListToResult(Areas.HitTest(Area), Result);
 end;
 
-function TMapLayer.AddPointOfInterest(APoint: TRealPoint; ACaption: String = ''): TPointOfInterest;
+function TMapLayer.AddPointOfInterest(APoint: TRealPoint; ACaption: String = ''): TMapPointOfInterest;
 begin
-  Result := PointsOfInterest.Add as TPointOfInterest;
+  Result := PointsOfInterest.Add as TMapPointOfInterest;
   Result.RealPoint := APoint;
   Result.Caption := ACaption;
 end;

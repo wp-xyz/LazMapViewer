@@ -22,7 +22,6 @@ object Form1: TForm1
     Layers = <>
     Font.Color = clBlack
     MapProvider = 'Google Maps'
-    UseThreads = True
     OnChange = MapView1Change
   end
   object StatusBar1: TStatusBar
@@ -61,10 +60,10 @@ object Form1: TForm1
       Left = 190
       Height = 30
       Top = 19
-      Width = 237
+      Width = 295
       BorderSpacing.Left = 12
       BorderSpacing.Around = 6
-      Caption = 'London cannot be moved out of the window'#13#10'Only zoom levels > 8 allowed.'
+      Caption = 'London cannot be moved out of the window at zoom 8.'#13#10'Only zoom levels > 8 allowed.'
     end
     object rgCenter: TRadioGroup
       AnchorSideLeft.Control = Panel1

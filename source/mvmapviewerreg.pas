@@ -40,7 +40,7 @@ begin
   RegisterPropertyEditor(TypeInfo(String),
     TMapLayer,'MapProvider',TMapProviderPropertyEditor);
   RegisterPropertyEditor(TypeInfo(TImageIndex),
-    TPointOfInterest, 'ImageIndex', TPointOfInterestImageIndexPropertyEditor);
+    TMapPointOfInterest, 'ImageIndex', TPointOfInterestImageIndexPropertyEditor);
   RegisterPropertyEditor(TypeInfo(TDateTime),
     TMapPoint, 'DateTime', TPointDateTimePropertyEditor);
   RegisterPropertyEditor(TypeInfo(Double),

@@ -5,8 +5,10 @@ unit main;
 interface
 
 uses
-  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ExtCtrls,
-  Grids, StdCtrls, ColorBox, mvMapViewer, mvGeoMath, mvGpsObj;
+  Classes, SysUtils,
+  LCLIntf, Forms, Controls, Graphics, Dialogs, ExtCtrls,
+  Grids, StdCtrls, ColorBox,
+  mvMapViewer, mvGpsObj, mvGeoMath;
 
 type
 
@@ -18,10 +20,19 @@ type
     cbUseThreads: TCheckBox;
     clbTrackColor: TColorBox;
     Label1: TLabel;
+    Label2: TLabel;
+    Label3: TLabel;
     lblInfo: TLabel;
     lblMapCenter: TLabel;
+    lblMapData: TLabel;
+    lblMapPresentation: TLabel;
+    MapDataLink: TLabel;
+    MapLicenseLink: TLabel;
+    MapStyleLink: TLabel;
     MapView: TMapView;
     Panel1: TPanel;
+    Panel2: TPanel;
+    MapPanel: TPanel;
     Splitter1: TSplitter;
     TrackGrid: TStringGrid;
     Timer: TTimer;
@@ -29,6 +40,9 @@ type
     procedure cbUseThreadsChange(Sender: TObject);
     procedure clbTrackColorChange(Sender: TObject);
     procedure FormActivate(Sender: TObject);
+    procedure URLClick(Sender: TObject);
+    procedure URLMouseEnter(Sender: TObject);
+    procedure URLMouseLeave(Sender: TObject);
     procedure MapViewCenterMove(Sender: TObject);
     procedure MapViewZoomChange(Sender: TObject);
     procedure TrackGridClick(Sender: TObject);
@@ -74,7 +88,7 @@ begin
   crs := Screen.Cursor;
   Screen.Cursor := crHourglass;
   try
-    MapView.MapProvider := 'Google Maps'; //'Open Topo Map';
+    MapView.MapProvider := 'Open Topo Map';
     MapView.Active := true;
 
     // Center on Grand Canyon Village
@@ -120,7 +134,9 @@ end;
 procedure TMainForm.InfoCaption;
 begin
   lblMapCenter.Caption := Format('MapCenter: Lat %s, Lon %s, Zoom %d', [
-    LatToStr(MapView.Center.Lat, true), LonToStr(MapView.Center.Lon, true), MapView.Zoom
+    mvGeoMath.LatToStr(MapView.Center.Lat, true),
+    mvGeoMath.LonToStr(MapView.Center.Lon, true),
+    MapView.Zoom
   ]);
 end;
 
@@ -208,6 +224,24 @@ begin
     Timer.Enabled := false;
     cbAutoTrace.Checked := false;
   end;
+end;
+
+procedure TMainForm.URLClick(Sender: TObject);
+begin
+  if (Sender is TLabel) and (TLabel(Sender).Hint <> '') then
+    OpenURL(TLabel(Sender).Hint);
+end;
+
+procedure TMainForm.URLMouseEnter(Sender: TObject);
+begin
+  if Sender is TLabel then
+    TLabel(Sender).Font.Style := [fsUnderline];
+end;
+
+procedure TMainForm.URLMouseLeave(Sender: TObject);
+begin
+  if Sender is TLabel then
+    TLabel(Sender).Font.Style := [];
 end;
 
 end.

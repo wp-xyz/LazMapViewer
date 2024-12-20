@@ -81,20 +81,20 @@ type
   private
     FSprites: TImageList;
     FTrack: TMapTrack;
-    FJet: TPointOfInterest;
+    FJet: TMapPointOfInterest;
     FIndex: Integer;
     FBearingIndex: Integer;
     FElapsed: Int64;
     FWarp: Integer;
     procedure MoveTrackPointToIndex(AIndex: Integer);
-    procedure SetJet(AValue: TPointOfInterest);
+    procedure SetJet(AValue: TMapPointOfInterest);
     procedure JetDraw(Sender: TObject; ADrawer: TMvCustomDrawingEngine;
-      APoint: TPointOfInterest);
+      APoint: TMapPointOfInterest);
   public
     procedure Step(AMillis: Int64);
     procedure Reset;
     function TimeInFlight: TTime;
-    property Jet: TPointOfInterest read FJet write SetJet;
+    property Jet: TMapPointOfInterest read FJet write SetJet;
     property Track: TMapTrack read FTrack write FTrack;
     property Sprites: TImageList read FSprites write FSprites;
   end;
@@ -196,7 +196,7 @@ begin
 end;
 
 procedure TFlightTrack.JetDraw(Sender: TObject;
-  ADrawer: TMvCustomDrawingEngine; APoint: TPointOfInterest);
+  ADrawer: TMvCustomDrawingEngine; APoint: TMapPointOfInterest);
 var
   Sprite: TBitmap;
   P: TPoint;
@@ -215,7 +215,7 @@ begin
   end;
 end;
 
-procedure TFlightTrack.SetJet(AValue: TPointOfInterest);
+procedure TFlightTrack.SetJet(AValue: TMapPointOfInterest);
 begin
   FJet := AValue;
   FJet.OnDrawPoint := @JetDraw;
@@ -419,7 +419,7 @@ procedure TMainForm.Follow;
 var
   I, W, H: Integer;
   R: TRect;
-  Jet: TPointOfInterest;
+  Jet: TMapPointOfInterest;
 
   function Outside: Boolean;
   begin

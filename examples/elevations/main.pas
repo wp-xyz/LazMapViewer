@@ -5,10 +5,11 @@ unit Main;
 interface
 
 uses
-  Classes, SysUtils, LazFileUtils,
-  LCLIntf, Forms, Controls, Graphics, Dialogs, StdCtrls,
-  ExtCtrls, Grids, Buttons, Types,
-  mvMapViewer, mvTypes, mvGeoMath, mvEngine, mvGpsObj, mvDrawingEngine;
+  Classes, SysUtils, Types,
+  LazFileUtils,
+  LCLIntf, Forms, Controls, Graphics, Dialogs, StdCtrls, ExtCtrls,
+  Grids, Buttons,
+  mvMapViewer, mvTypes, mvEngine, mvGpsObj, mvDrawingEngine, mvGeoMath;
 
 type
   { TMainForm }
@@ -19,12 +20,21 @@ type
     DataGrid: TDrawGrid;
     ImageList1: TImageList;
     Label1: TLabel;
+    Label2: TLabel;
+    Label3: TLabel;
+    lblMapData: TLabel;
+    MapStyleLink: TLabel;
+    lblMapPresentation: TLabel;
+    MapDataLink: TLabel;
     lblDatasets: TLabel;
-    lblURL: TLabel;
+    OpenTopoDataLink: TLabel;
+    MapLicenseLink: TLabel;
     MapView: TMapView;
     Log: TMemo;
     Panel1: TPanel;
     btnDelete: TSpeedButton;
+    MapPanel: TPanel;
+    Panel2: TPanel;
     Splitter1: TSplitter;
     Splitter2: TSplitter;
     procedure ApplicationPropertiesIdle(Sender: TObject; var Done: Boolean);
@@ -33,9 +43,9 @@ type
     procedure DataGridPrepareCanvas(Sender: TObject; aCol, aRow: Integer;
       aState: TGridDrawState);
     procedure FormCreate(Sender: TObject);
-    procedure lblURLClick(Sender: TObject);
-    procedure lblURLMouseEnter(Sender: TObject);
-    procedure lblURLMouseLeave(Sender: TObject);
+    procedure URLClick(Sender: TObject);
+    procedure URLMouseEnter(Sender: TObject);
+    procedure URLMouseLeave(Sender: TObject);
     procedure MapViewDrawGpsPoint(Sender: TObject;
       ADrawer: TMvCustomDrawingEngine; APoint: TGpsPoint);
     procedure MapViewMouseDown(Sender: TObject; Button: TMouseButton;
@@ -69,7 +79,7 @@ procedure TMainForm.FormCreate(Sender: TObject);
 begin
   MapView.Center := RealPoint(47, 11);
   MapView.Zoom := 8;
-  MapView.MapProvider := 'Google Satellite';
+  MapView.MapProvider := 'Open Topo Map';
   MapView.Active := true;
 
   DataGrid.ColWidths[0] := 40;
@@ -270,7 +280,6 @@ procedure TMainForm.btnDeleteClick(Sender: TObject);
 var
   idx: Integer;
   item: TGPSObj;
-  i: Integer;
 begin
   idx := DataGrid.Row - DataGrid.FixedRows;
   if idx < 0 then
@@ -286,21 +295,25 @@ begin
   DataGrid.Invalidate;
 end;
 
-// Open the browser with the opentopodata.org web-site.
-procedure TMainForm.lblURLClick(Sender: TObject);
+// Open the browser with the label hint's web-site.
+procedure TMainForm.URLClick(Sender: TObject);
 begin
-  OpenURL('https://www.opentopodata.org/');
+  if (Sender is TLabel) and (TLabel(Sender).Hint <> '') then
+    OpenURL(TLabel(Sender).Hint);
 end;
 
-// Underline the opentopodata.org URL when the mouse enters the label
-procedure TMainForm.lblURLMouseEnter(Sender: TObject);
+// Underline the URL when the mouse enters the label
+procedure TMainForm.URLMouseEnter(Sender: TObject);
 begin
-  lblURL.Font.Style := [fsUnderline];
+  if Sender is TLabel then
+    TLabel(Sender).Font.Style := [fsUnderline];
 end;
 
-procedure TMainForm.lblURLMouseLeave(Sender: TObject);
+// Remove the underline when the mouse leaves the label
+procedure TMainForm.URLMouseLeave(Sender: TObject);
 begin
-  lblURL.Font.Style := [];
+  if Sender is TLabel then
+    TLabel(Sender).Font.Style := [];
 end;
 
 end.
