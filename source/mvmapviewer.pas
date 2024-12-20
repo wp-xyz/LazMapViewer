@@ -73,7 +73,7 @@ type
   TMapEditMark = class;
   TMvCustomPluginManager = class;
 
-  TPointOfInterestDrawEvent = procedure(Sender: TObject;
+  TMapPointOfInterestDrawEvent = procedure(Sender: TObject;
     ADrawer: TMvCustomDrawingEngine; APoint: TMapPointOfInterest) of object;
 
   TMapTrackDrawEvent = procedure(Sender: TObject;
@@ -319,9 +319,9 @@ type
   TMapPointOfInterest = class(TMapPoint)
   private
     FImageIndex: TImageIndex;
-    FOnDrawPoint: TPointOfInterestDrawEvent;
+    FOnDrawPoint: TMapPointOfInterestDrawEvent;
     procedure SetImageIndex(AValue: TImageIndex);
-    procedure SetOnDrawPoint(AValue: TPointOfInterestDrawEvent);
+    procedure SetOnDrawPoint(AValue: TMapPointOfInterestDrawEvent);
   protected
     procedure DrawPoint(Sender: TObject; {%H-}AGPSObj: TGPSObj; {%H-}AArea: TRealArea);
     procedure ItemChanged; override;
@@ -332,7 +332,7 @@ type
     procedure AssignTo(Dest: TPersistent); override;
   published
     property ImageIndex: TImageIndex read FImageIndex write SetImageIndex default -1;
-    property OnDrawPoint: TPointOfInterestDrawEvent read FOnDrawPoint write SetOnDrawPoint;
+    property OnDrawPoint: TMapPointOfInterestDrawEvent read FOnDrawPoint write SetOnDrawPoint;
   end;
 
   { TMapPointsOfInterest }
@@ -1690,7 +1690,7 @@ begin
   ItemChanged;
 end;
 
-procedure TMapPointOfInterest.SetOnDrawPoint(AValue: TPointOfInterestDrawEvent);
+procedure TMapPointOfInterest.SetOnDrawPoint(AValue: TMapPointOfInterestDrawEvent);
 begin
   if CompareMem(@FOnDrawPoint, @AValue, SizeOf(TMethod)) then
     Exit;
