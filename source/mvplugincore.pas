@@ -160,6 +160,36 @@ type
     property Enabled;
   end;
 
+  { TMvMultiMapsDrawPlugin }
+
+  TMvMultiMapsDrawPlugin = class(TMvMultiMapsPlugin)
+  private
+    const
+      DEFAULT_OPACITY = 0.55;
+      DEFAULT_BACKGROUND_COLOR = clWhite;
+  private
+    FBackgroundColor: TColor;
+    FBackgroundOpacity: Single;
+    FFont: TFont;
+    FPen: TPen;
+    function IsOpacityStored: Boolean;
+    procedure SetBackgroundColor(AValue: TColor);
+    procedure SetBackgroundOpacity(AValue: Single);
+    procedure SetFont(AValue: TFont);
+    procedure SetPen(AValue: TPen);
+  protected
+    procedure Changed(Sender: TObject);
+    property BackgroundColor: TColor read FBackgroundColor write SetBackgroundColor default DEFAULT_BACKGROUND_COLOR;
+    property BackgroundOpacity: Single read FBackgroundOpacity write SetBackgroundOpacity stored IsOpacityStored;
+    property Font: TFont read FFont write SetFont;
+    property Pen: TPen read FPen write SetPen;
+  public
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
+    procedure Assign(ASource: TPersistent); override;
+  end;
+
+
   TMvCustomPluginClass = class of TMvCustomPlugin;
 
   TMvPluginList = class(TMvIndexedComponentList)
@@ -679,6 +709,91 @@ begin
   if Assigned(FMapDataList) then
     FMapDataList.Free;
   inherited Destroy;
+end;
+
+{ TMvMultiMapsDrawPlugin }
+
+constructor TMvMultiMapsDrawPlugin.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+  FBackgroundColor := DEFAULT_BACKGROUND_COLOR;
+  FBackgroundOpacity := DEFAULT_OPACITY;
+  FFont := TFont.Create;
+  FFont.OnChange := @Changed;
+  FPen := TPen.Create;
+  FPen.OnChange := @Changed;
+end;
+
+destructor TMvMultiMapsDrawPlugin.Destroy;
+begin
+  FFont.Free;
+  FPen.Free;
+  inherited Destroy;
+end;
+
+procedure TMvMultiMapsDrawPlugin.Assign(ASource: TPersistent);
+begin
+  if ASource is TMvDrawPlugin then
+  begin
+    FBackgroundColor := TMvDrawPlugin(ASource).BackgroundColor;
+    FBackgroundOpacity := TMvDrawPlugin(ASource).BackgroundOpacity;
+    FFont.Assign(TMvDrawPlugin(ASource).Font);
+    FPen.Assign(TMvDrawPlugin(ASource).Pen);
+  end;
+  inherited;
+end;
+
+procedure TMvMultiMapsDrawPlugin.Changed(Sender: TObject);
+begin
+  Update;
+end;
+
+function TMvMultiMapsDrawPlugin.IsOpacityStored: Boolean;
+begin
+  Result := FBackgroundOpacity <> DEFAULT_OPACITY;
+end;
+
+procedure TMvMultiMapsDrawPlugin.SetBackgroundColor(AValue: TColor);
+begin
+  if FBackgroundColor <> AValue then
+  begin
+    FBackgroundColor := AValue;
+    Update;
+  end;
+end;
+
+procedure TMvMultiMapsDrawPlugin.SetBackgroundOpacity(AValue: Single);
+begin
+  if FBackgroundOpacity <> AValue then
+  begin
+    FBackgroundOpacity := AValue;
+    Update;
+  end;
+end;
+
+procedure TMvMultiMapsDrawPlugin.SetFont(AValue: TFont);
+begin
+  if (AValue = nil) then
+    exit;
+  if (AValue.Name = FFont.Name) and (AValue.Size = FFont.Size) and
+    (AValue.Style = FFont.Style) and (AValue.Color = FFont.Color)
+  then
+    exit;
+  FFont.Assign(AValue);
+  Changed(Self);
+end;
+
+procedure TMvMultiMapsDrawPlugin.SetPen(AValue: TPen);
+begin
+  if (AValue = nil) then
+    exit;
+  if (AValue.Color = FPen.Color) and (AValue.Width = FPen.Width) and
+     (AValue.Style = FPen.Style) and (AValue.Mode = FPen.Mode) and
+     (AValue.JoinStyle = FPen.JoinStyle) and (AValue.EndCap = FPen.EndCap)
+  then
+    exit;
+  FPen.Assign(AValue);
+  Changed(Self);
 end;
 
 

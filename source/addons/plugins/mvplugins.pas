@@ -45,7 +45,7 @@ type
 
   TLegalNoticePosition = (lnpTopLeft, lnpTopRight, lnpBottomLeft, lnpBottomRight);
 
-  TLegalNoticePlugin = class(TMvMultiMapsPlugin)
+  TLegalNoticePlugin = class(TMvMultiMapsDrawPlugin)
   private
     const
       DEFAULT_LEGALNOTICE_OPACITY = 0.55;
@@ -55,13 +55,11 @@ type
     FLegalNoticeURL: String;
     FBackgroundOpacity: Single;
     FPosition: TLegalNoticePosition;
-    FFont: TFont;
     FSpacing: Integer;
     FBackgroundColor: TColor;
   private
     procedure SetBackgroundColor(AValue: TColor);
     procedure SetBackgroundOpacity(AValue: Single);
-    procedure SetFont(AValue: TFont);
     procedure SetLegalNotice(AValue: String);
     procedure SetLegalNoticeURL(AValue: String);
     procedure SetPosition(AValue: TLegalNoticePosition);
@@ -83,7 +81,7 @@ type
   published
     property BackgroundColor: TColor read FBackgroundColor write SetBackgroundColor default clNone;
     property BackgroundOpacity: Single read FBackgroundOpacity write SetBackgroundOpacity default DEFAULT_LEGALNOTICE_OPACITY;  // 0..1
-    property Font: TFont read FFont write SetFont;
+    property Font;
     property LegalNotice: String read FLegalNotice write SetLegalNotice;
     property LegalNoticeURL: String read FLegalNoticeURL write SetLegalNoticeURL;
     property Position: TLegalNoticePosition read FPosition write SetPosition default lnpBottomRight;
@@ -101,7 +99,7 @@ type
   { TDraggableMarkerData }
   PDraggableMarkerData = ^TDraggableMarkerData;
   TDraggableMarkerData = record
-    FDraggableMarker : TGPSPoint;
+    FDraggedMarker : TGPSPoint;
     FOrgPosition : TRealPoint;
   end;
 
@@ -109,7 +107,10 @@ type
   private
     FDraggableMarkerCanMoveEvent : TDraggableMarkerCanMoveEvent;
     FDraggableMarkerMovedEvent : TDraggableMarkerMovedEvent;
+    FDragMouseButton: TMouseButton;
     function GetFirstMarkerAtMousePos(const AMapView: TMapView; const AX, AY : Integer) : TGPSPoint;
+    function GetDraggedMarker(AMapView : TMapView) : TGPSPoint;
+    function GetOrgPosition(AMapView : TMapView): TRealPoint;
   protected
     procedure MouseDown(AMapView: TMapView; {%H-}Button: TMouseButton; {%H-}Shift: TShiftState;
       X, Y: Integer; var Handled: Boolean); override;
@@ -120,9 +121,10 @@ type
   published
     property DraggableMarkerCanMoveEvent : TDraggableMarkerCanMoveEvent read FDraggableMarkerCanMoveEvent write FDraggableMarkerCanMoveEvent;
     property DraggableMarkerMovedEvent : TDraggableMarkerMovedEvent read FDraggableMarkerMovedEvent write FDraggableMarkerMovedEvent;
+    property DragMouseButton : TMouseButton read FDragMouseButton write FDragMouseButton default mbLeft;
   public
-//    property DraggableMarker : TGPSPoint read FDraggableMarker;
-//    property OrgPosition : TRealPoint read FOrgPosition;
+    property DraggedMarker[AMapView : TMapView] : TGPSPoint read GetDraggedMarker;
+    property OrgPosition[AMapView : TMapView] : TRealPoint read GetOrgPosition;
     procedure Assign(Source: TPersistent); override;
   end;
 
@@ -345,15 +347,12 @@ begin
   inherited Create(AOwner);
   FBackgroundColor := clNone;
   FPosition := lnpBottomRight;
-  FFont := TFont.Create;
-  FFont.OnChange := @Changed;
   FBackgroundOpacity := DEFAULT_LEGALNOTICE_OPACITY;
   FSpacing := DEFAULT_LEGALNOTICE_SPACING;
 end;
 
 destructor TLegalNoticePlugin.Destroy;
 begin
-  FFont.Free;
   inherited;
 end;
 
@@ -363,7 +362,7 @@ begin
   begin
     FBackgroundColor := TLegalNoticePlugin(Source).BackgroundColor;
     FBackgroundOpacity := TLegalNoticePlugin(Source).BackgroundOpacity;
-    FFont.Assign(TLegalNoticePlugin(Source).Font);
+//    FFont.Assign(TLegalNoticePlugin(Source).Font);
     FLegalNotice := TLegalNoticePlugin(Source).LegalNotice;
     FLegalNoticeURL := TLegalNoticePlugin(Source).LegalNoticeURL;
     FPosition := TLegalNoticePlugin(Source).Position;
@@ -396,7 +395,7 @@ begin
         AMapView.DrawingEngine.FillRect(Left, Top, Right, Bottom);
     end;
     AMapView.DrawingEngine.BrushStyle := bsClear;
-    AMapView.DrawingEngine.SetFont(FFont.Name, FFont.Size, FFont.Style, FFont.Color);
+    AMapView.DrawingEngine.SetFont(Font.Name, Font.Size, Font.Style, Font.Color);
     AMapView.DrawingEngine.TextOut(x, y, FLegalNotice);
   finally
     AMapView.DrawingEngine.Opacity := lSavedOpacity;
@@ -413,7 +412,7 @@ var
 begin
   lSavedFont := AMapView.DrawingEngine.GetFont;
   try
-    AMapView.DrawingEngine.SetFont(FFont.Name, FFont.Size, FFont.Style, FFont.Color);
+    AMapView.DrawingEngine.SetFont(Font.Name, Font.Size, Font.Style, Font.Color);
     sz := AMapView.DrawingEngine.TextExtent(FLegalNotice);
     case FPosition of
       lnpTopLeft, lnpBottomLeft:
@@ -478,12 +477,12 @@ begin
   if PtInRect(lClickableRect, Point(X, Y)) and (not AMapView.Engine.InDrag) and
      (FLegalNoticeURL <> '') then
   begin
-    FFont.Style := [fsUnderline];
+    Font.Style := [fsUnderline];
     AMapView.Cursor := crHandPoint;
     Handled := true;
   end else
   begin
-    FFont.Style := [];
+    Font.Style := [];
     if not Handled then
       AMapView.Cursor := crDefault;
   end;
@@ -522,12 +521,6 @@ procedure TLegalNoticePlugin.SetBackgroundOpacity(AValue: Single);
 begin
   if FBackgroundOpacity = AValue then Exit;
   FBackgroundOpacity := AValue;
-  Update;
-end;
-
-procedure TLegalNoticePlugin.SetFont(AValue: TFont);
-begin
-  FFont.Assign(AValue);
   Update;
 end;
 
@@ -579,17 +572,40 @@ begin
   end;
 end;
 
+function TDraggableMarkerPlugin.GetDraggedMarker(AMapView: TMapView): TGPSPoint;
+var
+  lDraggableMarkerData : TDraggableMarkerData;
+  cnt : Integer;
+begin
+  Result := Nil;
+  cnt := GetMapViewData(AMapView,lDraggableMarkerData,SizeOf(lDraggableMarkerData));
+  if (cnt >= SizeOf(lDraggableMarkerData)) then
+    Result := lDraggableMarkerData.FDraggedMarker;
+end;
+
+function TDraggableMarkerPlugin.GetOrgPosition(AMapView : TMapView): TRealPoint;
+var
+  lDraggableMarkerData : TDraggableMarkerData;
+  cnt : Integer;
+begin
+  Result.InitXY(0.0,0.0);
+  cnt := GetMapViewData(AMapView,lDraggableMarkerData,SizeOf(lDraggableMarkerData));
+  if (cnt >= SizeOf(lDraggableMarkerData)) then
+    Result := lDraggableMarkerData.FOrgPosition;
+end;
+
 procedure TDraggableMarkerPlugin.MouseDown(AMapView: TMapView; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer; var Handled: Boolean);
 var
   lDraggableMarkerData : TDraggableMarkerData;
 begin
   if Handled then Exit;
-  lDraggableMarkerData.FDraggableMarker := GetFirstMarkerAtMousePos(AMapView,X,Y);
-  if Assigned(lDraggableMarkerData.FDraggableMarker) then
+  if FDragMouseButton <> Button then Exit;
+  lDraggableMarkerData.FDraggedMarker := GetFirstMarkerAtMousePos(AMapView,X,Y);
+  if Assigned(lDraggableMarkerData.FDraggedMarker) then
   begin
-    lDraggableMarkerData.FOrgPosition.Lon:= lDraggableMarkerData.FDraggableMarker.Lon;
-    lDraggableMarkerData.FOrgPosition.Lat:= lDraggableMarkerData.FDraggableMarker.Lat;
+    lDraggableMarkerData.FOrgPosition.Lon:= lDraggableMarkerData.FDraggedMarker.Lon;
+    lDraggableMarkerData.FOrgPosition.Lat:= lDraggableMarkerData.FDraggedMarker.Lat;
     SetMapViewData(AMapView,lDraggableMarkerData,SizeOf(lDraggableMarkerData));
     Handled := True;
   end;
@@ -607,14 +623,14 @@ var
 begin
   cnt := GetMapViewData(AMapView,lDraggableMarkerData,SizeOf(lDraggableMarkerData));
   if (cnt >= SizeOf(lDraggableMarkerData)) and
-     Assigned(lDraggableMarkerData.FDraggableMarker) then
+     Assigned(lDraggableMarkerData.FDraggedMarker) then
   begin
     pt.X := X;
     pt.Y := Y;
     rpt := AMapView.ScreenToLatLon(pt);
-    ele := lDraggableMarkerData.FDraggableMarker.Elevation;
-    dt := lDraggableMarkerData.FDraggableMarker.DateTime;
-    lDraggableMarkerData.FDraggableMarker.MoveTo(rpt.Lon, rpt.Lat,ele,dt);
+    ele := lDraggableMarkerData.FDraggedMarker.Elevation;
+    dt := lDraggableMarkerData.FDraggedMarker.DateTime;
+    lDraggableMarkerData.FDraggedMarker.MoveTo(rpt.Lon, rpt.Lat,ele,dt);
     AMapView.Invalidate;
     Handled := True; // Prevent the dragging of the map!!
   end
@@ -628,7 +644,6 @@ begin
     else if not Handled then
       AMapView.Cursor := crDefault;
   end
-
 end;
 
 procedure TDraggableMarkerPlugin.MouseUp(AMapView: TMapView; Button: TMouseButton;
@@ -636,13 +651,14 @@ procedure TDraggableMarkerPlugin.MouseUp(AMapView: TMapView; Button: TMouseButto
 var
   lpDraggableMarkerData : PDraggableMarkerData;
 begin
+  if FDragMouseButton <> Button then Exit;
   lpDraggableMarkerData := MapViewDataPtr[AMapView];
-  if Assigned(lpDraggableMarkerData) and Assigned(lpDraggableMarkerData^.FDraggableMarker) then
+  if Assigned(lpDraggableMarkerData) and Assigned(lpDraggableMarkerData^.FDraggedMarker) then
   begin
     if Assigned(FDraggableMarkerMovedEvent) then
-      FDraggableMarkerMovedEvent(Self,lpDraggableMarkerData^.FDraggableMarker,lpDraggableMarkerData^.FOrgPosition);
+      FDraggableMarkerMovedEvent(Self,lpDraggableMarkerData^.FDraggedMarker,lpDraggableMarkerData^.FOrgPosition);
     Handled := True;
-    lpDraggableMarkerData^.FDraggableMarker := Nil;
+    lpDraggableMarkerData^.FDraggedMarker := Nil;
   end;
 end;
 
@@ -652,6 +668,7 @@ begin
   begin
     FDraggableMarkerCanMoveEvent := TDraggableMarkerPlugin(Source).DraggableMarkerCanMoveEvent;
     FDraggableMarkerMovedEvent := TDraggableMarkerPlugin(Source).DraggableMarkerMovedEvent;
+    FDragMouseButton := TDraggableMarkerPlugin(Source).DragMouseButton;
   end;
   inherited;
 end;
