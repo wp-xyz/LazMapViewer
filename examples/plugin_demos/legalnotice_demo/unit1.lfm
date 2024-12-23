@@ -145,7 +145,7 @@ object MainForm: TMainForm
       OnChange = FloatSpinEdit1Change
     end
   end
-  object Bevel1: TBevel
+  object FormCenterBevel: TBevel
     AnchorSideLeft.Control = Owner
     AnchorSideLeft.Side = asrCenter
     AnchorSideTop.Control = Owner
@@ -157,10 +157,10 @@ object MainForm: TMainForm
     Anchors = [akTop, akLeft, akBottom]
     Shape = bsSpacer
   end
-  object Panel2: TPanel
+  object LeftPanel: TPanel
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner
-    AnchorSideRight.Control = Bevel1
+    AnchorSideRight.Control = FormCenterBevel
     AnchorSideBottom.Control = ParamsPanel
     Left = 0
     Height = 417
@@ -170,8 +170,8 @@ object MainForm: TMainForm
     BevelOuter = bvNone
     TabOrder = 1
   end
-  object Panel3: TPanel
-    AnchorSideLeft.Control = Bevel1
+  object RightPanel: TPanel
+    AnchorSideLeft.Control = FormCenterBevel
     AnchorSideLeft.Side = asrBottom
     AnchorSideTop.Control = Owner
     AnchorSideRight.Control = Owner

@@ -7,12 +7,11 @@ interface
 uses
   Classes, SysUtils,
   LCLIntf, Forms, Controls, Graphics, ExtCtrls, StdCtrls, Dialogs, Spin,
-  TAGraph, TATools,
   mvMapViewer, mvPluginCore, mvPlugins;
 
 type
   TMainForm = class(TForm)
-    Bevel1: TBevel;
+    FormCenterBevel: TBevel;
     btnSaveToImage: TButton;
     cbShowMapCenter: TCheckBox;
     cbShowLegalNotice: TCheckBox;
@@ -22,8 +21,8 @@ type
     lblLegalNotice: TLabel;
     lblOpacity: TLabel;
     ParamsPanel: TPanel;
-    Panel2: TPanel;
-    Panel3: TPanel;
+    LeftPanel: TPanel;
+    RightPanel: TPanel;
     procedure btnSaveToImageClick(Sender: TObject);
     procedure cbShowMapCenterChange(Sender: TObject);
     procedure cbShowLegalNoticeChange(Sender: TObject);
@@ -54,7 +53,7 @@ begin
 
   FMapView1 := TMapView.Create(self);
   FMapView1.Align := alClient;
-  FMapView1.Parent := Panel2;
+  FMapView1.Parent := LeftPanel;
   FMapView1.MapProvider := 'OpenStreetMap Mapnik';
   FMapView1.UseThreads := true;
   FMapView1.Zoom := 9;
@@ -65,7 +64,7 @@ begin
 
   FMapView2 := TMapView.Create(self);
   FMapView2.Align := alClient;
-  FMapView2.Parent := Panel3;
+  FMapView2.Parent := RightPanel;
   FMapView2.MapProvider := 'Maps for free';
   FMapView2.UseThreads := true;
   FMapView2.Zoom := 9;

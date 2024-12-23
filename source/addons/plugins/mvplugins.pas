@@ -81,12 +81,12 @@ type
   published
     property BackgroundColor: TColor read FBackgroundColor write SetBackgroundColor default clNone;
     property BackgroundOpacity: Single read FBackgroundOpacity write SetBackgroundOpacity default DEFAULT_LEGALNOTICE_OPACITY;  // 0..1
-    property Font;
     property LegalNotice: String read FLegalNotice write SetLegalNotice;
     property LegalNoticeURL: String read FLegalNoticeURL write SetLegalNoticeURL;
     property Position: TLegalNoticePosition read FPosition write SetPosition default lnpBottomRight;
     property Spacing: Integer read FSpacing write SetSpacing default DEFAULT_LEGALNOTICE_SPACING;
     // inherited properties
+    property Font;
     property MapView;
   end;
 
@@ -321,24 +321,6 @@ begin
   end;
 end;
 
-                  (*
-procedure TLinkedMapsPlugin.ZoomChanging(AMapView: TMapView;
-  var NewZoom, Handled: Boolean);
-var
-  i: integer;
-  map: TMapView;
-begin
-  if FLocked > 0 then
-    exit;
-  inc(FLocked);
-  try
-    for i := = to PluginManager.MapList.Count-1 do
-    begin
-      map := TMapView(PluginManager.MapList[i]);
-      if AMapView <> map then
-        map.ZoomChanging(NewZoom, Allow);
-        *)
-
 
 { TLegalNoticePlugin }
 
@@ -346,8 +328,8 @@ constructor TLegalNoticePlugin.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
   FBackgroundColor := clNone;
-  FPosition := lnpBottomRight;
   FBackgroundOpacity := DEFAULT_LEGALNOTICE_OPACITY;
+  FPosition := lnpBottomRight;
   FSpacing := DEFAULT_LEGALNOTICE_SPACING;
 end;
 
@@ -362,7 +344,6 @@ begin
   begin
     FBackgroundColor := TLegalNoticePlugin(Source).BackgroundColor;
     FBackgroundOpacity := TLegalNoticePlugin(Source).BackgroundOpacity;
-//    FFont.Assign(TLegalNoticePlugin(Source).Font);
     FLegalNotice := TLegalNoticePlugin(Source).LegalNotice;
     FLegalNoticeURL := TLegalNoticePlugin(Source).LegalNoticeURL;
     FPosition := TLegalNoticePlugin(Source).Position;
@@ -672,6 +653,7 @@ begin
   end;
   inherited;
 end;
+
 
 { TMvCustomPlugin }
 
