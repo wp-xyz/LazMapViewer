@@ -613,7 +613,6 @@ type
       procedure UpdateLayers;
 
       procedure CreateEditor;
-      procedure DoneEditor;
 
       function EditingEnabled: Boolean; inline;
       function DraggingEnabled: Boolean; inline;
@@ -800,7 +799,7 @@ type
 
   { TMapEditMark }
 
-  TMapEditMark = class(TGPSObj)
+  TMapEditMark = class(TGPSObj, IFPObserver)
   private
     FMapView: TMapView;
     FOnDirty: TNotifyEvent;
@@ -811,6 +810,7 @@ type
     FRealPt: TRealPoint;
     FPt: TPoint;
     FSelection: TMapObjectList;
+    FObservedColls: TMapObjectList;
     FLit: TMapObjectList;
     FOrigins: TRealPointArray;
     FDragStarted: Boolean;
@@ -825,6 +825,10 @@ type
     function GetCurrentTrack: TMapTrack;
     function GetCursorShape: TCursor;
     function GetHasSelection: Boolean;
+
+    procedure FPOObservedChanged(ASender: TObject;
+      Operation: TFPObservedOperation; Data: Pointer);
+    procedure ObserveItemColl(AItem: TObject);
 
     function AroundPt(X, Y: Integer; APt: TPoint): Boolean;
     procedure SelectFromMarquee;
@@ -3375,13 +3379,13 @@ var
   I: Integer;
 begin
   Active := False;
-  DoneEditor;
   Engine.Jobqueue.RemoveAsyncCalls(Self);
   FFont.Free;
   FreeAndNil(FPOIImage);
   FLayers.Free;
   for I := 0 to High(FGPSItems) do
     FreeAndNil(FGPSItems[I]);
+  FDragger.Free;
   FCenter.Free;
   inherited Destroy;
 end;
@@ -3702,7 +3706,7 @@ end;
 procedure TMapView.CreateEditor;
 begin
   if Assigned(FEditMark) then
-    DoneEditor;
+    Exit;
 
   FEditMark := TMapEditMark.Create(Self);
   FEditMark.UpdateFrom(Nil);
@@ -3718,15 +3722,6 @@ begin
   FDragger := TDragObj.Create;
   FDragger.OnDrag := @FEditMark.DoDrag;
   FDragger.OnEndDrag := @FEditMark.DoEndDrag;
-end;
-
-procedure TMapView.DoneEditor;
-begin
-  if not Assigned(FEditMark) then
-    Exit;
-  FDragger.Free;
-  FGPSItems[High(FGPSItems)].Delete(FEditMark);
-  FEditMark := Nil;
 end;
 
 function TMapView.EditingEnabled: Boolean;
@@ -4103,6 +4098,7 @@ begin
   if ClearFirst then
     FSelection.Clear;
   FSelection.Insert(0, APoint);
+  ObserveItemColl(APoint);
   FMapView.Invalidate;
 end;
 
@@ -4129,7 +4125,8 @@ begin
   if Assigned(Hits) then
     try
       for O in Hits do
-        FSelection.AddIfNotPresent(O);
+        if FSelection.AddIfNotPresent(O) then
+          ObserveItemColl(O);
       FMapView.Invalidate;
     finally
       Hits.Free;
@@ -4146,14 +4143,44 @@ begin
   end;
 end;
 
+procedure TMapEditMark.FPOObservedChanged(ASender: TObject;
+  Operation: TFPObservedOperation; Data: Pointer);
+var
+  Item: TMapItem;
+begin
+  if (Operation <> ooDeleteItem) or not Assigned(Data) or
+    not (TObject(Data) is TMapItem)
+  then
+    Exit;
+  // Item has been deleted from its parent collection,
+  // delete it from the current selection if present.
+  Item := TMapItem(Data);
+  FSelection.DelIfPresent(Item);
+end;
+
+procedure TMapEditMark.ObserveItemColl(AItem: TObject);
+var
+  ObservedColl: TCollection;
+begin
+  if not (AItem is TMapItem) or not Assigned(TMapItem(AItem).Collection) then
+    Exit;
+  // Start observing the item parent collection for deletions
+  ObservedColl := TMapItem(AItem).Collection;
+  if FObservedColls.AddIfNotPresent(ObservedColl) then
+    ObservedColl.FPOAttachObserver(Self);
+end;
+
 constructor TMapEditMark.Create(AMapView: TMapView);
 begin
   FMapView := AMapView;
   FSelection := TMapObjectList.Create;
+  FObservedColls := TMapObjectList.Create;
+  FObservedColls.FreeObjects := False;
 end;
 
 destructor TMapEditMark.Destroy;
 begin
+  FObservedColls.Free;
   FSelection.Free;
   inherited Destroy;
 end;
@@ -4266,8 +4293,11 @@ begin
     H := FSelection.DelIfPresent(FLit[0]);
     FTruncSelection := not H and FTruncSelection;
     FSelection.Insert(0, FLit[0]);
+    if not H then
+      ObserveItemColl(FLit[0]);
     for O in FLit do
-      FSelection.AddIfNotPresent(O);
+      if FSelection.AddIfNotPresent(O) then
+        ObserveItemColl(O);
     FreeAndNil(FLit);
   end
   else
