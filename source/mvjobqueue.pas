@@ -684,7 +684,7 @@ var
 begin
   TimeOut := 0;
   mThread := IsMainThread;
-  if FUseThreads then
+  if FUseThreads and (Length(lstJob) > 0) then
   begin
     repeat
       OneFound := False;
@@ -701,13 +701,15 @@ begin
       finally
         LeaveCriticalSection;
       end;
-      if OneFound and (TimeOut > 200) then
-        raise Exception.Create('TimeOut');
-      if mThread then
-        Application.ProcessMessages;
       if OneFound then
+      begin
+        if (TimeOut > 200) then
+          raise Exception.Create('TimeOut');
+        if mThread then
+          Application.ProcessMessages;
         Sleep(100);
-      Inc(TimeOut);
+        Inc(TimeOut);
+      end;
     until not OneFound;
   end;
 end;
