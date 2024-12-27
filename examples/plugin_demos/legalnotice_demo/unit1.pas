@@ -17,6 +17,8 @@ type
     cbShowLegalNotice: TCheckBox;
     cmbPosition: TComboBox;
     edLegalNotice: TEdit;
+    rbLeftMap: TRadioButton;
+    rbRightMap: TRadioButton;
     seOpacity: TSpinEdit;
     lblLegalNotice: TLabel;
     lblOpacity: TLabel;
@@ -28,12 +30,17 @@ type
     procedure cbShowLegalNoticeChange(Sender: TObject);
     procedure cmbPositionChange(Sender: TObject);
     procedure edLegalNoticeChange(Sender: TObject);
-    procedure FloatSpinEdit1Change(Sender: TObject);
+    procedure rbLeftMapChange(Sender: TObject);
+    procedure seOpacityChange(Sender: TObject);
     procedure FormCreate(Sender: TObject);
   private
     FMapView1: TMapView;
     FMapView2: TMapView;
     FPluginManager: TMvPluginManager;
+    FLegalNoticePlugin1: TLegalNoticePlugin;
+    FLegalNoticePlugin2: TLegalNoticePlugin;
+    FCenterMarkerPlugin: TCenterMarkerPlugin;
+    FLinkedMapsPlugin: TLinkedMapsPlugin;
   public
 
   end;
@@ -73,7 +80,8 @@ begin
   FMapView2.Active := true;
   FMapView2.PluginManager := FPluginManager;
 
-  with TLegalNoticePlugin.Create(FPluginManager) do
+  FLegalNoticePlugin1 := TLegalNoticePlugin.Create(FPluginManager);
+  with FLegalNoticePlugin1 do
   begin
     LegalNotice := '(c) OpenStreetMap and contributors';
     LegalNoticeURL := 'https://www.openstreetmap.org/copyright';
@@ -87,7 +95,8 @@ begin
     seOpacity.Value := round(BackgroundOpacity * 100);
   end;
 
-  with TLegalNoticePlugin.Create(FPluginManager) do
+  FLegalNoticePlugin2 := TLegalNoticePlugin.Create(FPluginManager);
+  with FLegalNoticePlugin2 do
   begin
     LegalNotice := 'maps-for-free';
     LegalNoticeURL := 'https://maps-for-free.com/html/about.html';
@@ -98,49 +107,68 @@ begin
     MapView := FMapView2;
   end;
 
-  with TCenterMarkerPlugin.Create(FPluginManager) do
+  FCenterMarkerPlugin := TCenterMarkerPlugin.Create(FPluginManager);
+  with FCenterMarkerPlugin do
   begin
     Size := 15;
     Pen.Width := 3;
     Pen.Color := clRed;
   end;
 
-  with TLinkedMapsPlugin.Create(FPluginManager) do ;
+  FLinkedMapsPlugin := TLinkedMapsPlugin.Create(FPluginManager);
 end;
 
 procedure TMainForm.edLegalNoticeChange(Sender: TObject);
 begin
-  (FPluginManager.Item[0] as TLegalNoticePlugin).LegalNotice := edLegalNotice.Text;
+  if rbLeftMap.Checked then
+    FLegalNoticePlugin1.LegalNotice := edLegalNotice.Text;
+  if rbRightMap.Checked then
+    FLegalNoticePlugin2.LegalNotice := edLegalNotice.Text;
 end;
 
-procedure TMainForm.FloatSpinEdit1Change(Sender: TObject);
+procedure TMainForm.rbLeftMapChange(Sender: TObject);
 begin
-  (FPluginManager.Item[0] as TLegalNoticePlugin).BackgroundOpacity := seOpacity.Value / 100;
-  if FPluginManager.PluginList.Count > 1 then
-    (FPluginManager.Item[1] as TLegalNoticePlugin).BackgroundOpacity := seOpacity.Value / 100;
+  if rbLeftMap.Checked then
+    edLegalNotice.Text := FLegalNoticePlugin1.LegalNotice;
+  if rbRightMap.Checked then
+    edLegalNotice.Text := FLegalNoticePlugin2.LegalNotice;
+end;
+
+procedure TMainForm.seOpacityChange(Sender: TObject);
+begin
+  if rbLeftMap.Checked then
+    FLegalNoticePlugin1.BackgroundOpacity := seOpacity.Value / 100;
+  if rbRightMap.Checked then
+    FLegalNoticePlugin2.BackgroundOpacity := seOpacity.Value / 100;
 end;
 
 procedure TMainForm.btnSaveToImageClick(Sender: TObject);
 begin
-  FMapView1.SaveToFile(TPortableNetworkGraphic, 'map1.png');
-  FMapView2.SaveToFile(TPortableNetworkGraphic, 'map2.png');
+  if rbLeftMap.Checked then
+    FMapView1.SaveToFile(TPortableNetworkGraphic, 'map1.png');
+  if rbRightMap.Checked then
+    FMapView2.SaveToFile(TPortableNetworkGraphic, 'map2.png');
 end;
 
 procedure TMainForm.cbShowMapCenterChange(Sender: TObject);
 begin
-  (FPluginManager.Item[2] as TCenterMarkerPlugin).Enabled := cbShowMapCenter.Checked;
+  FCenterMarkerPlugin.Enabled := cbShowMapCenter.Checked;
 end;
 
 procedure TMainForm.cbShowLegalNoticeChange(Sender: TObject);
 begin
-  (FPluginManager.Item[0] as TLegalNoticePlugin).Enabled := cbShowLegalNotice.Checked;
-  (FPluginManager.Item[1] as TLegalNoticePlugin).Enabled := cbShowLegalNotice.Checked;
+  if rbLeftMap.Checked then
+    FLegalNoticePlugin1.Enabled := cbShowLegalNotice.Checked;
+  if rbRightMap.Checked then
+    FLegalNoticePlugin2.Enabled := cbShowLegalNotice.Checked;
 end;
 
 procedure TMainForm.cmbPositionChange(Sender: TObject);
 begin
-  (FPluginManager.Item[0] as TLegalNoticePlugin).Position := TLegalNoticePosition(cmbPosition.ItemIndex);
-  (FPluginManager.Item[1] as TLegalNoticePlugin).Position := TLegalNoticePosition(cmbPosition.ItemIndex);
+  if rbLeftMap.Checked then
+    FLegalNoticePlugin1.Position := TLegalNoticePosition(cmbPosition.ItemIndex);
+  if rbRightMap.Checked then
+    FLegalNoticePlugin2.Position := TLegalNoticePosition(cmbPosition.ItemIndex);
 end;
 
 end.

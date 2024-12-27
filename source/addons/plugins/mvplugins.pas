@@ -45,7 +45,7 @@ type
 
   TLegalNoticePosition = (lnpTopLeft, lnpTopRight, lnpBottomLeft, lnpBottomRight);
 
-  TLegalNoticePlugin = class(TMvMultiMapsDrawPlugin)
+  TLegalNoticePlugin = class(TMvDrawPlugin)  //MultiMapsDrawPlugin)
   private
     const
       DEFAULT_LEGALNOTICE_OPACITY = 0.55;
@@ -71,7 +71,7 @@ type
     procedure AfterDrawObjects(AMapView: TMapView; var Handled: Boolean); override;
     procedure MouseDown(AMapView: TMapView; {%H-}Button: TMouseButton; {%H-}Shift: TShiftState;
       X, Y: Integer; var Handled: Boolean); override;
-    procedure MouseEnter(AMapView: TMapView; var Handled: Boolean); override;
+//    procedure MouseEnter(AMapView: TMapView; var Handled: Boolean); override;
     procedure MouseMove(AMapView: TMapView; {%H-}Shift: TShiftState; X, Y: Integer;
       var Handled: Boolean); override;
   public
@@ -408,7 +408,7 @@ begin
         y := AMapView.Height - sz.CY - FSpacing;
     end;
     AClickableRect := Rect(x, y, x + sz.CX, y + sz.CY);
-    SetMapViewData(AMapView,AClickableRect,SizeOf(AClickableRect));
+    //SetMapViewData(AMapView,AClickableRect,SizeOf(AClickableRect));
   finally
     AMapView.DrawingEngine.SetFont(lSavedFont);
   end;
@@ -429,8 +429,8 @@ begin
   if Handled then Exit;
   pt.X := X;
   pt.Y := Y;
-  if GetMapViewData(AMapView,lClickableRect,SizeOf(lClickableRect)) < SizeOf(lClickableRect) then
-    CalcClickableRect(AMapView,lClickableRect);
+  //if GetMapViewData(AMapView,lClickableRect,SizeOf(lClickableRect)) < SizeOf(lClickableRect) then
+  CalcClickableRect(AMapView,lClickableRect);
   if PtInRect(lClickableRect, pt) and (FLegalNoticeURL <> '') then
   begin
     // The button down event is consumed by this plugin
@@ -438,7 +438,7 @@ begin
     Handled := True;
   end;
 end;
-
+  {
 procedure TLegalNoticePlugin.MouseEnter(AMapView: TMapView; var Handled: Boolean);
 var
   lClickableRect : TRect;
@@ -446,14 +446,14 @@ begin
   inherited;
   CalcClickableRect(AMapView,lClickableRect);
 end;
-
+   }
 procedure TLegalNoticePlugin.MouseMove(AMapView: TMapView; Shift: TShiftState;
   X, Y: Integer; var Handled: Boolean);
 var
   lClickableRect : TRect;
 begin
-  if GetMapViewData(AMapView,lClickableRect,SizeOf(lClickableRect)) < SizeOf(lClickableRect) then
-    CalcClickableRect(AMapView, lClickableRect);
+ // if GetMapViewData(AMapView,lClickableRect,SizeOf(lClickableRect)) < SizeOf(lClickableRect) then
+   CalcClickableRect(AMapView, lClickableRect);
 
   if PtInRect(lClickableRect, Point(X, Y)) and (not AMapView.Engine.InDrag) and
      (FLegalNoticeURL <> '') then
@@ -511,6 +511,9 @@ begin
   FSpacing := AValue;
   Update;
 end;
+
+
+{ TDraggableMarkerPlugin }
 
 function TDraggableMarkerPlugin.GetFirstMarkerAtMousePos(const AMapView: TMapView;
   const AX, AY: Integer): TGPSPoint;
