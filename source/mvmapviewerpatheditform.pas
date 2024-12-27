@@ -406,6 +406,16 @@ var
   PtTxt: String;
   PtCnt: Integer = 0;
   HaveView, HaveLayer, HaveSel, HavePt: Boolean;
+
+  function ItemCap(AItem: TMapItem): String;
+  begin
+    Result := AItem.DisplayName;
+    if Result <> AItem.ClassName then
+      Result := Result + ': ' + AItem.ClassName;
+    if Assigned(AItem.Collection) then
+      Result := Format('%d - ', [AItem.Index]) + Result;
+  end;
+
 begin
   HaveView := Assigned(MapView);
   HaveSel := HaveView and MapView.EditMark.HasSelection;
@@ -424,7 +434,7 @@ begin
 
   // Update layer name
   if HaveLayer
-    then cbSelectedLayer.Text := MapLayer.DisplayName
+    then cbSelectedLayer.Text := ItemCap(MapLayer)
     else cbSelectedLayer.Text := '(none)';
   cbSelectedLayer.Hint := cbSelectedLayer.Text;
 
@@ -437,9 +447,7 @@ begin
     P := TMapPoint(MapView.EditMark.Selection[0]);
     if PtCnt > 0 then
     begin
-      PtTxt := P.DisplayName;
-      if PtTxt <> P.ClassName then
-        PtTxt := PtTxt + ': ' + P.ClassName;
+      PtTxt := ItemCap(P);
       if PtCnt > 1 then
         PtTxt := PtTxt + Format(' +%d more', [PtCnt - 1]);
     end;

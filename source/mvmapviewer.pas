@@ -902,6 +902,7 @@ type
     function GetTracksOnly: TMapEditorTracksFilterEnumerator;
   public
     function IndexOfObj(const Item: TObject; out Index: Integer): Boolean;
+    function IsPresent(const Item: TObject): Boolean;
     function DelIfPresent(const Item: TObject): Boolean;
     function AddIfNotPresent(const Item: TObject): Boolean; inline;
 
@@ -4155,7 +4156,10 @@ begin
   // Item has been deleted from its parent collection,
   // delete it from the current selection if present.
   Item := TMapItem(Data);
-  FSelection.DelIfPresent(Item);
+  if FSelection.DelIfPresent(Item) and
+    (FSelection.Count > 0) and not (FSelection[0] is TMapPoint) // No points left?
+  then
+    FSelection.Clear;
 end;
 
 procedure TMapEditMark.ObserveItemColl(AItem: TObject);
@@ -4270,10 +4274,13 @@ begin
     Lon := TMapPoint(AObjs[0]).Longitude;
     FLit.Free;
     FLit := TMapObjectList.Create(AObjs);
+    FMapView.Invalidate;
   end
-  else
+  else if Assigned(FLit) then
+  begin
     FreeAndNil(FLit);
-  FMapView.Invalidate;
+    FMapView.Invalidate;
+  end;
 end;
 
 function TMapEditMark.ClickableAt(X, Y: Integer): Boolean;
@@ -4283,13 +4290,50 @@ end;
 
 function TMapEditMark.ClickAt(X, Y: Integer): Boolean;
 var
-  O: TObject;
-  H: Boolean;
+  O, O1: TObject;
+  H, Alt: Boolean;
+  I: Integer;
+
+  function GetAlt(P0: TObject): TObject;
+  var
+    P: TObject;
+    LeftOf: Boolean = False;
+  begin
+    Result := Nil;
+    for P in FLit.Points do
+      if not LeftOf and not FSelection.IsPresent(P) and (Result = Nil) then
+        Result := P
+      else if (P = P0) then
+        LeftOf := True
+      else if LeftOf and not FSelection.IsPresent(P) then
+        Exit(P);
+  end;
+
 begin
   Result := True;
   if Assigned(FLit) and AroundPt(X, Y, FPt) then
   begin
+    // Ctrl+click adds to selection
     FTruncSelection := not (ssCtrl in GetKeyShiftState);
+    for O in FLit.Points do
+      if FSelection.IndexOfObj(O, I) then
+      begin
+        // Alt+click selects the point below
+        Alt := ssAlt in GetKeyShiftState;
+        if Alt then
+        begin
+          O1 := GetAlt(O);
+          if Assigned(O1) then
+          begin
+            FSelection[I] := O1;
+            ObserveItemColl(O1);
+          end;
+        end;
+        if I > 0 then
+          FSelection.Exchange(I, 0);
+        Exit;
+      end;
+
     H := FSelection.DelIfPresent(FLit[0]);
     FTruncSelection := not H and FTruncSelection;
     FSelection.Insert(0, FLit[0]);
@@ -4400,6 +4444,11 @@ function TMapEditorList.IndexOfObj(const Item: TObject; out Index: Integer
 begin
   Index := IndexOf(Item);
   Result := Index >= 0;
+end;
+
+function TMapEditorList.IsPresent(const Item: TObject): Boolean;
+begin
+  Result := IndexOf(Item) >= 0;
 end;
 
 function TMapEditorList.DelIfPresent(const Item: TObject): Boolean;

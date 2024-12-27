@@ -2,30 +2,28 @@ object MapViewerPathEditForm: TMapViewerPathEditForm
   Left = 370
   Height = 90
   Top = 31
-  Width = 292
+  Width = 293
   BorderStyle = bsToolWindow
   Caption = 'MapViewer Path Editor'
   ClientHeight = 90
-  ClientWidth = 292
-  LCLVersion = '2.2.4.0'
+  ClientWidth = 293
   object pnlFrame: TPanel
     Left = 0
     Height = 90
     Top = 0
-    Width = 292
+    Width = 293
     Align = alClient
-    BevelColor = clRed
     ClientHeight = 90
-    ClientWidth = 292
+    ClientWidth = 293
     TabOrder = 0
     object pnlTools: TPanel
       Left = 1
       Height = 33
       Top = 1
-      Width = 290
+      Width = 291
       Align = alTop
       ClientHeight = 33
-      ClientWidth = 290
+      ClientWidth = 291
       ParentShowHint = False
       ShowHint = True
       TabOrder = 0
@@ -181,30 +179,30 @@ object MapViewerPathEditForm: TMapViewerPathEditForm
     end
     object lblSelectedPt: TLabel
       AnchorSideLeft.Control = pnlFrame
-      AnchorSideTop.Side = asrCenter
+      AnchorSideTop.Control = cbSelectedPt
       Left = 1
       Height = 16
-      Top = 39
-      Width = 82
+      Top = 37
+      Width = 83
       Alignment = taRightJustify
       Anchors = [akTop, akLeft, akRight]
       AutoSize = False
       BorderSpacing.Right = 5
-      Caption = 'Selection'
+      Caption = 'Selection:'
       ParentColor = False
     end
     object lblSelectedLayer: TLabel
       AnchorSideLeft.Control = pnlFrame
-      AnchorSideTop.Side = asrCenter
+      AnchorSideTop.Control = cbSelectedLayer
       Left = 1
       Height = 16
-      Top = 63
-      Width = 82
+      Top = 62
+      Width = 83
       Alignment = taRightJustify
       Anchors = [akTop, akLeft, akRight]
       AutoSize = False
       BorderSpacing.Right = 5
-      Caption = 'On Layer'
+      Caption = 'On Layer:'
       ParentColor = False
     end
     object cbSelectedPt: TEdit
@@ -212,7 +210,7 @@ object MapViewerPathEditForm: TMapViewerPathEditForm
       AnchorSideTop.Side = asrBottom
       AnchorSideRight.Control = pnlFrame
       AnchorSideRight.Side = asrBottom
-      Left = 87
+      Left = 88
       Height = 22
       Top = 37
       Width = 201
@@ -231,7 +229,7 @@ object MapViewerPathEditForm: TMapViewerPathEditForm
       AnchorSideTop.Side = asrBottom
       AnchorSideRight.Control = pnlFrame
       AnchorSideRight.Side = asrBottom
-      Left = 87
+      Left = 88
       Height = 22
       Top = 62
       Width = 201
