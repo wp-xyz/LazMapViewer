@@ -26,7 +26,6 @@ object MainForm: TMainForm
     MapCenter.Latitude = 49
     PluginManager = PluginManager
     POIImages = ImageList1
-    UseThreads = True
     Zoom = 3
     OnMouseUp = MapViewMouseUp
   end

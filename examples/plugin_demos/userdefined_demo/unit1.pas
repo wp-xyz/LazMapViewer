@@ -13,6 +13,7 @@ type
   { TMainForm }
 
   TMainForm = class(TForm)
+    Label1: TLabel;
     lblMessageLabel: TLabel;
     lblUserdefinedPluginMessage: TLabel;
     MapView: TMapView;

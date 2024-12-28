@@ -79,7 +79,7 @@ const
   DELTA = 5;   // Tolerance of the HitTest
 var
   layer: TMapLayer;
-  poi: TPointOfInterest;
+  poi: TMapPointOfInterest;
   RP: TRealPoint;
   area: TRealArea;
   list: TMapObjectList;
@@ -97,7 +97,7 @@ begin
   try
     if (list = nil) then
     begin
-      poi := TPointOfInterest(layer.PointsOfInterest.Add);
+      poi := TMapPointOfInterest(layer.PointsOfInterest.Add);
       poi.Caption := 'Test ' + IntToStr(layer.PointsOfInterest.Count);
       poi.ImageIndex := Random(ImageList1.Count);
       poi.Longitude := RP.Lon;
@@ -106,9 +106,9 @@ begin
     begin
       for i := list.Count-1 downto 0 do
       begin
-        if list[i] is TPointOfInterest then
+        if list[i] is TMapPointOfInterest then
         begin
-          poi := TPointOfInterest(list[i]);
+          poi := TMapPointOfInterest(list[i]);
           poi.Free;
         end;
       end;

@@ -10,7 +10,7 @@ object MainForm: TMainForm
   OnCreate = FormCreate
   object MapView: TMapView
     Left = 0
-    Height = 257
+    Height = 261
     Top = 0
     Width = 451
     Align = alClient
@@ -22,34 +22,47 @@ object MainForm: TMainForm
     PluginManager = PluginManager
   end
   object InfoPanel: TPanel
-    Left = 0
-    Height = 50
-    Top = 257
-    Width = 451
+    Left = 8
+    Height = 30
+    Top = 269
+    Width = 435
     Align = alBottom
-    ClientHeight = 50
-    ClientWidth = 451
+    AutoSize = True
+    BorderSpacing.Around = 8
+    BevelOuter = bvNone
+    ClientHeight = 30
+    ClientWidth = 435
     TabOrder = 1
     object lblMessageLabel: TLabel
-      AnchorSideTop.Control = InfoPanel
-      AnchorSideTop.Side = asrCenter
-      Left = 16
+      AnchorSideLeft.Control = InfoPanel
+      AnchorSideTop.Control = Label1
+      AnchorSideTop.Side = asrBottom
+      Left = 0
       Height = 15
-      Top = 18
+      Top = 15
       Width = 146
       Caption = 'UserdefinedPlugin Message'
     end
     object lblUserdefinedPluginMessage: TLabel
       AnchorSideLeft.Control = lblMessageLabel
       AnchorSideLeft.Side = asrBottom
-      AnchorSideTop.Control = InfoPanel
+      AnchorSideTop.Control = lblMessageLabel
       AnchorSideTop.Side = asrCenter
-      Left = 170
+      Left = 154
       Height = 15
-      Top = 18
+      Top = 15
       Width = 38
       BorderSpacing.Left = 8
       Caption = ' (none)'
+    end
+    object Label1: TLabel
+      AnchorSideLeft.Control = InfoPanel
+      AnchorSideTop.Control = InfoPanel
+      Left = 0
+      Height = 15
+      Top = 0
+      Width = 106
+      Caption = 'Click into the map...'
     end
   end
   object PluginManager: TMvPluginManager

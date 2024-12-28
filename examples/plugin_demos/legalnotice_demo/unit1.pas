@@ -83,11 +83,9 @@ begin
   FLegalNoticePlugin1 := TLegalNoticePlugin.Create(FPluginManager);
   with FLegalNoticePlugin1 do
   begin
-    LegalNotice := '(c) OpenStreetMap and contributors';
-    LegalNoticeURL := 'https://www.openstreetmap.org/copyright';
-    Spacing := 5;
+    LegalNotice := 'Map data from [https://www.openstreetmap.org/copyright OpenStreetMap and contributors]';
+    Spacing := 0;
     Font.Size := 8;
-    Font.Color := clBlue;
     BackgroundColor := clWhite;
     MapView := FMapView1;
 
@@ -98,9 +96,8 @@ begin
   FLegalNoticePlugin2 := TLegalNoticePlugin.Create(FPluginManager);
   with FLegalNoticePlugin2 do
   begin
-    LegalNotice := 'maps-for-free';
-    LegalNoticeURL := 'https://maps-for-free.com/html/about.html';
-    Spacing := 5;
+    LegalNotice := '(c) [https://maps-for-free.com/html/about.html maps-for-free]';
+    Spacing := 0;
     Font.Size := 8;
     Font.Color := clBlue;
     BackgroundColor := clWhite;

@@ -25,8 +25,7 @@ object MainForm: TMainForm
     Left = 427
     Top = 141
     object LegalNoticePlugin: TLegalNoticePlugin
-      LegalNotice = '(c) OpenStreetMap and contributors'
-      LegalNoticeURL = 'https://www.openstreetmap.org'
+      LegalNotice = '[https://www.openstreetmap.org (c) OpenStreetMap and contributors]'
     end
     object DraggableMarkerPlugin: TDraggableMarkerPlugin
     end

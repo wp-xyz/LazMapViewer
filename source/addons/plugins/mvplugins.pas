@@ -5,7 +5,7 @@ unit mvPlugins;
 interface
 
 uses
-  Classes, SysUtils,
+  Classes, SysUtils, Contnrs,
   Graphics, Controls, LCLIntf, //LazLoggerBase,
   mvMapViewer, mvDrawingEngine, mvPluginCore, mvGPSObj, mvTypes;
 
@@ -50,28 +50,37 @@ type
     const
       DEFAULT_LEGALNOTICE_OPACITY = 0.55;
       DEFAULT_LEGALNOTICE_SPACING = 4;
+    type
+      TLegalNoticePart = class
+        Text: String;
+        URL: String;
+        Rect: TRect;
+        constructor Create(AText, AURL: String);
+      end;
+      TLegalNoticeParts = class(TFPObjectList);
   private
     FLegalNotice: String;
-    FLegalNoticeURL: String;
+    FLegalNoticeParts: TLegalNoticeParts;
     FBackgroundOpacity: Single;
     FPosition: TLegalNoticePosition;
     FSpacing: Integer;
     FBackgroundColor: TColor;
+    FMouseOverPart: Integer;
+    FURLFontColor: TColor;
   private
     procedure SetBackgroundColor(AValue: TColor);
     procedure SetBackgroundOpacity(AValue: Single);
     procedure SetLegalNotice(AValue: String);
-    procedure SetLegalNoticeURL(AValue: String);
     procedure SetPosition(AValue: TLegalNoticePosition);
     procedure SetSpacing(AValue: Integer);
   protected
-    procedure CalcClickableRect(AMapView: TMapView; out AClickableRect: TRect);
     procedure Changed(Sender: TObject);
+    procedure ExtractLegalNoticeParts(AMapView: TMapView);
+    function PointInURLPart(APoint: TPoint; out URL: String): Integer;
   protected
     procedure AfterDrawObjects(AMapView: TMapView; var Handled: Boolean); override;
     procedure MouseDown(AMapView: TMapView; {%H-}Button: TMouseButton; {%H-}Shift: TShiftState;
       X, Y: Integer; var Handled: Boolean); override;
-//    procedure MouseEnter(AMapView: TMapView; var Handled: Boolean); override;
     procedure MouseMove(AMapView: TMapView; {%H-}Shift: TShiftState; X, Y: Integer;
       var Handled: Boolean); override;
   public
@@ -82,9 +91,9 @@ type
     property BackgroundColor: TColor read FBackgroundColor write SetBackgroundColor default clNone;
     property BackgroundOpacity: Single read FBackgroundOpacity write SetBackgroundOpacity default DEFAULT_LEGALNOTICE_OPACITY;  // 0..1
     property LegalNotice: String read FLegalNotice write SetLegalNotice;
-    property LegalNoticeURL: String read FLegalNoticeURL write SetLegalNoticeURL;
     property Position: TLegalNoticePosition read FPosition write SetPosition default lnpBottomRight;
     property Spacing: Integer read FSpacing write SetSpacing default DEFAULT_LEGALNOTICE_SPACING;
+    property URLFontColor: TColor read FURLFontColor write FURLFontColor default clBlue;
     // inherited properties
     property Font;
     property MapView;
@@ -324,17 +333,27 @@ end;
 
 { TLegalNoticePlugin }
 
+constructor TLegalNoticePlugin.TLegalNoticePart.Create(AText, AURL: String);
+begin
+  inherited Create;
+  Text := AText;
+  URL := AURL;
+end;
+
 constructor TLegalNoticePlugin.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
   FBackgroundColor := clNone;
   FBackgroundOpacity := DEFAULT_LEGALNOTICE_OPACITY;
+  FURLFontColor := clBlue;
   FPosition := lnpBottomRight;
   FSpacing := DEFAULT_LEGALNOTICE_SPACING;
+  FLegalNoticeParts := TLegalNoticeParts.Create;
 end;
 
 destructor TLegalNoticePlugin.Destroy;
 begin
+  FLegalNoticeParts.Free;
   inherited;
 end;
 
@@ -345,45 +364,179 @@ begin
     FBackgroundColor := TLegalNoticePlugin(Source).BackgroundColor;
     FBackgroundOpacity := TLegalNoticePlugin(Source).BackgroundOpacity;
     FLegalNotice := TLegalNoticePlugin(Source).LegalNotice;
-    FLegalNoticeURL := TLegalNoticePlugin(Source).LegalNoticeURL;
     FPosition := TLegalNoticePlugin(Source).Position;
     FSpacing := TLegalNoticePlugin(Source).Spacing;
+    FURLFontColor := TLegalNoticePlugin(Source).URLFontColor;
   end;
   inherited;
 end;
 
 procedure TLegalNoticePlugin.AfterDrawObjects(AMapView: TMapView; var Handled: Boolean);
 var
-  x, y: Integer;
-  lClickableRect: TRect;
+  i: Integer;
   lSavedFont: TMvFont;
   lSavedOpacity: Single;
+  part: TLegalNoticePart;
 begin
   if not Assigned(AMapView) then Exit;
   Handled := True;
-  CalcClickableRect(AMapView,lClickableRect);
-  x := lClickableRect.Left;
-  y := lClickableRect.Top;
+
   lSavedFont := AMapView.DrawingEngine.GetFont;
   lSavedOpacity := AMapView.DrawingEngine.Opacity;
   try
-    if FBackgroundColor <> clNone then
+    ExtractLegalNoticeParts(AMapView);
+    for i := 0 to FLegalNoticeParts.Count-1 do
     begin
-      AMapView.DrawingEngine.Opacity := FBackgroundOpacity;
-      AMapView.DrawingEngine.BrushStyle := bsSolid;
-      AMapView.DrawingEngine.BrushColor := ColorToRGB(FBackgroundColor);
-      with lClickableRect do
-        AMapView.DrawingEngine.FillRect(Left, Top, Right, Bottom);
+      part := TLegalNoticePart(FLegalNoticeParts[i]);
+      // Draw the background of each part
+      if FBackgroundColor <> clNone then
+      begin
+        AMapView.DrawingEngine.Opacity := FBackgroundOpacity;
+        AMapView.DrawingEngine.BrushStyle := bsSolid;
+        AMapView.DrawingEngine.BrushColor := ColorToRGB(FBackgroundColor);
+        with part.Rect do
+          AMapView.DrawingEngine.FillRect(Left, Top, Right, Bottom);
+      end;
+      // Draw the text of each part.
+      AMapView.DrawingEngine.BrushStyle := bsClear;
+      if part.URL <> '' then
+      begin
+        if i = FMouseOverPart then
+          AMapView.DrawingEngine.SetFont(Font.Name, Font.Size, Font.Style + [fsUnderline], FURLFontColor)
+        else
+          AMapView.DrawingEngine.SetFont(Font.Name, Font.Size, Font.Style, FURLFontColor)
+      end
+      else
+        AMapView.DrawingEngine.SetFont(Font.Name, Font.Size, Font.Style, Font.Color);
+      AMapView.DrawingEngine.TextOut(part.Rect.Left, part.Rect.Top, part.Text);
     end;
-    AMapView.DrawingEngine.BrushStyle := bsClear;
-    AMapView.DrawingEngine.SetFont(Font.Name, Font.Size, Font.Style, Font.Color);
-    AMapView.DrawingEngine.TextOut(x, y, FLegalNotice);
   finally
     AMapView.DrawingEngine.Opacity := lSavedOpacity;
     AMapView.DrawingEngine.SetFont(lSavedFont);
   end;
 end;
 
+{ LegalNotice can contain text and embedded URLs with text following the
+  wikipedia mark-down.
+
+  Example:
+    'Map data from [https://openstreetmap.org/copyright OpenStreetMap and contributors]'
+  displayed as "Map data from OpenStreamMap and contributors"
+  Embedded URL (https://openstreetmap.org/copyright) is assigned to text
+  "OpenStreetMap and contributors" }
+procedure TLegalNoticePlugin.ExtractLegalNoticeParts(AMapView: TMapView);
+var
+  P: PAnsiChar;
+  partType: (ptText, ptURL, ptURLText);
+  txt: String;
+  url: String;
+  part: TLegalNoticePart;
+  savedFont: TMvFont;
+  R: TRect;
+  sz: TSize;
+  i, w, h, dx, dy: Integer;
+begin
+  FLegalNoticeParts.Clear;
+  if FLegalNotice = '' then
+    exit;
+
+  P := PChar(FLegalNotice);
+  partType := ptText;
+  txt := '';
+  url := '';
+
+  while true do
+  begin
+    case P^ of
+      #0 : break;
+      '[': begin
+             // entering a URL part
+             if partType = ptText then
+             begin
+               if (txt <> '') or (url <> '') then
+               begin
+                 // Store away previously found txt and url
+                 part := TLegalNoticePart.Create(txt, url);
+                 FLegalNoticeParts.Add(part);
+               end;
+               partType := ptURL;  // the next part will be in URL
+               txt := '';
+               url := '';
+             end;
+           end;
+      ' ': if partType = ptURL then  // in URL
+           begin
+             partType := ptURLText;  // next part will be the text assigned to the URL
+             txt := '';
+           end else
+             txt := txt + P^;
+      ']': if partType = ptURLText then
+           begin
+             if (txt <> '') and (url <> '') then
+             begin
+               // Store away url and its text
+               part := TLegalNoticePart.Create(txt, url);
+               FLegalNoticeParts.Add(part);
+             end;
+             partType := ptText;  // next part will be normal text again
+             txt := '';
+             url := '';
+           end;
+      else
+        if partType = ptURL then
+          url := url + P^
+        else
+          txt := txt + P^;
+    end;
+    inc(P);
+  end;
+
+  if (partType = ptText) and (txt <> '') then
+  begin
+    part := TLegalNoticePart.Create(txt, '');
+    FLegalNoticeParts.Add(part);
+  end;
+
+  // Measure pixel size of parts
+  savedFont := AMapView.DrawingEngine.GetFont;
+  try
+    AMapView.DrawingEngine.SetFont(Font.Name, Font.Size, Font.Style, Font.Color);
+    R := Rect(0, 0, 0, 0);
+    for i := 0 to FLegalNoticeParts.Count-1 do
+    begin
+      part := TLegalNoticePart(FLegalNoticeParts[i]);
+      sz := AMapView.DrawingEngine.TextExtent(part.Text);
+      R := Rect(R.Right, R.Top, R.Right + sz.CX, R.Top + sz.CY);
+      part.Rect := R;
+    end;
+    w := R.Right;
+    h := R.Bottom;
+  finally
+    AMapView.DrawingEngine.SetFont(savedFont);
+  end;
+
+  // Calculate left/top corner of total text
+  case FPosition of
+    lnpTopLeft, lnpBottomLeft:
+      dx := FSpacing;
+    lnpTopRight, lnpBottomRight:
+      dx := AMapView.Width - w - FSpacing;
+  end;
+  case FPosition of
+    lnpTopLeft, lnpTopRight:
+      dy := FSpacing;
+    lnpBottomLeft, lnpBottomRight:
+      dy := AMapView.Height - h - FSpacing;
+  end;
+
+  // Move text rectangles to correct position
+  for i := 0 to FLegalNoticeParts.Count-1 do
+  begin
+    part := TLegalNoticePart(FLegalNoticeParts[i]);
+    OffsetRect(part.Rect, dx, dy);
+  end;
+end;
+                             (*
 procedure TLegalNoticePlugin.CalcClickableRect(AMapView: TMapView; out
   AClickableRect: TRect);
 var
@@ -413,7 +566,7 @@ begin
     AMapView.DrawingEngine.SetFont(lSavedFont);
   end;
 end;
-
+              *)
 procedure TLegalNoticePlugin.Changed(Sender: TObject);
 begin
   Update;
@@ -422,19 +575,15 @@ end;
 procedure TLegalNoticePlugin.MouseDown(AMapView: TMapView; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer; var Handled: Boolean);
 var
-  pt: TPoint;
-  lClickableRect : TRect;
+  url: String;
+  idx: Integer;
 begin
   // The button down event is consumed by a different plugin, so do nothing here
   if Handled then Exit;
-  pt.X := X;
-  pt.Y := Y;
-  //if GetMapViewData(AMapView,lClickableRect,SizeOf(lClickableRect)) < SizeOf(lClickableRect) then
-  CalcClickableRect(AMapView,lClickableRect);
-  if PtInRect(lClickableRect, pt) and (FLegalNoticeURL <> '') then
+  if PointInURLPart(Point(X, Y), url) <> -1 then
   begin
     // The button down event is consumed by this plugin
-    OpenURL(FLegalNoticeURL);
+    OpenURL(url);
     Handled := True;
   end;
 end;
@@ -450,25 +599,45 @@ end;
 procedure TLegalNoticePlugin.MouseMove(AMapView: TMapView; Shift: TShiftState;
   X, Y: Integer; var Handled: Boolean);
 var
-  lClickableRect : TRect;
+  part: TLegalNoticePart;
+  url: String;
 begin
- // if GetMapViewData(AMapView,lClickableRect,SizeOf(lClickableRect)) < SizeOf(lClickableRect) then
-   CalcClickableRect(AMapView, lClickableRect);
+  ExtractLegalNoticeParts(AMapView);
 
-  if PtInRect(lClickableRect, Point(X, Y)) and (not AMapView.Engine.InDrag) and
-     (FLegalNoticeURL <> '') then
+  if not (AMapView.Engine.InDrag) then
   begin
-    Font.Style := [fsUnderline];
-    AMapView.Cursor := crHandPoint;
-    Handled := true;
-  end else
-  begin
-    Font.Style := [];
-    if not Handled then
-      AMapView.Cursor := crDefault;
+    FMouseOverPart := PointInURLPart(Point(X, Y), url);
+    if (FMouseOverPart <> -1) then
+    begin
+      if url <> '' then
+      begin
+        AMapView.Cursor := crHandPoint;
+        Handled := true;
+      end;
+    end else
+      if not Handled then
+        AMapView.Cursor := crDefault;
   end;
   Update;
 end;
+
+function TLegalNoticePlugin.PointInURLPart(APoint: TPoint; out URL: String): Integer;
+var
+  part: TLegalNoticePart;
+begin
+  for Result := 0 to FLegalNoticeParts.Count-1 do
+  begin
+    part := TLegalNoticePart(FLegalNoticeParts[Result]);
+    if PtInRect(part.Rect, APoint) and (part.URL <> '') then
+    begin
+      uRL := part.URL;
+      exit;
+    end;
+  end;
+  URL := '';
+  Result := -1;
+end;
+
 
 procedure TLegalNoticePlugin.SetPosition(AValue: TLegalNoticePosition);
 begin
@@ -481,13 +650,6 @@ procedure TLegalNoticePlugin.SetLegalNotice(AValue: String);
 begin
   if FLegalNotice = AValue then Exit;
   FLegalNotice := AValue;
-  Update;
-end;
-
-procedure TLegalNoticePlugin.SetLegalNoticeURL(AValue: String);
-begin
-  if FLegalNoticeURL = AValue then Exit;
-  FLegalNoticeURL := AValue;
   Update;
 end;
 
