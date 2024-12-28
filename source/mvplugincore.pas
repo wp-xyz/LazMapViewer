@@ -34,14 +34,14 @@ type
     FPluginManager: TMvPluginManager;
     FMapView: TMapView;
     FEnabled: Boolean;
-    procedure SetEnabled(AValue: Boolean);
-    procedure SetMapView(AValue: TMapView);
     procedure SetPluginManager(AValue: TMvPluginManager);
   protected
     function GetIndex: Integer; override;
     procedure Notification(AComponent: TComponent; Operation: TOperation); override;
     procedure ReadState(Reader: TReader); override;
+    procedure SetEnabled(AValue: Boolean); virtual;
     procedure SetIndex(AValue: Integer); override;
+    procedure SetMapView(AValue: TMapView); virtual;
     procedure SetParentComponent(AParent: TComponent); override;
     procedure Update; virtual;
   protected
@@ -158,6 +158,7 @@ type
     destructor Destroy;override;
   published
     property Enabled;
+    property MapView;
   end;
 
   { TMvMultiMapsDrawPlugin }
