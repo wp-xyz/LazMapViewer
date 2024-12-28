@@ -14,9 +14,9 @@ implementation
 {$R mvmapviewer_icons.res}
 
 uses
-  ImgList,
+  Controls, ImgList,
   mvTypes, mvGeoNames, mvMapViewer, mvDLEFpc, mvDLECache, mvPluginCore,
-  mvMapViewerPropEdits, mvPluginEditors;
+  mvMapViewerPropEdits, mvPlugins, mvPluginEditors;
 
 procedure Register;
 var
@@ -47,17 +47,19 @@ begin
     TMapPoint, 'Elevation', TPointElevationPropertyEditor);
 
   RegisterPropertyEditor(TypeInfo(Double),
-    TMapPoint,'Latitude',TLatLonDMSPropertyEditor);
+    TMapPoint,'Latitude', TLatLonDMSPropertyEditor);
   RegisterPropertyEditor(TypeInfo(Double),
-    TMapPoint,'Longitude',TLatLonDMSPropertyEditor);
+    TMapPoint,'Longitude', TLatLonDMSPropertyEditor);
   RegisterPropertyEditor(TypeInfo(Double),
-    TMapCenter,'Latitude',TLatLonDMSPropertyEditor);
+    TMapCenter,'Latitude', TLatLonDMSPropertyEditor);
   RegisterPropertyEditor(TypeInfo(Double),
-    TMapCenter,'Longitude',TLatLonDMSPropertyEditor);
+    TMapCenter,'Longitude', TLatLonDMSPropertyEditor);
 
+  RegisterComponentEditor(TMvPluginManager, TMvPluginManagerComponentEditor);
   RegisterPropertyEditor(TypeInfo(TMvPluginList),
     TMvPluginManager, 'PluginList', TMvPluginListPropertyEditor);
-  RegisterComponentEditor(TMvPluginManager, TMvPluginManagerComponentEditor);
+  RegisterPropertyEditor(TypeInfo(TCaption),
+    TLegalNoticePlugin, 'LegalNotice', TStringMultilinePropertyEditor);
 
   for i := 0 to PluginClassRegistry.Count - 1 do
     RegisterNoIcon([TMvCustomPluginClass(PluginClassRegistry.GetClass(i))]);
