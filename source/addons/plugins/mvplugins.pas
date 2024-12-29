@@ -769,6 +769,7 @@ var
   lDraggableMarkerData : TDraggableMarkerData;
 begin
   if Handled then Exit;
+  if not MapViewEnabled[AMapView] then Exit;
   if FDragMouseButton <> Button then Exit;
   lDraggableMarkerData.FDraggedMarker := GetFirstMarkerAtMousePos(AMapView,X,Y);
   if Assigned(lDraggableMarkerData.FDraggedMarker) then
@@ -791,6 +792,7 @@ var
   cnt : Integer;
 begin
   cnt := GetMapViewData(AMapView,lDraggableMarkerData,SizeOf(lDraggableMarkerData));
+  if not MapViewEnabled[AMapView] then Exit;
   if (cnt >= SizeOf(lDraggableMarkerData)) and
      Assigned(lDraggableMarkerData.FDraggedMarker) then
   begin
@@ -820,6 +822,7 @@ procedure TDraggableMarkerPlugin.MouseUp(AMapView: TMapView; Button: TMouseButto
 var
   lpDraggableMarkerData : PDraggableMarkerData;
 begin
+  if not MapViewEnabled[AMapView] then Exit;
   if FDragMouseButton <> Button then Exit;
   lpDraggableMarkerData := MapViewDataPtr[AMapView];
   if Assigned(lpDraggableMarkerData) and Assigned(lpDraggableMarkerData^.FDraggedMarker) then

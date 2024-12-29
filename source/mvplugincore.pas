@@ -120,18 +120,24 @@ type
   end;
 
   { TMvMultiMapsPluginData }
+const
+  DefaultMultiMapsMapViewEnabled = True;
 
+type
   TMvMultiMapsPluginData = class(TObject)
   private
     FMapView : TMapView;
+    FEnabled : Boolean;
     FData : array of Byte;
     function GetDataSize : Integer;
   public
+    property Enabled : Boolean read FEnabled write FEnabled;
     property DataSize : Integer read GetDataSize;
     procedure SetData(const AData; const ADataSize : Integer);
     function GetData(out AData; const AMaxDataSize : Integer) : Integer;
     function GetDataPtr : Pointer;
     property MapView : TMapView read FMapView write FMapView;
+    constructor Create;
   end;
 
   { TMvMultiMapsPlugin }
@@ -143,10 +149,14 @@ type
     function GetMapViewDataSize(Value : TMapView) : Integer;
     function GetMapViewDataItem(Value : TMapView) : TMvMultiMapsPluginData;
     function GetMapViewDataPtr(Value : TMapView) : Pointer;
+    function GetMapViewEnabled(Value : TMapView) : Boolean;
+    procedure SetMapViewEnabled(AIndex : TMapView; Value : Boolean);
+
   protected
     function CreateMultiMapsPluginData : TMvMultiMapsPluginData;virtual;
     property MapDataList : TObjectList read FMapDataList;
   public
+    property MapViewEnabled[AIndex : TMapView] : Boolean read GetMapViewEnabled write SetMapViewEnabled;
     property MapViewDataIndex[AIndex : TMapView] : Integer read GetMapViewDataIndex;
     property MapViewDataSize[AIndex : TMapView] : Integer read GetMapViewDataSize;
     property MapViewDataItem[AIndex : TMapView] : TMvMultiMapsPluginData read GetMapViewDataItem;
@@ -619,6 +629,12 @@ begin
     Result := @FData[0];
 end;
 
+constructor TMvMultiMapsPluginData.Create;
+begin
+  inherited;
+  FEnabled := DefaultMultiMapsMapViewEnabled;
+end;
+
 { TMvMultiMapsPlugin }
 
 function TMvMultiMapsPlugin.GetMapViewDataIndex(Value: TMapView): Integer;
@@ -660,6 +676,30 @@ begin
   di := GetMapViewDataItem(Value);
   if Assigned(di) then
     Result := di.GetDataPtr;
+end;
+
+function TMvMultiMapsPlugin.GetMapViewEnabled(Value: TMapView): Boolean;
+var
+  di : TMvMultiMapsPluginData;
+begin
+  Result := DefaultMultiMapsMapViewEnabled;
+  di := GetMapViewDataItem(Value);
+  if not Assigned(di) then Exit;
+  Result := di.Enabled;
+end;
+
+procedure TMvMultiMapsPlugin.SetMapViewEnabled(AIndex: TMapView; Value: Boolean);
+var
+  di : TMvMultiMapsPluginData;
+begin
+  di := GetMapViewDataItem(AIndex);
+  if not Assigned(di) then
+  begin
+    di := CreateMultiMapsPluginData;
+    di.MapView := AIndex;
+    FMapDataList.Add(di);
+  end;
+  di.Enabled := Value;
 end;
 
 function TMvMultiMapsPlugin.CreateMultiMapsPluginData: TMvMultiMapsPluginData;
