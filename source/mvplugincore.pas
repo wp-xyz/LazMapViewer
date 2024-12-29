@@ -168,7 +168,6 @@ type
     destructor Destroy;override;
   published
     property Enabled;
-    property MapView;
   end;
 
   { TMvMultiMapsDrawPlugin }

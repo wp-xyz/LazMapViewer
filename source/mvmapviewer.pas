@@ -3298,6 +3298,7 @@ var
   I: Integer;
 begin
   inherited Create(AOwner);
+  ControlStyle := ControlStyle + [csAcceptsControls];
 
   Width := 150;
   Height := 150;
