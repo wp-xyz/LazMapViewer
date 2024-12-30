@@ -28,14 +28,17 @@ type
   private
     FImage: TLazIntfImage;
     function GetImage: TLazIntfImage;
+    constructor CreateEmpty;
   protected
     function GetImageObject: TObject; override;
     procedure StretchImageIfNeeded(var AImage: TLazIntfImage; ANewWidth, ANewHeight: Integer);
   public
+    function CreateCopy : TPictureCacheItem; override;
     constructor Create(AStream: TStream); override;
     destructor Destroy; override;
     property Image: TLazIntfImage read GetImage;
   end;
+
 
   { TMvIntfGraphicsDrawingEngine }
 
@@ -180,6 +183,11 @@ begin
   Result := FImage;
 end;
 
+constructor TLazIntfImageCacheItem.CreateEmpty;
+begin
+  inherited;
+end;
+
 function TLazIntfImageCacheItem.GetImageObject: TObject;
 begin
   Result := FImage;
@@ -242,6 +250,13 @@ begin
       canv.Free;
     end;
   end;
+end;
+
+function TLazIntfImageCacheItem.CreateCopy: TPictureCacheItem;
+begin
+  Result:= TLazIntfImageCacheItem.CreateEmpty;
+  TLazIntfImageCacheItem(Result).FImage := TLazIntfImage.CreateCompatible(FImage,FImage.Width,FImage.Height);
+  TLazIntfImageCacheItem(Result).FImage.Assign(FImage);
 end;
 
 

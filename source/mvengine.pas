@@ -30,6 +30,10 @@ type
   TDrawStretchedTileEvent = procedure (const TileId: TTileId; X,Y: Integer;
     TileImg: TPictureCacheItem; const R: TRect) of object;
 
+  TTileAfterGetFromCacheEvent = procedure (const AMapProvider: TMapProvider;
+                                           const ATileId: TTileId;
+                                           const ATileImg: TPictureCacheItem) of object;
+
   TEraseBackgroundEvent = procedure (const R: TRect) of Object;
 
   TTileDownloadedEvent = procedure (const TileId: TTileId) of object;
@@ -76,6 +80,8 @@ type
       FOnTileDownloaded: TTileDownloadedEvent;
       FOnZoomChange: TNotifyEvent;
       FOnZoomChanging: TZoomChangingEvent;
+      FCreateTempTileCopy : Boolean;
+      FTileAfterGetFromCacheEvent : TTileAfterGetFromCacheEvent;
       FZoomMax: Integer;
       FZoomMin: Integer;
       lstProvider : TStringList;
@@ -208,7 +214,8 @@ type
       property Zoom: integer read GetZoom write SetZoom;
       property ZoomToCursor: Boolean read FZoomToCursor write FZoomToCursor default True;
       property CacheItemClass: TPictureCacheItemClass read GetCacheItemClass write SetCacheItemClass;
-
+      { CreateTempTileCopy creates a local copy of the tile prior further processing }
+      property CreateTempTileCopy : Boolean read FCreateTempTileCopy write FCreateTempTileCopy;
       property OnCenterMove: TNotifyEvent read FOnCenterMove write FOnCenterMove;
       property OnCenterMoving: TCenterMovingEvent read FOnCenterMoving write FOnCenterMoving;
       property OnChange: TNotifyEvent Read FOnChange write FOnchange; //called when visiable area change
@@ -218,6 +225,7 @@ type
       property OnTileDownloaded: TTileDownloadedEvent read FOnTileDownloaded write FOnTileDownloaded;
       property OnZoomChange: TNotifyEvent read FOnZoomChange write FOnZoomChange;
       property OnZoomChanging: TZoomChangingEvent read FOnZoomChanging write FOnZoomChanging;
+      property OnTileAfterGetFromCache: TTileAfterGetFromCacheEvent read FTileAfterGetFromCacheEvent write FTileAfterGetFromCacheEvent;
   end;
 
 // The following functions have been moved to mvGeoMath and will be removed here sooner or later...
@@ -1080,6 +1088,7 @@ var
   tile: TTileID;
   previewDrawn: Boolean;
   previewImg: TPictureCacheItem;
+  tmpImg : TPictureCacheItem;
   R: TRect;
 
   procedure AddJob;
@@ -1176,7 +1185,24 @@ begin
             if Cache.GetPreviewFromCache(AWin.MapProvider, tile, R) then
             begin
               Cache.GetFromCache(AWin.MapProvider, tile, previewImg);
-              DrawStretchedTile(Tiles[iTile], px, py, previewImg, R);
+              tmpImg := Nil;
+              try
+                if FCreateTempTileCopy then
+                begin
+                  // If a local copy is needed, create one
+                  tmpImg := previewImg.CreateCopy;
+                  // replace the pointer to the original image by the copy
+                  previewImg := tmpImg;
+                end;
+                if Assigned(FTileAfterGetFromCacheEvent) then
+                  FTileAfterGetFromCacheEvent(AWin.MapProvider,tile,previewImg);
+                DrawStretchedTile(Tiles[iTile], px, py, previewImg, R);
+              finally
+                // free the copy if
+                if Assigned(tmpImg) then
+                  tmpImg.Free;
+              end;
+
               previewDrawn := true;
             end;
           end;
@@ -1401,7 +1427,7 @@ end;
 procedure TMapViewerEngine.DrawTileFromCache(constref ATile: TTileId; constref
   AWin: TMapWindow);
 var
-  img: TPictureCacheItem;
+  img, tmpImg: TPictureCacheItem;
   X, Y: integer;
   worldWidth : Integer;
   numTiles : Integer;
@@ -1410,30 +1436,44 @@ begin
   if IsCurrentWin(AWin)then
   begin
      Cache.GetFromCache(AWin.MapProvider, ATile, img);
-     Y := AWin.Y + ATile.Y * TileSize.CY; // begin of Y
-     if Cyclic then
-     begin
-       baseX := AWin.X + ATile.X * TileSize.CX; // begin of X
-       numTiles := 1 shl AWin.Zoom;
-       worldWidth := numTiles * TileSize.CX;
-       // From the center to the left (western) hemisphere
-       X := baseX;
-       while (X + TileSize.CX >= 0) do
+     tmpImg := Nil;
+     try
+       // if a local copy is needed, create one
+       if FCreateTempTileCopy then
        begin
-         DrawTile(ATile, X, Y, img);
-         X := X - worldWidth;
+         tmpImg := img.CreateCopy;
+         img := tmpImg; // Replace the pointer to the cached image by the copy
        end;
-       // From the center to the right (eastern) hemisphere
-       X := baseX + worldWidth;
-       while ((X - TileSize.CX) <= AWin.Width) do
+       if Assigned(FTileAfterGetFromCacheEvent) then
+         FTileAfterGetFromCacheEvent(AWin.MapProvider,ATile,img);
+       Y := AWin.Y + ATile.Y * TileSize.CY; // begin of Y
+       if Cyclic then
        begin
+         baseX := AWin.X + ATile.X * TileSize.CX; // begin of X
+         numTiles := 1 shl AWin.Zoom;
+         worldWidth := numTiles * TileSize.CX;
+         // From the center to the left (western) hemisphere
+         X := baseX;
+         while (X + TileSize.CX >= 0) do
+         begin
+           DrawTile(ATile, X, Y, img);
+           X := X - worldWidth;
+         end;
+         // From the center to the right (eastern) hemisphere
+         X := baseX + worldWidth;
+         while ((X - TileSize.CX) <= AWin.Width) do
+         begin
+           DrawTile(ATile, X, Y, img);
+           X := X + worldWidth;
+         end;
+       end else
+       begin
+         X := AWin.X + ATile.X * TileSize.CX; // begin of X
          DrawTile(ATile, X, Y, img);
-         X := X + worldWidth;
        end;
-     end else
-     begin
-       X := AWin.X + ATile.X * TileSize.CX; // begin of X
-       DrawTile(ATile, X, Y, img);
+     finally
+       if Assigned(tmpImg) then
+         tmpImg.Free;
      end;
   end;
 end;

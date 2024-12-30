@@ -28,6 +28,7 @@ Type
      function GetImageObject: TObject; virtual;
      class function GetImageReader({%H-}AStream: TStream): TFPCustomImageReader;
    public
+     function CreateCopy : TPictureCacheItem; virtual;
      constructor Create({%H-}AStream: TStream); virtual;
      destructor Destroy; override;
    end;
@@ -138,6 +139,11 @@ begin
     Result := TFPReaderJPEG.Create
   else if IsValidPNG(AStream) then
     Result := TLazReaderPNG.Create;
+end;
+
+function TPictureCacheItem.CreateCopy: TPictureCacheItem;
+begin
+  Result := Nil; //TPictureCacheItem.Create;
 end;
 
 constructor TPictureCacheItem.Create(AStream: TStream);

@@ -46,7 +46,8 @@ Type
     mvoEditorEnabled,       // Point/Track editor enabled
     mvoMouseDragging,       // Allow dragging of the map with the mouse
     mvoMouseZooming,        // Allow zooming into the map with the mouse
-    mvoLatLonInDMS          // Use Degrees, Minutes and Seconds for Lat/Lon
+    mvoLatLonInDMS,         // Use Degrees, Minutes and Seconds for Lat/Lon
+    mvoPluginCopyTiles      // Make an internal copy of the tile before passing to plugins
   );
 
   TMapViewOptions = set of TMapViewOption;
@@ -61,6 +62,7 @@ type
   TMapView = class;
   TMapPoint = class;
   TMapLayer = class;
+  TGPSTileLayerBase = class;
   TMapLayers = class;
   TMapPointOfInterest = class;
   TMapPointsOfInterest = class;
@@ -453,6 +455,8 @@ type
       APoint: TGPSPoint): Boolean; virtual;
     function DrawMissingTile(AMapView: TMapView; ADrawingEngine: TMvCustomDrawingEngine;
       ATileID: TTileID; ARect: TRect): Boolean; virtual;
+    function TileAfterGetFromCache(AMapView: TMapView; ATileLayer: TGPSTileLayerBase;
+      AMapProvider: TMapProvider; ATileID: TTileID; ATileImg: TPictureCacheItem): Boolean; virtual;
     function GPSItemsModified(AMapView: TMapView; ModifiedList: TGPSObjectList;
       ActualObjs: TGPSObjList; Adding: Boolean): Boolean; virtual;
     function MouseDown(AMapView: TMapView; AButton: TMouseButton; AShift: TShiftState;
@@ -589,6 +593,9 @@ type
       procedure DoDrawPoint(const Area: TRealArea; APt: TGPSPoint; AImageIndex: Integer);
       procedure DoDrawStretchedTile(const TileId: TTileID; X, Y: Integer; TileImg: TPictureCacheItem; const R: TRect);
       procedure DoDrawTile(const TileId: TTileId; X,Y: integer; TileImg: TPictureCacheItem);
+      procedure DoTileAfterGetFromCache(const AMapProvider: TMapProvider;
+                                        const ATileId: TTileId;
+                                        const ATileImg: TPictureCacheItem);
       procedure DoDrawTileInfo(const {%H-}TileID: TTileID; X,Y: Integer);
       procedure DoEraseBackground(const R: TRect);
       procedure DoTileDownloaded(const {%H-}TileId: TTileId);
@@ -743,6 +750,10 @@ type
     function GetUseThreads: Boolean;
     procedure DoTileDownloaded(const TileId: TTileId);
     procedure DoDrawTile(const TileId: TTileId; X, Y: Integer; TileImg: TPictureCacheItem);
+    procedure DoTileAfterGetFromCache(const AMapProvider: TMapProvider;
+                                      const ATileId: TTileId;
+                                      const ATileImg: TPictureCacheItem);
+
     procedure SetDrawMode(AValue: TItemDrawMode);
     procedure SetMapProvider(AValue: String);
     procedure SetOpacity(AValue: Single);
@@ -2437,6 +2448,7 @@ procedure TMapView.SetOptions(AValue: TMapViewOptions);
 begin
   if FOptions = AValue then Exit;
   FOptions := AValue;
+  Engine.CreateTempTileCopy:= (mvoPluginCopyTiles in FOptions);
   if Engine.InDrag and not (mvoMouseDragging in FOptions) then
   begin
     Engine.DragObj.AbortDrag;
@@ -3255,6 +3267,15 @@ begin
     DoDrawTileInfo(TileID, X, Y);
 end;
 
+procedure TMapView.DoTileAfterGetFromCache(const AMapProvider: TMapProvider;
+  const ATileId: TTileId; const ATileImg: TPictureCacheItem);
+var
+  lHandled: Boolean;
+begin
+  lHandled := GetPluginManager.TileAfterGetFromCache(Self, Nil,
+                                                     AMapProvider, ATileID, ATileImg);
+end;
+
 procedure TMapView.DoDrawMissingTile(ATileID: TTileID; ARect: TRect);
 var
   lHandled: Boolean;
@@ -3334,6 +3355,7 @@ begin
   FEngine.OnCenterMoving := @DoCenterMoving;
   FEngine.OnDrawTile := @DoDrawTile;
   FEngine.OnDrawStretchedTile := @DoDrawStretchedTile;
+  FEngine.OnTileAfterGetFromCache := @DoTileAfterGetFromCache;
   FEngine.OnEraseBackground := @DoEraseBackground;
   FEngine.OnTileDownloaded := @DoTileDownloaded;
   FEngine.OnZoomChange := @DoZoomChange;
@@ -3851,6 +3873,16 @@ begin
   DrawTile(TileId, X, Y, TileImg);
 end;
 
+procedure TGPSTileLayerBase.DoTileAfterGetFromCache(
+  const AMapProvider: TMapProvider; const ATileId: TTileId;
+  const ATileImg: TPictureCacheItem);
+var
+  lHandled: Boolean;
+begin
+  lHandled := FParentView.PluginManager.TileAfterGetFromCache(FParentView, Self,
+                                                     AMapProvider, ATileID, ATileImg);
+end;
+
 procedure TGPSTileLayerBase.SetDrawMode(AValue: TItemDrawMode);
 begin
   if FDrawMode = AValue then Exit;
@@ -3892,6 +3924,7 @@ begin
   FMapProvider := FEngine.MapProvider;
   FEngine.OnTileDownloaded := @DoTileDownloaded;
   FEngine.OnDrawTile := @DoDrawTile;
+  FEngine.OnTileAfterGetFromCache := @DoTileAfterGetFromCache;
 end;
 
 destructor TGPSTileLayerBase.Destroy;
@@ -4523,6 +4556,15 @@ begin
   Unused(AMapView, ADrawingEngine);
   Unused(ATileID, ARect);
   Result := false;
+end;
+
+function TMvCustomPluginManager.TileAfterGetFromCache(AMapView: TMapView;
+  ATileLayer: TGPSTileLayerBase; AMapProvider: TMapProvider; ATileID: TTileID;
+  ATileImg: TPictureCacheItem): Boolean;
+begin
+  Unused(AMapView, ATileLayer);
+  Unused(AMapProvider,ATileID, ATileImg);
+  Result := False;
 end;
 
 function TMvCustomPluginManager.GPSItemsModified(AMapView: TMapView;

@@ -29,14 +29,19 @@ type
   private
     FImage: TBGRABitmap;
     function GetImage: TBGRABitmap;
+    constructor CreateEmpty;
   protected
     function GetImageObject: TObject; override;
     procedure StretchImageIfNeeded(var AImage: TBGRABitmap; ANewWidth, ANewHeight: Integer);
   public
+    function CreateCopy : TPictureCacheItem; override;
     constructor Create(AStream: TStream); override;
     destructor Destroy; override;
     property Image: TBGRABitmap read GetImage;
   end;
+
+
+
 
   { TMvBGRADrawingEngine }
 
@@ -120,6 +125,11 @@ begin
   Result := FImage;
 end;
 
+constructor TBGRABitmapCacheItem.CreateEmpty;
+begin
+  inherited;
+end;
+
 constructor TBGRABitmapCacheItem.Create(AStream: TStream);
 var
   Reader: TFPCustomImageReader;
@@ -156,6 +166,13 @@ begin
     AImage.Free;
     AImage := img;
   end;
+end;
+
+function TBGRABitmapCacheItem.CreateCopy: TPictureCacheItem;
+begin
+  Result:= TBGRABitmapCacheItem.CreateEmpty;
+  TBGRABitmapCacheItem(Result).FImage := TBGRABitmap.Create(FImage.Height, FIMage.Width);
+  TBGRABitmapCacheItem(Result).FImage.Assign(FImage);
 end;
 
 destructor TBGRABitmapCacheItem.Destroy;

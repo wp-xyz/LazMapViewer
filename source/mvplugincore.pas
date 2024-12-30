@@ -7,7 +7,8 @@ interface
 uses
   Classes, SysUtils, StrUtils, Contnrs, Math, LazLoggerBase,
   Graphics, Controls, Dialogs,
-  mvMapViewer, mvTypes, mvGpsObj, mvClassRegistration, mvDrawingEngine;
+  mvMapViewer, mvTypes, mvGpsObj, mvClassRegistration, mvDrawingEngine,
+  mvMapProvider, mvCache;
 
 type
   TMvCustomPlugin = class;
@@ -55,6 +56,9 @@ type
       APoint: TGPSPoint; var Handled: Boolean); virtual;
     procedure DrawMissingTile(AMapView: TMapView; ADrawingEngine: TMvCustomDrawingEngine;
       ATileID: TTileID; ARect: TRect; var Handled: Boolean); virtual;
+    procedure TileAfterGetFromCache(AMapView: TMapView; ATileLayer: TGPSTileLayerBase;
+      AMapProvider: TMapProvider; ATileID: TTileID; ATileImg: TPictureCacheItem;
+      var Handled: Boolean); virtual;
     procedure GPSItemsModified(AMapView: TMapView; ModifiedList: TGPSObjectList;
       ActualObjs: TGPSObjList; Adding: Boolean; var Handled: Boolean); virtual;
     procedure MouseDown(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
@@ -236,6 +240,8 @@ type
       APoint: TGPSPoint): Boolean; override;
     function DrawMissingTile(AMapView: TMapView; ADrawingEngine: TMvCustomDrawingEngine;
       ATileID: TTileID; ARect: TRect): Boolean; override;
+    function TileAfterGetFromCache(AMapView: TMapView; ATileLayer: TGPSTileLayerBase;
+      AMapProvider: TMapProvider; ATileID: TTileID; ATileImg: TPictureCacheItem): Boolean; override;
     function GPSItemsModified(AMapView: TMapView; ModifiedList: TGPSObjectList;
       ActualObjs: TGPSObjList; Adding: Boolean): Boolean; override;
     function MouseDown(AMapView: TMapView; AButton: TMouseButton; AShift: TShiftState;
@@ -361,6 +367,15 @@ procedure TMvCustomPlugin.DrawMissingTile(AMapView: TMapView;
 begin
   Unused(AMapView, Handled);
   Unused(ADrawingEngine, ATileID, ARect);
+end;
+
+procedure TMvCustomPlugin.TileAfterGetFromCache(AMapView: TMapView;
+  ATileLayer: TGPSTileLayerBase; AMapProvider: TMapProvider; ATileID: TTileID;
+  ATileImg: TPictureCacheItem; var Handled: Boolean);
+begin
+  Unused(AMapView, Handled);
+  Unused(ATileLayer, AMapProvider);
+  Unused(ATileID, ATileImg);
 end;
 
 function TMvCustomPlugin.GetIndex: Integer;
@@ -978,6 +993,23 @@ begin
     plugin := Item[i];
     if HandlePlugin(plugin, AMapView) then
       plugin.DrawMissingTile(AMapView, ADrawingEngine, ATileID, ARect, Result);
+  end;
+end;
+
+function TMvPluginManager.TileAfterGetFromCache(AMapView: TMapView;
+  ATileLayer: TGPSTileLayerBase; AMapProvider: TMapProvider; ATileID: TTileID;
+  ATileImg: TPictureCacheItem): Boolean;
+var
+  i: Integer;
+  plugin: TMvCustomPlugin;
+begin
+  Result := false;
+  for i := 0 to FPluginList.Count-1 do
+  begin
+    plugin := Item[i];
+    if HandlePlugin(plugin, AMapView) then
+      plugin.TileAfterGetFromCache(AMapView, ATileLayer,
+                                   AMapProvider, ATileID, ATileImg, Result);
   end;
 end;
 

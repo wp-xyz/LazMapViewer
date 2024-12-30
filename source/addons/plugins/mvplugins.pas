@@ -7,7 +7,8 @@ interface
 uses
   Classes, SysUtils, Contnrs,
   Graphics, Controls, LCLIntf, //LazLoggerBase,
-  mvMapViewer, mvDrawingEngine, mvPluginCore, mvGPSObj, mvTypes;
+  mvMapViewer, mvDrawingEngine, mvPluginCore, mvGPSObj, mvTypes,
+  mvMapProvider, mvCache;
 
 type
   { TCenterMarkerPlugin - draws a cross in the map center }
@@ -147,6 +148,11 @@ type
     ADrawingEngine: TMvCustomDrawingEngine; ATileID: TTileID; ARect: TRect;
     var Handled: Boolean) of object;
 
+  TMvPluginTileAfterGetFromCacheEvent = procedure (Sender: TObject; AMapView: TMapView;
+    ATileLayer: TGPSTileLayerBase; AMapProvider: TMapProvider;
+    ATileID: TTileID; ATileImg: TPictureCacheItem;
+    var Handled: Boolean) of object;
+
   TMvPluginGPSItemsModifiedEvent = procedure (Sender: TObject; AMapView: TMapView;
     ChangedList: TGPSObjectList; ActualObjs: TGPSObjList; Adding: Boolean;
     var Handled: Boolean) of Object;
@@ -177,6 +183,7 @@ type
     FCenterMovingEvent: TMvPluginCenterMovingEvent;
     FDrawGPSPointEvent: TMvPluginDrawGPSPointEvent;
     FDrawMissingTileEvent: TMvPluginDrawMissingTileEvent;
+    FTileAfterGetFromCacheEvent: TMvPluginTileAfterGetFromCacheEvent;
     FGPSItemsModifiedEvent : TMvPluginGPSItemsModifiedEvent;
     FMouseDownEvent : TMvPluginMouseEvent;
     FMouseEnterEvent : TMvPluginNotifyEvent;
@@ -197,6 +204,9 @@ type
       APoint: TGPSPoint; var Handled: Boolean); override;
     procedure DrawMissingTile(AMapView: TMapView; ADrawingEngine: TMvCustomDrawingEngine;
       ATileID: TTileID; ARect: TRect; var Handled: Boolean); override;
+    procedure TileAfterGetFromCache(AMapView: TMapView; ATileLayer: TGPSTileLayerBase;
+      AMapProvider: TMapProvider; ATileID: TTileID; ATileImg: TPictureCacheItem;
+      var Handled: Boolean); override;
     procedure GPSItemsModified(AMapView: TMapView; ChangedList: TGPSObjectList;
       ActualObjs: TGPSObjList; Adding: Boolean; var Handled: Boolean); override;
     procedure MouseDown(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
@@ -894,6 +904,15 @@ procedure TUserDefinedPlugin.DrawMissingTile(AMapView: TMapView;
 begin
   if Assigned(FDrawMissingTileEvent) then
     FDrawMissingTileEvent(Self, AMapView, ADrawingEngine, ATileID, ARect, Handled);
+end;
+
+procedure TUserDefinedPlugin.TileAfterGetFromCache(AMapView: TMapView;
+  ATileLayer: TGPSTileLayerBase; AMapProvider: TMapProvider; ATileID: TTileID;
+  ATileImg: TPictureCacheItem; var Handled: Boolean);
+begin
+  if Assigned(FTileAfterGetFromCacheEvent) then
+    FTileAfterGetFromCacheEvent(Self, AMapView, ATileLayer, AMapProvider,
+                                ATileID, ATileImg, Handled);
 end;
 
 procedure TUserDefinedPlugin.GPSItemsModified(AMapView: TMapView;

@@ -29,10 +29,12 @@ type
   private
     FImage: TRGB32Bitmap;
     function GetImage: TRGB32Bitmap;
+    constructor CreateEmpty;
   protected
     function GetImageObject: TObject; override;
     procedure StretchImageIfNeeded(var AImage: TRGB32Bitmap; ANewWidth, ANewHeight: Integer);
   public
+    function CreateCopy : TPictureCacheItem; override;
     constructor Create(AStream: TStream); override;
     destructor Destroy; override;
     property Image: TRGB32Bitmap read GetImage;
@@ -262,6 +264,11 @@ begin
   Result := FImage;
 end;
 
+constructor TRGB32BitmapCacheItem.CreateEmpty;
+begin
+  inherited;
+end;
+
 function TRGB32BitmapCacheItem.GetImageObject: TObject;
 begin
   Result := FImage;
@@ -303,6 +310,13 @@ begin
   if Assigned(AImage) then
     if (AImage.Width <> ANewWidth) or (AImage.Height <> ANewHeight) then
       AImage.StretchTrunc(ANewWidth, ANewHeight);
+end;
+
+function TRGB32BitmapCacheItem.CreateCopy: TPictureCacheItem;
+begin
+  Result:= TRGB32BitmapCacheItem.CreateEmpty;
+  TRGB32BitmapCacheItem(Result).FImage := TRGB32Bitmap.Create(FImage.Width, FImage.Height);
+  TRGB32BitmapCacheItem(Result).FImage.Assign(FImage);
 end;
 
 destructor TMvRGBGraphicsDrawingEngine.Destroy;
