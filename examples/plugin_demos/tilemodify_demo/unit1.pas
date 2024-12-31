@@ -191,15 +191,26 @@ begin
 end;
 
 procedure TForm1.rgModeClick(Sender: TObject);
+var
+  lmvOptions : TMapViewOptions;
 begin
   case rgMode.ItemIndex of
     0 : FTileModifyPlugin.ModifyMode := tmmNone;
     1 : FTileModifyPlugin.ModifyMode := tmmGrayScale;
     2 : FTileModifyPlugin.ModifyMode := tmmColorExchange;
     3 : FTileModifyPlugin.ModifyMode := tmmBrightnessContrast;
+  else
+    FTileModifyPlugin.ModifyMode := tmmNone;
   end;
   gbColorExchange.Enabled := (FTileModifyPlugin.ModifyMode = tmmColorExchange);
   gbBrightnessContrast.Enabled := (FTileModifyPlugin.ModifyMode = tmmBrightnessContrast);
+
+  lmvOptions := MapView1.Options;
+  if FTileModifyPlugin.ModifyMode = tmmNone then
+    Exclude(lmvOptions, mvoPluginCopyTiles)
+  else
+    Include(lmvOptions, mvoPluginCopyTiles);
+  MapView1.Options := lmvOptions;
   MapView1.Invalidate;
 end;
 //------------------------------------------------------------------------------
