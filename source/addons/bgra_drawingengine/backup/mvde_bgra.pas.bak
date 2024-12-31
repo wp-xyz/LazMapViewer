@@ -29,12 +29,11 @@ type
   private
     FImage: TBGRABitmap;
     function GetImage: TBGRABitmap;
-    constructor CreateEmpty;
   protected
     function GetImageObject: TObject; override;
     procedure StretchImageIfNeeded(var AImage: TBGRABitmap; ANewWidth, ANewHeight: Integer);
   public
-    function CreateCopy : TPictureCacheItem; override;
+    constructor Create(APictureCacheItem : TPictureCacheItem); override;
     constructor Create(AStream: TStream); override;
     destructor Destroy; override;
     property Image: TBGRABitmap read GetImage;
@@ -125,10 +124,6 @@ begin
   Result := FImage;
 end;
 
-constructor TBGRABitmapCacheItem.CreateEmpty;
-begin
-  inherited;
-end;
 
 constructor TBGRABitmapCacheItem.Create(AStream: TStream);
 var
@@ -168,11 +163,13 @@ begin
   end;
 end;
 
-function TBGRABitmapCacheItem.CreateCopy: TPictureCacheItem;
+constructor TBGRABitmapCacheItem.Create(APictureCacheItem: TPictureCacheItem);
 begin
-  Result:= TBGRABitmapCacheItem.CreateEmpty;
-  TBGRABitmapCacheItem(Result).FImage :=
-  FImage
+  inherited;
+  if not (APictureCacheItem is TBGRABitmapCacheItem) then
+    raise EMvCacheException.Create('Passed APictureCacheItem is not of type TBGRABitmapCacheItem!');
+  FImage := TBGRABitmap.Create(APictureCacheItem.FImage.Height, APictureCacheItem.FImage.Width);
+  FImage.Assign(APictureCacheItem.FImage);
 end;
 
 destructor TBGRABitmapCacheItem.Destroy;

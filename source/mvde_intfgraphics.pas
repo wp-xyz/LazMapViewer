@@ -28,12 +28,11 @@ type
   private
     FImage: TLazIntfImage;
     function GetImage: TLazIntfImage;
-    constructor CreateEmpty;
   protected
     function GetImageObject: TObject; override;
     procedure StretchImageIfNeeded(var AImage: TLazIntfImage; ANewWidth, ANewHeight: Integer);
   public
-    function CreateCopy : TPictureCacheItem; override;
+    constructor Create(ASource : TPictureCacheItem); override;
     constructor Create(AStream: TStream); override;
     destructor Destroy; override;
     property Image: TLazIntfImage read GetImage;
@@ -183,11 +182,6 @@ begin
   Result := FImage;
 end;
 
-constructor TLazIntfImageCacheItem.CreateEmpty;
-begin
-  inherited;
-end;
-
 function TLazIntfImageCacheItem.GetImageObject: TObject;
 begin
   Result := FImage;
@@ -252,11 +246,15 @@ begin
   end;
 end;
 
-function TLazIntfImageCacheItem.CreateCopy: TPictureCacheItem;
+constructor TLazIntfImageCacheItem.Create(ASource: TPictureCacheItem);
+var
+  src : TLazIntfImageCacheItem absolute ASource;
 begin
-  Result:= TLazIntfImageCacheItem.CreateEmpty;
-  TLazIntfImageCacheItem(Result).FImage := TLazIntfImage.CreateCompatible(FImage,FImage.Width,FImage.Height);
-  TLazIntfImageCacheItem(Result).FImage.Assign(FImage);
+  inherited;
+  if not (ASource is TLazIntfImageCacheItem) then
+    raise EMvCacheException.Create('Passed APictureCacheItem is not of type TLazIntfImageCacheItem!');
+  FImage := TLazIntfImage.CreateCompatible(src.FImage,src.FImage.Width,src.FImage.Height);
+  FImage.Assign(src.FImage);
 end;
 
 

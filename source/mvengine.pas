@@ -1190,7 +1190,7 @@ begin
                 if FCreateTempTileCopy then
                 begin
                   // If a local copy is needed, create one
-                  tmpImg := previewImg.CreateCopy;
+                  tmpImg := Cache.CacheItemClass.Create(previewImg);
                   // replace the pointer to the original image by the copy
                   previewImg := tmpImg;
                 end;
@@ -1441,7 +1441,7 @@ begin
        // if a local copy is needed, create one
        if FCreateTempTileCopy then
        begin
-         tmpImg := img.CreateCopy;
+         tmpImg := Cache.CacheItemClass.Create(img);
          img := tmpImg; // Replace the pointer to the cached image by the copy
        end;
        if Assigned(FTileAfterGetFromCacheEvent) then
