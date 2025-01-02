@@ -25,7 +25,7 @@
           </Target>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
-            <OtherUnitFiles Value="..\..\..\source\addons\plugins\tilemodify;..\..\..\source\addons\bgra_drawingengine;..\..\..\source\addons\rgbgraphics_drawingengine"/>
+            <OtherUnitFiles Value="..\..\..\source\addons\plugins\tilemodify;..\..\..\source\addons\bgra_drawingengine;..\..\..\source\addons\rgbgraphics_drawingengine;C:\ComponentsLazarus\epiktimer\"/>
             <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
           </SearchPaths>
           <Parsing>

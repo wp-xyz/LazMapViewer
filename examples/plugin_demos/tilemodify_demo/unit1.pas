@@ -30,8 +30,10 @@ type
     Label1: TLabel;
     Label2: TLabel;
     Label3: TLabel;
+    Label4: TLabel;
     Label5: TLabel;
     Label6: TLabel;
+    lblMsPerTile: TLabel;
     MapView1: TMapView;
     MvPluginManager1: TMvPluginManager;
     Panel1: TPanel;
@@ -46,6 +48,7 @@ type
     procedure cbDrawingEngineChange(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
+    procedure MapView1AfterPaint(Sender: TObject);
     procedure rgModeClick(Sender: TObject);
     procedure shpOrgColorMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
@@ -167,6 +170,7 @@ end;
 
 procedure TForm1.cbDrawingEngineChange(Sender: TObject);
 begin
+  FTileModifyPlugin.ResetMilliSecondsPerTile;
   case cbDrawingEngine.ItemIndex of
     1 : MapView1.DrawingEngine := FMvBGRADrawingEngine;
     2 : MapView1.DrawingEngine := FMvRGBGraphicsDrawingEngine;
@@ -188,6 +192,12 @@ procedure TForm1.FormDestroy(Sender: TObject);
 begin
   if (mHook <> 0) then
     UnhookWindowsHookEx(mHook);
+end;
+
+procedure TForm1.MapView1AfterPaint(Sender: TObject);
+begin
+  if Assigned(FTileModifyPlugin) then
+    lblMsPerTile.Caption := Format('%1.4f ms',[FTileModifyPlugin.MilliSecondsPerTile]);
 end;
 
 procedure TForm1.rgModeClick(Sender: TObject);

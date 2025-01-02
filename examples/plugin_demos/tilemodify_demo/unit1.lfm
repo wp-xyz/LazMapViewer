@@ -8,7 +8,7 @@ object Form1: TForm1
   ClientWidth = 490
   OnCreate = FormCreate
   OnDestroy = FormDestroy
-  LCLVersion = '3.4.0.0'
+  LCLVersion = '3.6.0.0'
   object MapView1: TMapView
     Left = 144
     Height = 359
@@ -30,6 +30,7 @@ object Form1: TForm1
     Font.Color = clBlack
     MapProvider = 'OpenStreetMap Mapnik'
     PluginManager = MvPluginManager1
+    OnAfterPaint = MapView1AfterPaint
   end
   object Panel1: TPanel
     Left = 0
@@ -209,6 +210,20 @@ object Form1: TForm1
         Text = 'Default (LazIntfImg)'
         OnChange = cbDrawingEngineChange
       end
+    end
+    object Label4: TLabel
+      Left = 8
+      Height = 15
+      Top = 336
+      Width = 39
+      Caption = 'ms/Tile'
+    end
+    object lblMsPerTile: TLabel
+      Left = 64
+      Height = 15
+      Top = 336
+      Width = 18
+      Caption = 'n/a'
     end
   end
   object MvPluginManager1: TMvPluginManager

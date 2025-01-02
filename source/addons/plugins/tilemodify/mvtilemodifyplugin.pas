@@ -12,6 +12,8 @@ unit mvtilemodifyplugin;
 
 interface
 
+{$define USE_EPIKTIMER}
+
 uses
   Classes, SysUtils,
   Graphics, Controls, LCLIntf, //LazLoggerBase,
@@ -19,7 +21,9 @@ uses
   mvMapProvider, mvCache,
   FPImage, IntfGraphics, mvDE_IntfGraphics,
   BGRABitmap, BGRABitmapTypes, mvDE_BGRA,
-  RGBGraphics, mvDE_RGBGraphics;
+  RGBGraphics, mvDE_RGBGraphics
+  {$ifdef USE_EPIKTIMER}, epiktimer{$endif}
+  ;
 type
 
   { TTileModifyPlugin }
@@ -32,6 +36,10 @@ type
     FSameColorRange : Single;
     FBrightness : Single;
     FContrast : Single;
+    FMilliSecondsPerTile : Single;
+    FTileCount : Integer;
+    {$ifdef USE_EPIKTIMER}FEpikTimer : TEpikTimer;{$endif}
+
     function LimitToOne(Value : Single) : Single;
     procedure SetSameColorRange(Value : Single);
     procedure SetBrightness(Value : Single);
@@ -54,10 +62,14 @@ type
     property Contrast : Single read FContrast write SetContrast;
 
   public
-
+    property MilliSecondsPerTile : Single read FMilliSecondsPerTile;
+    procedure ResetMilliSecondsPerTile;
+    constructor Create(AOwner: TComponent); override;
   end;
 
 implementation
+const
+  TileCountMax = 25;
 
 { TTileModifyPlugin }
 
@@ -243,7 +255,19 @@ var
   n: integer;
   lRGB32Bitmap : TRGB32Bitmap;
   cnt : Integer;
+  {$ifndef USE_EPIKTIMER}
+    t0, t1 : Int64;
+  {$endif}
+  ms : Double;
+  partd : Double;
 begin
+  {$ifdef USE_EPIKTIMER}
+    FEpikTimer.Clear;
+    FEpikTimer.Start;
+  {$else}
+    t0 := GetTickCount;
+  {$endif}
+
   Unused(AMapView, AMapProvider);
   Unused(ATileID,Handled);
   case FModifyMode of
@@ -277,12 +301,7 @@ begin
           end
           else if ATileImg is TBGRABitmapCacheItem then
           begin
-            lBGRABitmap := TBGRABitmapCacheItem(ATileImg).Image.FilterGrayscale;
-            try
-              TBGRABitmapCacheItem(ATileImg).Image.Assign(lBGRABitmap);
-            finally
-              lBGRABitmap.Free;
-            end;
+            TBGRABitmapCacheItem(ATileImg).Image.InplaceGrayscale();
           end
           else if ATileImg is TRGB32BitmapCacheItem then
           begin
@@ -449,6 +468,30 @@ begin
   else
     // tmmNone :;
   end;
+  {$ifdef USE_EPIKTIMER}
+    FEpikTimer.Stop;
+    ms := FEpikTimer.Elapsed*1000.0;
+  {$else}
+    t1 := GetTickCount;
+    ms := t1-t0;
+  {$endif}
+  partd := ((TileCountMax-FTileCount)/TileCountMax);
+  FMilliSecondsPerTile := (FMilliSecondsPerTile*(1.0-partd))+
+                          (ms*partd);
+  if FTileCount < TileCountMax-1 then
+    Inc(FTileCount);
+end;
+
+procedure TTileModifyPlugin.ResetMilliSecondsPerTile;
+begin
+  FTileCount := 0;
+  FMilliSecondsPerTile := 0.0;
+end;
+
+constructor TTileModifyPlugin.Create(AOwner: TComponent);
+begin
+  inherited;
+  {$ifdef USE_EPIKTIMER}FEpikTimer := TEpikTimer.Create(Self);{$endif}
 end;
 
 initialization
