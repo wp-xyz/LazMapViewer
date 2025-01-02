@@ -22,6 +22,7 @@ type
 
   TForm1 = class(TForm)
     btnResetBrightnessContrast: TButton;
+    btnInvalidate: TButton;
     ColorDialog1: TColorDialog;
     cbDrawingEngine: TComboBox;
     gbColorExchange: TGroupBox;
@@ -44,6 +45,7 @@ type
     timerColorPick: TTimer;
     tbColorThresh: TTrackBar;
     tbBrightness: TTrackBar;
+    procedure btnInvalidateClick(Sender: TObject);
     procedure btnResetBrightnessContrastClick(Sender: TObject);
     procedure cbDrawingEngineChange(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -188,6 +190,11 @@ begin
   MapView1.Invalidate;
 end;
 
+procedure TForm1.btnInvalidateClick(Sender: TObject);
+begin
+  MapView1.Invalidate;
+end;
+
 procedure TForm1.FormDestroy(Sender: TObject);
 begin
   if (mHook <> 0) then
@@ -197,7 +204,7 @@ end;
 procedure TForm1.MapView1AfterPaint(Sender: TObject);
 begin
   if Assigned(FTileModifyPlugin) then
-    lblMsPerTile.Caption := Format('%1.4f ms',[FTileModifyPlugin.MilliSecondsPerTile]);
+    lblMsPerTile.Caption := Format('%1.4f ms %s(%d Tiles)',[FTileModifyPlugin.MilliSecondsPerTile, #13#10, FTileModifyPlugin.AvgTileCount+1]);
 end;
 
 procedure TForm1.rgModeClick(Sender: TObject);
@@ -214,6 +221,8 @@ begin
   end;
   gbColorExchange.Enabled := (FTileModifyPlugin.ModifyMode = tmmColorExchange);
   gbBrightnessContrast.Enabled := (FTileModifyPlugin.ModifyMode = tmmBrightnessContrast);
+
+  FTileModifyPlugin.ResetMilliSecondsPerTile;
 
   lmvOptions := MapView1.Options;
   if FTileModifyPlugin.ModifyMode = tmmNone then

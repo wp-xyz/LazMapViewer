@@ -37,7 +37,7 @@ type
     FBrightness : Single;
     FContrast : Single;
     FMilliSecondsPerTile : Single;
-    FTileCount : Integer;
+    FAvgTileCount : Integer;
     {$ifdef USE_EPIKTIMER}FEpikTimer : TEpikTimer;{$endif}
 
     function LimitToOne(Value : Single) : Single;
@@ -63,13 +63,14 @@ type
 
   public
     property MilliSecondsPerTile : Single read FMilliSecondsPerTile;
+    property AvgTileCount : Integer read FAvgTileCount write FAvgTileCount;
     procedure ResetMilliSecondsPerTile;
     constructor Create(AOwner: TComponent); override;
   end;
 
 implementation
 const
-  TileCountMax = 25;
+  TileCountMax = 128;
 
 { TTileModifyPlugin }
 
@@ -261,6 +262,8 @@ var
   ms : Double;
   partd : Double;
 begin
+  if Assigned(ATileLayer) then Exit;
+
   {$ifdef USE_EPIKTIMER}
     FEpikTimer.Clear;
     FEpikTimer.Start;
@@ -475,16 +478,16 @@ begin
     t1 := GetTickCount;
     ms := t1-t0;
   {$endif}
-  partd := ((TileCountMax-FTileCount)/TileCountMax);
+  partd := ((TileCountMax-FAvgTileCount)/TileCountMax);
   FMilliSecondsPerTile := (FMilliSecondsPerTile*(1.0-partd))+
                           (ms*partd);
-  if FTileCount < TileCountMax-1 then
-    Inc(FTileCount);
+  if FAvgTileCount < TileCountMax-1 then
+    Inc(FAvgTileCount);
 end;
 
 procedure TTileModifyPlugin.ResetMilliSecondsPerTile;
 begin
-  FTileCount := 0;
+  FAvgTileCount := 0;
   FMilliSecondsPerTile := 0.0;
 end;
 

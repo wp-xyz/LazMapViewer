@@ -1,19 +1,19 @@
 object Form1: TForm1
   Left = 314
-  Height = 359
+  Height = 427
   Top = 130
-  Width = 490
+  Width = 597
   Caption = 'Tile Modify Demo'
-  ClientHeight = 359
-  ClientWidth = 490
+  ClientHeight = 427
+  ClientWidth = 597
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   LCLVersion = '3.6.0.0'
   object MapView1: TMapView
     Left = 144
-    Height = 359
+    Height = 427
     Top = 0
-    Width = 346
+    Width = 453
     Active = True
     Align = alClient
     DownloadEngine = MapView1.BuiltInDLE
@@ -34,11 +34,11 @@ object Form1: TForm1
   end
   object Panel1: TPanel
     Left = 0
-    Height = 359
+    Height = 427
     Top = 0
     Width = 144
     Align = alLeft
-    ClientHeight = 359
+    ClientHeight = 427
     ClientWidth = 144
     TabOrder = 1
     object rgMode: TRadioGroup
@@ -219,11 +219,20 @@ object Form1: TForm1
       Caption = 'ms/Tile'
     end
     object lblMsPerTile: TLabel
-      Left = 64
+      Left = 56
       Height = 15
       Top = 336
       Width = 18
       Caption = 'n/a'
+    end
+    object btnInvalidate: TButton
+      Left = 8
+      Height = 25
+      Top = 368
+      Width = 75
+      Caption = 'Repaint'
+      TabOrder = 4
+      OnClick = btnInvalidateClick
     end
   end
   object MvPluginManager1: TMvPluginManager
