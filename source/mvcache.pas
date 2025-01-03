@@ -63,6 +63,9 @@ Type
      Function DiskCached(const aFileName: String): Boolean;
      procedure LoadFromDisk(const aFileName: String; out item: TPictureCacheItem);
      Function GetFileName(MapProvider: TMapProvider; const TileId: TTileId): String;
+     { procedure Add allows the insertion of an existing TPictureCacheItem.
+       CAUTION: This will not create any File on Disk!! }
+     procedure Add(MapProvider: TMapProvider; const TileId: TTileId; const Item: TPictureCacheItem);
    public
      Procedure CheckCacheSize(Sender: TObject);
      constructor Create(aOwner: TComponent); override;
@@ -325,6 +328,33 @@ begin
   else
     Result := SetDirSeparators(Format('%s/%d/%d_%d', [prov, TileID.Z, TileID.X, TileID.Y]));
 end;
+
+procedure TPictureCache.Add(MapProvider: TMapProvider; const TileId: TTileId;
+  const Item: TPictureCacheItem);
+var
+  FileName: String;
+  idx: integer;
+begin
+  if not Assigned(Item) then Exit;
+  FileName := GetFileName(MapProvider, TileId);
+  EnterCrit;
+  try
+    idx := Cache.IndexOf(FileName);
+    if idx <> -1 then
+      Cache.Objects[idx].Free
+    else
+    begin
+      Cache.Insert(0, FileName);
+      idx := 0;
+    end;
+    Cache.Objects[idx]:=item;
+  finally
+    LeaveCrit;
+  end;
+  //   if UseDisk then
+  // What to do here? Exception, Ignoring
+end;
+
 
 procedure TPictureCache.CheckCacheSize(Sender: TObject);
 var

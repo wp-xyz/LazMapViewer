@@ -34,7 +34,7 @@ uses
   Classes, SysUtils,
   Graphics, Controls, LCLIntf, //LazLoggerBase,
   mvMapViewer, mvPluginCore,  mvTypes,
-  mvMapProvider, mvCache,
+  mvMapProvider, mvDrawingEngine, mvCache,
   FPImage, IntfGraphics, mvDE_IntfGraphics,
   uYCbCrTools
   {$ifdef USE_BGRA}, BGRABitmap, BGRABitmapTypes, mvDE_BGRA {$endif}
@@ -43,10 +43,20 @@ uses
   ;
 type
 
+  { TTileModifyPluginPictureCache }
+
+  TTileModifyPluginPictureCache = class(TPictureCache)
+  public
+    procedure ClearCache;
+    procedure Add(MapProvider: TMapProvider; const TileId: TTileId; const Item: TPictureCacheItem);
+  end;
+
   { TTileModifyPlugin }
   TTileModifyMode = (tmmNone, tmmGrayScale, tmmColorExchange, tmmBrightnessContrast);
   TTileModifyPlugin = class(TMvCustomPlugin)
   private
+    FCurrentDrawingEngine : TMvCustomDrawingEngine;
+    FInternalPictureCache : TTileModifyPluginPictureCache;
     FModifyMode : TTileModifyMode;
     FOrgColor : TColor;
     FExchangeColor : TColor;
@@ -55,9 +65,12 @@ type
     FContrast : Single;
     FMilliSecondsPerTile : Single;
     FAvgTileCount : Integer;
+    FUseCache : Boolean;
     {$ifdef USE_EPIKTIMER}FEpikTimer : TEpikTimer;{$endif}
 
     function LimitToOne(Value : Single) : Single;
+    procedure SetUseCache(Value : Boolean);
+    procedure SetModifyMode(Value : TTileModifyMode);
     procedure SetSameColorRange(Value : Single);
     procedure SetBrightness(Value : Single);
     procedure SetContrast(Value : Single);
@@ -70,7 +83,7 @@ type
       AMapProvider: TMapProvider; ATileID: TTileID; ATileImg: TPictureCacheItem;
       var Handled: Boolean); override;
   published
-    property ModifyMode : TTileModifyMode read FModifyMode write FModifyMode;
+    property ModifyMode : TTileModifyMode read FModifyMode write SetModifyMode;
     property MapView;
     // For the color exchange three values have to be set
     // The original color, the color to be painted instead
@@ -81,7 +94,7 @@ type
     property SameColorRange : Single read FSameColorRange write SetSameColorRange;
     property Brightness : Single read FBrightness write SetBrightness;
     property Contrast : Single read FContrast write SetContrast;
-
+    property UseCache : Boolean read FUseCache write SetUseCache;
   public
     property MilliSecondsPerTile : Single read FMilliSecondsPerTile;
     property AvgTileCount : Integer read FAvgTileCount write FAvgTileCount;
@@ -117,6 +130,19 @@ begin
             (Abs(Blue(AColor)-BColor.Blue) <= dw);
 end;
 
+{ TTileModifyPluginPictureCache }
+
+procedure TTileModifyPluginPictureCache.ClearCache;
+begin
+  inherited ClearCache;
+end;
+
+procedure TTileModifyPluginPictureCache.Add(MapProvider: TMapProvider;
+  const TileId: TTileId; const Item: TPictureCacheItem);
+begin
+  inherited Add(MapProvider,TileId,Item);
+end;
+
 { TTileModifyPlugin }
 
 function TTileModifyPlugin.LimitToOne(Value: Single): Single;
@@ -129,19 +155,58 @@ begin
     Result := Value;
 end;
 
-procedure TTileModifyPlugin.SetSameColorRange(Value: Single);
+procedure TTileModifyPlugin.SetUseCache(Value: Boolean);
 begin
-  FSameColorRange := LimitToOne(Value);
+  if Value <> FUseCache then
+  begin
+    FUseCache := Value;
+    FInternalPictureCache.ClearCache;
+  end;
+end;
+
+procedure TTileModifyPlugin.SetModifyMode(Value: TTileModifyMode);
+begin
+  if Value <> FModifyMode then
+  begin
+    FModifyMode := Value;
+    FInternalPictureCache.ClearCache;
+  end;
+end;
+
+procedure TTileModifyPlugin.SetSameColorRange(Value: Single);
+var
+  newv : Single;
+begin
+  newv := LimitToOne(Value);
+  if newv <> FSameColorRange then
+  begin
+    FSameColorRange := newv;
+    FInternalPictureCache.ClearCache;
+  end;
 end;
 
 procedure TTileModifyPlugin.SetBrightness(Value: Single);
+var
+  newv : Single;
 begin
-  FBrightness := LimitToOne(Value);
+  newv := LimitToOne(Value);
+  if newv <> FBrightness then
+  begin
+    FBrightness := newv;
+    FInternalPictureCache.ClearCache;
+  end;
 end;
 
 procedure TTileModifyPlugin.SetContrast(Value: Single);
+var
+  newv : Single;
 begin
-  FContrast := LimitToOne(Value);
+  newv := LimitToOne(Value);
+  if newv <> FContrast then
+  begin
+    FContrast := newv;
+    FInternalPictureCache.ClearCache;
+  end;
 end;
 
 procedure TTileModifyPlugin.ProcessTileLazIntfImg(
@@ -210,9 +275,9 @@ begin
               begin
                 lTmpFPClr := ALazIntfImg.Colors[x, y];
                 lTmpClr := FPColorToTColor(lTmpFPClr);
-                RGBToYCbCr(lTmpClr.Red,lTmpClr.Green,lTmpClr.Blue,yc,cr,cb);
+                RGBToYCbCrInline(lTmpClr.Red,lTmpClr.Green,lTmpClr.Blue,yc,cr,cb);
                 YCbCrContrastBrightness(yc,cr,cb,FContrast,FBrightness);
-                YCbCrToRGB(yc,cr,cb,rb,gb,bb);
+                YCbCrToRGBInline(yc,cr,cb,rb,gb,bb);
                 lTmpClr := RGB(rb,gb,bb);
                 lTmpFPClr := TColorToFPColor(lTmpClr);
                 ALazIntfImg.Colors[x, y] := lTmpFPClr;
@@ -266,9 +331,9 @@ begin
           plBGRAPixel := ABGRABitmap.Data;
           for n := ABGRABitmap.NbPixels-1 downto 0 do
           begin
-            RGBToYCbCr(plBGRAPixel^.red,plBGRAPixel^.green,plBGRAPixel^.blue,yc,cr,cb);
+            RGBToYCbCrInline(plBGRAPixel^.red,plBGRAPixel^.green,plBGRAPixel^.blue,yc,cr,cb);
             YCbCrContrastBrightness(yc,cr,cb,FContrast,FBrightness);
-            YCbCrToRGB(yc,cr,cb,plBGRAPixel^.red,plBGRAPixel^.green,plBGRAPixel^.blue);
+            YCbCrToRGBInline(yc,cr,cb,plBGRAPixel^.red,plBGRAPixel^.green,plBGRAPixel^.blue);
             Inc(plBGRAPixel);
           end;
           ABGRABitmap.InvalidateBitmap;   // note that we have accessed pixels directly
@@ -331,9 +396,9 @@ begin
             lPixelClr.red := Red(clr);
             lPixelClr.green := Green(clr);
             lPixelClr.blue := Blue(clr);
-            RGBToYCbCr(lPixelClr.red,lPixelClr.green,lPixelClr.blue,yc,cr,cb);
+            RGBToYCbCrInline(lPixelClr.red,lPixelClr.green,lPixelClr.blue,yc,cr,cb);
             YCbCrContrastBrightness(yc,cr,cb,FContrast,FBrightness);
-            YCbCrToRGB(yc,cr,cb,lPixelClr.red,lPixelClr.green,lPixelClr.blue);
+            YCbCrToRGBInline(yc,cr,cb,lPixelClr.red,lPixelClr.green,lPixelClr.blue);
             clr := RGB(lPixelClr.red,lPixelClr.green,lPixelClr.blue);
             plBGRAPixel^ := ColorToRGB32Pixel(clr);
             Inc(plBGRAPixel);
@@ -359,8 +424,9 @@ var
   {$endif}
   ms : Double;
   partd : Double;
+  picitem : TPictureCacheItem;
 begin
-  Unused(AMapView, AMapProvider);
+  Unused(AMapView);
   Unused(ATileID,Handled);
 
   if Assigned(ATileLayer) then Exit;
@@ -373,17 +439,56 @@ begin
     t0 := GetTickCount;
   {$endif}
 
-  if ATileImg is TLazIntfImageCacheItem then
-    ProcessTileLazIntfImg(TLazIntfImageCacheItem(ATileImg).Image)
-  {$ifdef USE_BGRA}
-  else if ATileImg is TBGRABitmapCacheItem then
-    ProcessTileBRGA(TBGRABitmapCacheItem(ATileImg).Image)
-  {$endif}
-  {$ifdef USE_RGB32}
-  else if ATileImg is TRGB32BitmapCacheItem then
-    ProcessTileRGB32(TRGB32BitmapCacheItem(ATileImg).Image)
-  {$endif}
-  ;
+  if FCurrentDrawingEngine <> MapView.DrawingEngine then
+  begin
+    FInternalPictureCache.ClearCache;
+    FCurrentDrawingEngine := MapView.DrawingEngine;
+  end;
+
+  if FUseCache and FInternalPictureCache.InCache(AMapProvider,ATileID) then
+  begin
+    FInternalPictureCache.GetFromCache(AMapProvider,ATileID,picitem);
+    if ATileImg is TLazIntfImageCacheItem then
+      TLazIntfImageCacheItem(ATileImg).Image.Assign(TLazIntfImageCacheItem(picitem).Image)
+    {$ifdef USE_BGRA}
+    else if ATileImg is TBGRABitmapCacheItem then
+      TBGRABitmapCacheItem(ATileImg).Image.Assign(TBGRABitmapCacheItem(picitem).Image)
+    {$endif}
+    {$ifdef USE_RGB32}
+    else if ATileImg is TRGB32BitmapCacheItem then
+      TRGB32BitmapCacheItem(ATileImg).Image.Assign(TRGB32BitmapCacheItem(picitem).Image)
+    {$endif}
+    ;
+  end
+  else
+  begin
+    picitem := Nil;
+    if ATileImg is TLazIntfImageCacheItem then
+    begin
+      ProcessTileLazIntfImg(TLazIntfImageCacheItem(ATileImg).Image);
+      if FUseCache then
+        picitem := TLazIntfImageCacheItem.Create(ATileImg);
+    end
+    {$ifdef USE_BGRA}
+    else if ATileImg is TBGRABitmapCacheItem then
+    begin
+      ProcessTileBRGA(TBGRABitmapCacheItem(ATileImg).Image);
+      if FUseCache then
+        picitem := TBGRABitmapCacheItem.Create(ATileImg);
+    end
+    {$endif}
+    {$ifdef USE_RGB32}
+    else if ATileImg is TRGB32BitmapCacheItem then
+    begin
+      ProcessTileRGB32(TRGB32BitmapCacheItem(ATileImg).Image);
+      if FUseCache then
+        picitem := TRGB32BitmapCacheItem.Create(ATileImg);
+    end
+    {$endif}
+    ;
+    if Assigned(picitem) then
+      FInternalPictureCache.Add(AMapProvider,ATileID,picitem);
+  end;
 
   {$ifdef USE_EPIKTIMER}
     FEpikTimer.Stop;
@@ -392,6 +497,7 @@ begin
     t1 := GetTickCount;
     ms := t1-t0;
   {$endif}
+
   partd := ((TileCountMax-FAvgTileCount)/TileCountMax);
   FMilliSecondsPerTile := (FMilliSecondsPerTile*(1.0-partd))+
                           (ms*partd);
@@ -408,6 +514,9 @@ end;
 constructor TTileModifyPlugin.Create(AOwner: TComponent);
 begin
   inherited;
+  FInternalPictureCache := TTileModifyPluginPictureCache.Create(Self);
+  FInternalPictureCache.UseDisk:= False;
+
   {$ifdef USE_EPIKTIMER}FEpikTimer := TEpikTimer.Create(Self);{$endif}
 end;
 

@@ -23,10 +23,13 @@ type
   TForm1 = class(TForm)
     btnResetBrightnessContrast: TButton;
     btnInvalidate: TButton;
+    cbUseInternalCache: TCheckBox;
     ColorDialog1: TColorDialog;
     cbDrawingEngine: TComboBox;
     gbColorExchange: TGroupBox;
     gbBrightnessContrast: TGroupBox;
+    GroupBox1: TGroupBox;
+    GroupBox2: TGroupBox;
     GroupBox3: TGroupBox;
     Label1: TLabel;
     Label2: TLabel;
@@ -48,6 +51,7 @@ type
     procedure btnInvalidateClick(Sender: TObject);
     procedure btnResetBrightnessContrastClick(Sender: TObject);
     procedure cbDrawingEngineChange(Sender: TObject);
+    procedure cbUseInternalCacheClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure MapView1AfterPaint(Sender: TObject);
@@ -179,6 +183,11 @@ begin
   else
     MapView1.DrawingEngine := Nil;
   end;
+end;
+
+procedure TForm1.cbUseInternalCacheClick(Sender: TObject);
+begin
+  FTileModifyPlugin.UseCache := cbUseInternalCache.Checked;
 end;
 
 procedure TForm1.btnResetBrightnessContrastClick(Sender: TObject);
