@@ -24,6 +24,7 @@ type
     btnResetBrightnessContrast: TButton;
     btnInvalidate: TButton;
     cbUseInternalCache: TCheckBox;
+    cbShowRailwayLayer: TCheckBox;
     ColorDialog1: TColorDialog;
     cbDrawingEngine: TComboBox;
     gbColorExchange: TGroupBox;
@@ -51,6 +52,7 @@ type
     procedure btnInvalidateClick(Sender: TObject);
     procedure btnResetBrightnessContrastClick(Sender: TObject);
     procedure cbDrawingEngineChange(Sender: TObject);
+    procedure cbShowRailwayLayerChange(Sender: TObject);
     procedure cbUseInternalCacheClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
@@ -183,6 +185,11 @@ begin
   else
     MapView1.DrawingEngine := Nil;
   end;
+end;
+
+procedure TForm1.cbShowRailwayLayerChange(Sender: TObject);
+begin
+  MapView1.Layers[0].Visible:= cbShowRailwayLayer.Checked;
 end;
 
 procedure TForm1.cbUseInternalCacheClick(Sender: TObject);
