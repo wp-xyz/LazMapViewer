@@ -12,7 +12,23 @@ unit mvtilemodifyplugin;
 
 interface
 
+{ Activate USE_EPIKTIMER to include Epiktimer (https://wiki.lazarus.freepascal.org/EpikTimer)
+  for a precise timing measurement.
+  If not activated the timing measurement is much less precise.}
 {$define USE_EPIKTIMER}
+
+{ Activate USE_BGRA if your application uses the mvDE_BGRA drawing engine.
+  If not activated, the plugin is not able to perform on the tiles of this drawinmg engine.
+  If activated, but the drawing engine is not used, a lot of unused code is compiled into
+  the target application.
+}
+{$define USE_BGRA}
+{ Activate USE_RGB32 if your application uses the mvDE_RGBGraphics drawing engine.
+  If not activated, the plugin is not able to perform on the tiles of this drawinmg engine.
+  If activated, but the drawing engine is not used, a lot of unused code is compiled into
+  the target application.
+}
+{$define USE_RGB32}
 
 uses
   Classes, SysUtils,
@@ -20,8 +36,9 @@ uses
   mvMapViewer, mvPluginCore,  mvTypes,
   mvMapProvider, mvCache,
   FPImage, IntfGraphics, mvDE_IntfGraphics,
-  BGRABitmap, BGRABitmapTypes, mvDE_BGRA,
-  RGBGraphics, mvDE_RGBGraphics
+  uYCbCrTools
+  {$ifdef USE_BGRA}, BGRABitmap, BGRABitmapTypes, mvDE_BGRA {$endif}
+  {$ifdef USE_RGB32}, RGBGraphics, RGBTypes, mvDE_RGBGraphics {$endif}
   {$ifdef USE_EPIKTIMER}, epiktimer{$endif}
   ;
 type
@@ -44,6 +61,10 @@ type
     procedure SetSameColorRange(Value : Single);
     procedure SetBrightness(Value : Single);
     procedure SetContrast(Value : Single);
+    procedure ProcessTileLazIntfImg(const ALazIntfImg: TLazIntfImage);
+    {$ifdef USE_BGRA}procedure ProcessTileBRGA(const ABGRABitmap : TBGRABitmap);{$endif}
+    {$ifdef USE_RGB32}procedure ProcessTileRGB32(const ARGB32Bitmap : TRGB32Bitmap);{$endif}
+
   protected
     procedure TileAfterGetFromCache(AMapView: TMapView; ATileLayer: TGPSTileLayerBase;
       AMapProvider: TMapProvider; ATileID: TTileID; ATileImg: TPictureCacheItem;
@@ -72,6 +93,30 @@ implementation
 const
   TileCountMax = 128;
 
+type
+  TPluginRGBPixel = packed record
+    blue, green, red, alpha: Byte;
+  end;
+
+function IsCloseToFPColor(const AColor, BColor : TFPColor; const ASameColorRange : Single) : Boolean;
+var
+  dw : Word;
+begin
+  dw := Trunc($FFFF * ASameColorRange);
+  Result := (Abs(AColor.Red-BColor.Red) <= dw) and
+            (Abs(AColor.Green-BColor.Green) <= dw) and
+            (Abs(AColor.Blue-BColor.Blue) <= dw);
+end;
+function IsCloseToBGRAPixel(const AColor : TColor; const BColor : TPluginRGBPixel; const ASameColorRange : Single) : Boolean;
+var
+  dw : Word;
+begin
+  dw := Trunc($FF * ASameColorRange);
+  Result := (Abs(Red(AColor)-BColor.Red) <= dw) and
+            (Abs(Green(AColor)-BColor.Green) <= dw) and
+            (Abs(Blue(AColor)-BColor.Blue) <= dw);
+end;
+
 { TTileModifyPlugin }
 
 function TTileModifyPlugin.LimitToOne(Value: Single): Single;
@@ -99,170 +144,227 @@ begin
   FContrast := LimitToOne(Value);
 end;
 
+procedure TTileModifyPlugin.ProcessTileLazIntfImg(
+  const ALazIntfImg: TLazIntfImage);
+var
+  x, y: Integer;
+  lTmpFPClr: TFPColor;
+  lTmpClr : TColor;
+  Gray: Word;
+  r,g,b : Double;
+  yc,cr,cb : Double;
+  rb, gb, bb : Byte;
+  lOldClr, lNewClr : TFPColor;
+begin
+  case FModifyMode of
+    tmmGrayScale :
+      begin
+        ALazIntfImg.BeginUpdate;
+        try
+          r := 0.30;
+          g := 0.59;
+          b := 0.11;
+          for y := 0 to ALazIntfImg.Height - 1 do
+            for x := 0 to ALazIntfImg.Width - 1 do
+            begin
+              lTmpFPClr := ALazIntfImg.Colors[x, y];
+
+              Gray := Round(lTmpFPClr.Red * R + lTmpFPClr.Green * G + lTmpFPClr.Blue * B);
+              lTmpFPClr.Red := Gray;
+              lTmpFPClr.Green := Gray;
+              lTmpFPClr.Blue := Gray;
+              ALazIntfImg.Colors[x, y] := lTmpFPClr;
+            end;
+        finally
+          ALazIntfImg.EndUpdate;
+        end;
+      end;
+    tmmColorExchange :
+      begin
+        if FOrgColor = FExchangeColor then Exit;
+        lOldClr := TColorToFPColor(FOrgColor);
+        lNewClr := TColorToFPColor(FExchangeColor);
+        ALazIntfImg.BeginUpdate;
+        try
+          for y := 0 to ALazIntfImg.Height - 1 do
+            for x := 0 to ALazIntfImg.Width - 1 do
+            begin
+              lTmpFPClr := ALazIntfImg.Colors[x, y];
+              if IsCloseToFPColor(lTmpFPClr,lOldClr,FSameColorRange) then
+                lTmpFPClr := lNewClr;
+              ALazIntfImg.Colors[x, y] := lTmpFPClr;
+            end;
+        finally
+          ALazIntfImg.EndUpdate;
+        end;
+      end;
+    tmmBrightnessContrast :
+      begin
+        if (FBrightness <> 0.5) or
+           (FContrast <> 0.5) then
+        begin
+          ALazIntfImg.BeginUpdate;
+          try
+            for y := 0 to ALazIntfImg.Height - 1 do
+              for x := 0 to ALazIntfImg.Width - 1 do
+              begin
+                lTmpFPClr := ALazIntfImg.Colors[x, y];
+                lTmpClr := FPColorToTColor(lTmpFPClr);
+                RGBToYCbCr(lTmpClr.Red,lTmpClr.Green,lTmpClr.Blue,yc,cr,cb);
+                YCbCrContrastBrightness(yc,cr,cb,FContrast,FBrightness);
+                YCbCrToRGB(yc,cr,cb,rb,gb,bb);
+                lTmpClr := RGB(rb,gb,bb);
+                lTmpFPClr := TColorToFPColor(lTmpClr);
+                ALazIntfImg.Colors[x, y] := lTmpFPClr;
+              end;
+          finally
+            ALazIntfImg.EndUpdate;
+          end;
+        end;
+      end;
+  else
+    // tmmNone :;
+  end;
+end;
+{$ifdef USE_BGRA}
+procedure TTileModifyPlugin.ProcessTileBRGA(const ABGRABitmap: TBGRABitmap);
+var
+  plBGRAPixel: PBGRAPixel;
+  lNewBGRAPixelClr : TPluginRGBPixel;
+  n: integer;
+  yc,cr,cb : Double;
+begin
+  case FModifyMode of
+    tmmGrayScale :
+      begin
+        ABGRABitmap.InplaceGrayscale();
+      end;
+    tmmColorExchange :
+      begin
+        if FOrgColor = FExchangeColor then Exit;
+        plBGRAPixel := ABGRABitmap.Data;
+        for n := ABGRABitmap.NbPixels-1 downto 0 do
+        begin
+          lNewBGRAPixelClr.red:= plBGRAPixel^.red;
+          lNewBGRAPixelClr.green:= plBGRAPixel^.green;
+          lNewBGRAPixelClr.blue:= plBGRAPixel^.blue;
+          if IsCloseToBGRAPixel(FOrgColor,lNewBGRAPixelClr,FSameColorRange) then
+          begin
+            plBGRAPixel^.red := Red(FExchangeColor);
+            plBGRAPixel^.green := Green(FExchangeColor);
+            plBGRAPixel^.blue := Blue(FExchangeColor);
+          end;
+          Inc(plBGRAPixel);
+        end;
+        ABGRABitmap.InvalidateBitmap;   // note that we have accessed pixels directly
+      end;
+    tmmBrightnessContrast :
+      begin
+        if (FBrightness <> 0.5) or
+           (FContrast <> 0.5) then
+        begin
+          plBGRAPixel := ABGRABitmap.Data;
+          for n := ABGRABitmap.NbPixels-1 downto 0 do
+          begin
+            RGBToYCbCr(plBGRAPixel^.red,plBGRAPixel^.green,plBGRAPixel^.blue,yc,cr,cb);
+            YCbCrContrastBrightness(yc,cr,cb,FContrast,FBrightness);
+            YCbCrToRGB(yc,cr,cb,plBGRAPixel^.red,plBGRAPixel^.green,plBGRAPixel^.blue);
+            Inc(plBGRAPixel);
+          end;
+          ABGRABitmap.InvalidateBitmap;   // note that we have accessed pixels directly
+        end;
+      end;
+  else
+    // tmmNone :;
+  end;
+end;
+{$endif}
+{$ifdef USE_RGB32}
+procedure TTileModifyPlugin.ProcessTileRGB32(const ARGB32Bitmap: TRGB32Bitmap);
+var
+  plBGRAPixel: PRGB32Pixel;
+  lPixelClr : TPluginRGBPixel;
+  lNewBGRAPixelClr : TPluginRGBPixel;
+  n: integer;
+  cnt : Integer;
+  clr : TColor;
+  yc,cr,cb : Double;
+begin
+  case FModifyMode of
+    tmmGrayScale :
+      begin
+        ARGB32Bitmap.Grayscale;
+      end;
+    tmmColorExchange :
+      begin
+        if FOrgColor = FExchangeColor then Exit;
+        lNewBGRAPixelClr.red := Red(FExchangeColor);
+        lNewBGRAPixelClr.green := Green(FExchangeColor);
+        lNewBGRAPixelClr.blue := Blue(FExchangeColor);
+
+        plBGRAPixel := PRGB32Pixel(ARGB32Bitmap.Pixels);
+        cnt := ARGB32Bitmap.Height * ARGB32Bitmap.RowPixelStride; // * lRGB32Bitmap.SizeOfPixel;
+        for n := 0 to cnt-1 do
+        begin
+          clr := RGB32PixelToColor(plBGRAPixel^);
+          lPixelClr.red := Red(clr);
+          lPixelClr.green := Green(clr);
+          lPixelClr.blue := Blue(clr);
+          if IsCloseToBGRAPixel(FOrgColor,lPixelClr,FSameColorRange) then
+          begin
+            clr := RGB(lNewBGRAPixelClr.red,lNewBGRAPixelClr.green,lNewBGRAPixelClr.blue);
+            plBGRAPixel^ := ColorToRGB32Pixel(clr);
+          end;
+          Inc(plBGRAPixel);
+        end;
+      end;
+    tmmBrightnessContrast :
+      begin
+        if (FBrightness <> 0.5) or
+           (FContrast <> 0.5) then
+        begin
+          plBGRAPixel := PRGB32Pixel(ARGB32Bitmap.Pixels);
+          cnt := ARGB32Bitmap.Height * ARGB32Bitmap.RowPixelStride; // * lRGB32Bitmap.SizeOfPixel;
+          for n := 0 to cnt-1 do
+          begin
+            clr := RGB32PixelToColor(plBGRAPixel^);
+            lPixelClr.red := Red(clr);
+            lPixelClr.green := Green(clr);
+            lPixelClr.blue := Blue(clr);
+            RGBToYCbCr(lPixelClr.red,lPixelClr.green,lPixelClr.blue,yc,cr,cb);
+            YCbCrContrastBrightness(yc,cr,cb,FContrast,FBrightness);
+            YCbCrToRGB(yc,cr,cb,lPixelClr.red,lPixelClr.green,lPixelClr.blue);
+            clr := RGB(lPixelClr.red,lPixelClr.green,lPixelClr.blue);
+            plBGRAPixel^ := ColorToRGB32Pixel(clr);
+            Inc(plBGRAPixel);
+          end;
+        end;
+      end;
+  else
+    // tmmNone :;
+  end;
+end;
+{$endif}
+
 procedure TTileModifyPlugin.TileAfterGetFromCache(AMapView: TMapView;
   ATileLayer: TGPSTileLayerBase; AMapProvider: TMapProvider; ATileID: TTileID;
   ATileImg: TPictureCacheItem; var Handled: Boolean);
-  function IsCloseToFPColor(const AColor, BColor : TFPColor) : Boolean;
-  var
-    dw : Word;
-  begin
-    dw := Trunc($FFFF * FSameColorRange);
-    Result := (Abs(AColor.Red-BColor.Red) <= dw) and
-              (Abs(AColor.Green-BColor.Green) <= dw) and
-              (Abs(AColor.Blue-BColor.Blue) <= dw);
-  end;
-  function IsCloseToBGRAPixel(const AColor : TColor; BColor : PBGRAPixel) : Boolean;
-  var
-    dw : Word;
-  begin
-    dw := Trunc($FF * FSameColorRange);
-    Result := (Abs(AColor.Red-BColor^.Red) <= dw) and
-              (Abs(AColor.Green-BColor^.Green) <= dw) and
-              (Abs(AColor.Blue-BColor^.Blue) <= dw);
-  end;
-  function ApplyBrightnessToFPColor(const AColor : TFPColor) : TFPColor;
-  var
-    sv, sr : Single;
-  begin
-    sv := 1.0+((FBrightness - 0.5)*2.0);
-    sr := AColor.Red*sv;
-    if sr < 0 then
-      Result.Red := 0
-    else if sr > $FFFF then
-      Result.Red := $FFFF
-    else
-      Result.Red := Trunc(sr);
-    sr := AColor.Green*sv;
-    if sr < 0 then
-      Result.Green := 0
-    else if sr > $FFFF then
-      Result.Green := $FFFF
-    else
-      Result.Green := Trunc(sr);
-    sr := AColor.Blue*sv;
-    if sr < 0 then
-      Result.Blue := 0
-    else if sr > $FFFF then
-      Result.Blue := $FFFF
-    else
-      Result.Blue := Trunc(sr);
-  end;
-  function ApplyBrightnessToBGRAPixel(const AColor : PBGRAPixel) : TBGRAPixel;
-  var
-    sv, sr : Single;
-  begin
-    sv := 1.0+((FBrightness - 0.5)*2.0);
-    sr := AColor^.Red*sv;
-    if sr < 0 then
-      Result.Red := 0
-    else if sr > $FF then
-      Result.Red := $FF
-    else
-      Result.Red := Trunc(sr);
-    sr := AColor^.Green*sv;
-    if sr < 0 then
-      Result.Green := 0
-    else if sr > $FF then
-      Result.Green := $FF
-    else
-      Result.Green := Trunc(sr);
-    sr := AColor^.Blue*sv;
-    if sr < 0 then
-      Result.Blue := 0
-    else if sr > $FF then
-      Result.Blue := $FF
-    else
-      Result.Blue := Trunc(sr);
-  end;
-  function ApplyContrastToFPColor(const AColor : TFPColor) : TFPColor;
-  var
-    sv, sr : Single;
-    dev : Single;
-  begin
-    sv := ((FContrast-0.5)*2.0);
-    dev := AColor.Red-$7FFF;
-    sr := AColor.Red + dev*sv;
-    if sr < 0 then
-      Result.Red := 0
-    else if sr > $FFFF then
-      Result.Red := $FFFF
-    else
-      Result.Red := Trunc(sr);
-    dev := AColor.Green-$7FFF;
-    sr := AColor.Green + dev*sv;
-    if sr < 0 then
-      Result.Green := 0
-    else if sr > $FFFF then
-      Result.Green := $FFFF
-    else
-      Result.Green := Trunc(sr);
-    dev := AColor.Blue-$7FFF;
-    sr := AColor.Blue + dev*sv;
-    if sr < 0 then
-      Result.Blue := 0
-    else if sr > $FFFF then
-      Result.Blue := $FFFF
-    else
-      Result.Blue := Trunc(sr);
-  end;
-  function ApplyContrastToBGRAPixel(const AColor : PBGRAPixel) : TBGRAPixel;
-  var
-    sv, sr : Single;
-    dev : Single;
-  begin
-    sv := ((FContrast-0.5)*2.0);
-    dev := AColor^.Red-$7F;
-    sr := AColor^.Red + dev*sv;
-    if sr < 0 then
-      Result.Red := 0
-    else if sr > $FF then
-      Result.Red := $FF
-    else
-      Result.Red := Trunc(sr);
-    dev := AColor^.Green-$7F;
-    sr := AColor^.Green + dev*sv;
-    if sr < 0 then
-      Result.Green := 0
-    else if sr > $FF then
-      Result.Green := $FF
-    else
-      Result.Green := Trunc(sr);
-    dev := AColor^.Blue-$7F;
-    sr := AColor^.Blue + dev*sv;
-    if sr < 0 then
-      Result.Blue := 0
-    else if sr > $FF then
-      Result.Blue := $FF
-    else
-      Result.Blue := Trunc(sr);
-  end;
-
-
-
 
 // const
 //  OSM = 'OPENSTREETMAP';
 
 var
-  lBGRABitmap : TBGRABitmap;
-  IntfImg: TLazIntfImage = nil;
-  x, y: Integer;
-  TempColor: TFPColor;
-  Gray: Word;
-  r,g,b : Single;
-  lOldClr, lNewClr : TFPColor;
-  plBGRAPixel: PBGRAPixel;
-  lNewBGRAPixelClr : TBGRAPixel;
-  n: integer;
-  lRGB32Bitmap : TRGB32Bitmap;
-  cnt : Integer;
   {$ifndef USE_EPIKTIMER}
     t0, t1 : Int64;
   {$endif}
   ms : Double;
   partd : Double;
 begin
+  Unused(AMapView, AMapProvider);
+  Unused(ATileID,Handled);
+
   if Assigned(ATileLayer) then Exit;
+  if FModifyMode = tmmNone then Exit;
 
   {$ifdef USE_EPIKTIMER}
     FEpikTimer.Clear;
@@ -271,206 +373,18 @@ begin
     t0 := GetTickCount;
   {$endif}
 
-  Unused(AMapView, AMapProvider);
-  Unused(ATileID,Handled);
-  case FModifyMode of
-    tmmGrayScale :
-      begin
-        //  if UpperCase(Copy(AMapProvider.Name,1,Length(OSM))) = OSM then
-        if not Assigned(ATileLayer) then
-        begin // Modify only the underlying map tile
-          if ATileImg is TLazIntfImageCacheItem then
-          begin
-            IntfImg := TLazIntfImageCacheItem(ATileImg).Image;
-            IntfImg.BeginUpdate;
-            try
-              r := 0.30;
-              g := 0.59;
-              b := 0.11;
-              for y := 0 to IntfImg.Height - 1 do
-                for x := 0 to IntfImg.Width - 1 do
-                begin
-                  TempColor := IntfImg.Colors[x, y];
+  if ATileImg is TLazIntfImageCacheItem then
+    ProcessTileLazIntfImg(TLazIntfImageCacheItem(ATileImg).Image)
+  {$ifdef USE_BGRA}
+  else if ATileImg is TBGRABitmapCacheItem then
+    ProcessTileBRGA(TBGRABitmapCacheItem(ATileImg).Image)
+  {$endif}
+  {$ifdef USE_RGB32}
+  else if ATileImg is TRGB32BitmapCacheItem then
+    ProcessTileRGB32(TRGB32BitmapCacheItem(ATileImg).Image)
+  {$endif}
+  ;
 
-                  Gray := Round(TempColor.Red * R + TempColor.Green * G + TempColor.Blue * B);
-                  TempColor.Red := Gray;
-                  TempColor.Green := Gray;
-                  TempColor.Blue := Gray;
-                  IntfImg.Colors[x, y] := TempColor;
-                end;
-            finally
-              IntfImg.EndUpdate;
-            end;
-          end
-          else if ATileImg is TBGRABitmapCacheItem then
-          begin
-            TBGRABitmapCacheItem(ATileImg).Image.InplaceGrayscale();
-          end
-          else if ATileImg is TRGB32BitmapCacheItem then
-          begin
-            TRGB32BitmapCacheItem(ATileImg).Image.Grayscale;
-          end;
-        end;
-      end;
-    tmmColorExchange :
-      begin
-        if FOrgColor = FExchangeColor then Exit;
-        //  if UpperCase(Copy(AMapProvider.Name,1,Length(OSM))) = OSM then
-        if not Assigned(ATileLayer) then
-        begin // Modify only the underlying map tile
-          lOldClr := TColorToFPColor(FOrgColor);
-          lNewClr := TColorToFPColor(FExchangeColor);
-
-
-          if ATileImg is TLazIntfImageCacheItem then
-          begin
-            IntfImg := TLazIntfImageCacheItem(ATileImg).Image;
-            IntfImg.BeginUpdate;
-            try
-              for y := 0 to IntfImg.Height - 1 do
-                for x := 0 to IntfImg.Width - 1 do
-                begin
-                  TempColor := IntfImg.Colors[x, y];
-                  if IsCloseToFPColor(TempColor,lOldClr) then
-                    TempColor := lNewClr;
-                  IntfImg.Colors[x, y] := TempColor;
-                end;
-            finally
-              IntfImg.EndUpdate;
-            end;
-          end
-          else if ATileImg is TBGRABitmapCacheItem then
-          begin
-            lNewBGRAPixelClr.red := Red(FExchangeColor);
-            lNewBGRAPixelClr.green := Green(FExchangeColor);
-            lNewBGRAPixelClr.blue := Blue(FExchangeColor);
-
-            lBGRABitmap := TBGRABitmapCacheItem(ATileImg).Image;
-            plBGRAPixel := lBGRABitmap.Data;
-            for n := lBGRABitmap.NbPixels-1 downto 0 do
-            begin
-              if IsCloseToBGRAPixel(FOrgColor,plBGRAPixel) then
-                plBGRAPixel^ := lNewBGRAPixelClr;
-              Inc(plBGRAPixel);
-            end;
-            lBGRABitmap.InvalidateBitmap;   // note that we have accessed pixels directly
-          end
-          else if ATileImg is TRGB32BitmapCacheItem then
-          begin
-            lNewBGRAPixelClr.red := Red(FExchangeColor);
-            lNewBGRAPixelClr.green := Green(FExchangeColor);
-            lNewBGRAPixelClr.blue := Blue(FExchangeColor);
-
-            lRGB32Bitmap := TRGB32BitmapCacheItem(ATileImg).Image;
-            plBGRAPixel := PBGRAPixel(lRGB32Bitmap.Pixels);
-            cnt := lRGB32Bitmap.Height * lRGB32Bitmap.RowPixelStride; // * lRGB32Bitmap.SizeOfPixel;
-            for n := 0 to cnt-1 do
-            begin
-              if IsCloseToBGRAPixel(FOrgColor,plBGRAPixel) then
-                plBGRAPixel^ := lNewBGRAPixelClr;
-              Inc(plBGRAPixel);
-            end;
-          end;
-        end;
-      end;
-    tmmBrightnessContrast :
-      begin
-        //  if UpperCase(Copy(AMapProvider.Name,1,Length(OSM))) = OSM then
-        if not Assigned(ATileLayer) then
-        begin // Modify only the underlying map tile
-          // First the brightness
-          if FBrightness <> 0.5 then
-          begin
-            if ATileImg is TLazIntfImageCacheItem then
-            begin
-              IntfImg := TLazIntfImageCacheItem(ATileImg).Image;
-              IntfImg.BeginUpdate;
-              try
-                for y := 0 to IntfImg.Height - 1 do
-                  for x := 0 to IntfImg.Width - 1 do
-                  begin
-                    TempColor := IntfImg.Colors[x, y];
-                    TempColor := ApplyBrightnessToFPColor(TempColor);
-                    IntfImg.Colors[x, y] := TempColor;
-                  end;
-              finally
-                IntfImg.EndUpdate;
-              end;
-            end
-            else if ATileImg is TBGRABitmapCacheItem then
-            begin
-              lBGRABitmap := TBGRABitmapCacheItem(ATileImg).Image;
-              plBGRAPixel := lBGRABitmap.Data;
-              for n := lBGRABitmap.NbPixels-1 downto 0 do
-              begin
-                lNewBGRAPixelClr := ApplyBrightnessToBGRAPixel(plBGRAPixel);
-                plBGRAPixel^ := lNewBGRAPixelClr;
-                Inc(plBGRAPixel);
-              end;
-              lBGRABitmap.InvalidateBitmap;   // note that we have accessed pixels directly
-            end
-            else if ATileImg is TRGB32BitmapCacheItem then
-            begin
-              lRGB32Bitmap := TRGB32BitmapCacheItem(ATileImg).Image;
-              plBGRAPixel := PBGRAPixel(lRGB32Bitmap.Pixels);
-              cnt := lRGB32Bitmap.Height * lRGB32Bitmap.RowPixelStride; // * lRGB32Bitmap.SizeOfPixel;
-              for n := 0 to cnt-1 do
-              begin
-                lNewBGRAPixelClr := ApplyBrightnessToBGRAPixel(plBGRAPixel);
-                plBGRAPixel^ := lNewBGRAPixelClr;
-                Inc(plBGRAPixel);
-              end;
-            end;
-          end;
-          // second the contrast
-          if FContrast <> 0.5 then
-          begin
-            if ATileImg is TLazIntfImageCacheItem then
-            begin
-              IntfImg := TLazIntfImageCacheItem(ATileImg).Image;
-              IntfImg.BeginUpdate;
-              try
-                for y := 0 to IntfImg.Height - 1 do
-                  for x := 0 to IntfImg.Width - 1 do
-                  begin
-                    TempColor := IntfImg.Colors[x, y];
-                    TempColor := ApplyContrastToFPColor(TempColor);
-                    IntfImg.Colors[x, y] := TempColor;
-                  end;
-              finally
-                IntfImg.EndUpdate;
-              end;
-            end
-            else if ATileImg is TBGRABitmapCacheItem then
-            begin
-              lBGRABitmap := TBGRABitmapCacheItem(ATileImg).Image;
-              plBGRAPixel := lBGRABitmap.Data;
-              for n := lBGRABitmap.NbPixels-1 downto 0 do
-              begin
-                lNewBGRAPixelClr := ApplyContrastToBGRAPixel(plBGRAPixel);
-                plBGRAPixel^ := lNewBGRAPixelClr;
-                Inc(plBGRAPixel);
-              end;
-              lBGRABitmap.InvalidateBitmap;   // note that we have accessed pixels directly
-            end
-            else if ATileImg is TRGB32BitmapCacheItem then
-            begin
-              lRGB32Bitmap := TRGB32BitmapCacheItem(ATileImg).Image;
-              plBGRAPixel := PBGRAPixel(lRGB32Bitmap.Pixels);
-              cnt := lRGB32Bitmap.Height * lRGB32Bitmap.RowPixelStride; // * lRGB32Bitmap.SizeOfPixel;
-              for n := 0 to cnt-1 do
-              begin
-                lNewBGRAPixelClr := ApplyContrastToBGRAPixel(plBGRAPixel);
-                plBGRAPixel^ := lNewBGRAPixelClr;
-                Inc(plBGRAPixel);
-              end;
-            end;
-          end;
-        end;
-      end;
-  else
-    // tmmNone :;
-  end;
   {$ifdef USE_EPIKTIMER}
     FEpikTimer.Stop;
     ms := FEpikTimer.Elapsed*1000.0;

@@ -131,6 +131,11 @@
         <Filename Value="..\..\..\source\addons\plugins\tilemodify\mvtilemodifyplugin.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit>
+      <Unit>
+        <Filename Value="..\..\..\source\addons\plugins\tilemodify\uycbcrtools.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="uYCbCrTools"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
