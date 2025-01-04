@@ -299,9 +299,9 @@ begin
     exit;
   inc(FLocked);
   try
-    for i := 0 to PluginManager.MapList.Count-1 do
+    for i := 0 to PluginManager.MapViewCount-1 do
     begin
-      map := TMapView(PluginManager.MapList[i]);
+      map := PluginManager.MapViews[i];
       if AMapView <> map then
         map.Center := AMapView.Center;
     end;
@@ -320,9 +320,9 @@ begin
     exit;
   inc(FLocked);
   try
-    for i := 0 to PluginManager.MapList.Count-1 do
+    for i := 0 to PluginManager.MapViewCount-1 do
     begin
-      map := TMapView(PluginManager.MapList[i]);
+      map := PluginManager.MapViews[i];
       if AMapView <> map then
       begin
         zoomToCrs := map.ZoomToCursor;

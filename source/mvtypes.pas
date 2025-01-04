@@ -18,7 +18,7 @@ uses
   Classes, SysUtils, Types, Math;
 
 const
-  PALETTE_PAGE = 'Misc';
+  PALETTE_PAGE = 'MapViewer';
   DEFAULT_POI_TEXT_WIDTH = 300;
 
 var

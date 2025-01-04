@@ -220,7 +220,10 @@ type
   private
     FPluginList: TMvPluginList;
     FMapList: TFPList;
-    function GetItem(AIndex: Integer): TMvCustomPlugin;
+    function GetCount: Integer;
+    function GetItems(AIndex: Integer): TMvCustomPlugin;
+    function GetMapViewCount: Integer;
+    function GetMapViews(AIndex: Integer): TMapView;
   protected
     procedure AddMapView(AMapView: TMapView); override;
     function HandlePlugin(APlugin: TMvCustomPlugin; AMapView: TMapView): Boolean;
@@ -261,8 +264,11 @@ type
     destructor Destroy; override;
     procedure GetChildren(Proc: TGetChildProc; Root: TComponent); override;
     procedure SetChildOrder(Child: TComponent; Order: Integer); override;
-    property Item[AIndex: Integer]: TMvCustomPlugin read GetItem; default;
-    property MapList: TFPList read FMapList;
+    property Count: Integer read GetCount;
+    property Items[AIndex: Integer]: TMvCustomPlugin read GetItems; default;
+    property MapViews[AIndex: Integer]: TMapView read GetMapViews;
+    property MapViewCount: Integer read GetMapViewCount;
+//    property MapList: TFPList read FMapList;
   published
     property PluginList: TMvPluginList read FPluginList;
   end;
@@ -903,7 +909,7 @@ begin
   Result := False;
   for i := 0 to FPluginList.Count-1 do
   begin
-    plugin := Item[i];
+    plugin := Items[i];
     if HandlePlugin(plugin, AMapView) then
       plugin.AfterDrawObjects(AMapView, Result);
   end;
@@ -917,7 +923,7 @@ begin
   Result := False;
   for i := 0 to FPluginList.Count-1 do
   begin
-    plugin := Item[i];
+    plugin := Items[i];
     if HandlePlugin(plugin, AMapView) then
       plugin.AfterPaint(AMapView, Result);
   end;
@@ -931,7 +937,7 @@ begin
   Result := false;
   for i := 0 to FPluginList.Count-1 do
   begin
-    plugin := Item[i];
+    plugin := Items[i];
     if HandlePlugin(plugin, AMapView) then
       plugin.BeforeDrawObjects(AMapView, Result);
   end;
@@ -945,7 +951,7 @@ begin
   Result := false;
   for i := 0 to FPluginList.Count-1 do
   begin
-    plugin := Item[i];
+    plugin := Items[i];
     if HandlePlugin(plugin, AMapView) then
       plugin.CenterMove(AMapView, Result);
   end;
@@ -960,7 +966,7 @@ begin
   Result := false;
   for i := 0 to FPluginList.Count-1 do
   begin
-    plugin := Item[i];
+    plugin := Items[i];
     if HandlePlugin(plugin, AMapView) then
       plugin.CenterMoving(AMapView, NewCenter, Allow, Result);
   end;
@@ -975,7 +981,7 @@ begin
   Result := false;
   for i := 0 to FPluginList.Count-1 do
   begin
-    plugin := Item[i];
+    plugin := Items[i];
     if HandlePlugin(plugin, AMapView) then
       plugin.DrawGPSPoint(AMapView, ADrawingEngine, APoint, Result);
   end;
@@ -990,7 +996,7 @@ begin
   Result := false;
   for i := 0 to FPluginList.Count-1 do
   begin
-    plugin := Item[i];
+    plugin := Items[i];
     if HandlePlugin(plugin, AMapView) then
       plugin.DrawMissingTile(AMapView, ADrawingEngine, ATileID, ARect, Result);
   end;
@@ -1006,7 +1012,7 @@ begin
   Result := false;
   for i := 0 to FPluginList.Count-1 do
   begin
-    plugin := Item[i];
+    plugin := Items[i];
     if HandlePlugin(plugin, AMapView) then
       plugin.TileAfterGetFromCache(AMapView, ATileLayer,
                                    AMapProvider, ATileID, ATileImg, Result);
@@ -1020,15 +1026,30 @@ var
 begin
   for i := 0 to FPluginList.Count-1 do
   begin
-    plugin := Item[i];
+    plugin := Items[i];
     if plugin.Owner = Root then
       Proc(plugin);
   end;
 end;
 
-function TMvPluginManager.GetItem(AIndex: Integer): TMvCustomPlugin;
+function TMvPluginManager.GetCount: Integer;
+begin
+  Result := FPluginList.Count;
+end;
+
+function TMvPluginManager.GetItems(AIndex: Integer): TMvCustomPlugin;
 begin
   Result := TMvCustomPlugin(FPluginList.Items[AIndex]);
+end;
+
+function TMvPluginManager.GetMapViews(AIndex: Integer): TMapView;
+begin
+  Result := TMapView(FMapList[AIndex]);
+end;
+
+function TMvPluginManager.GetMapViewCount: Integer;
+begin
+  Result := FMapList.Count;
 end;
 
 function TMvPluginManager.GPSItemsModified(AMapView: TMapView;
@@ -1040,7 +1061,7 @@ begin
   Result := false;
   for i := 0 to FPluginList.Count-1 do
   begin
-    plugin := Item[i];
+    plugin := Items[i];
     if HandlePlugin(plugin, AMapView) then
       plugin.GPSItemsModified(AMapView, ModifiedList, ActualObjs, Adding, Result);
   end;
@@ -1067,9 +1088,9 @@ var
   plugin: TMvCustomPlugin;
 begin
   Result := false;
-  for i := 0 to FPluginList.Count-1 do
+  for i := FPluginList.Count-1 downto 0 do
   begin
-    plugin := Item[i];
+    plugin := Items[i];
     if HandlePlugin(plugin, AMapView) then
       plugin.MouseDown(AMapView, AButton, AShift, X, Y, Result);
   end;
@@ -1081,9 +1102,9 @@ var
   plugin: TMvCustomPlugin;
 begin
   Result := false;
-  for i := 0 to FPluginList.Count-1 do
+  for i := FPluginList.Count-1 downto 0 do
   begin
-    plugin := Item[i];
+    plugin := Items[i];
     if HandlePlugin(plugin, AMapView) then
       plugin.MouseEnter(AMapView, Result);
   end;
@@ -1095,9 +1116,9 @@ var
   plugin: TMvCustomPlugin;
 begin
   Result := false;
-  for i := 0 to FPluginList.Count-1 do
+  for i := FPluginList.Count-1 downto 0 do
   begin
-    plugin := Item[i];
+    plugin := Items[i];
     if HandlePlugin(plugin, AMapView) then
       plugin.MouseLeave(AMapView, Result);
   end;
@@ -1110,9 +1131,9 @@ var
   plugin: TMvCustomPlugin;
 begin
   Result := false;
-  for i := 0 to FPluginList.Count-1 do
+  for i := FPluginList.Count-1 downto 0 do
   begin
-    plugin := Item[i];
+    plugin := Items[i];
     if HandlePlugin(plugin, AMapView) then
       plugin.MouseMove(AMapView, AShift, X, Y, Result);
   end;
@@ -1125,9 +1146,9 @@ var
   plugin: TMvCustomPlugin;
 begin
   Result := false;
-  for i := 0 to FPluginList.Count-1 do
+  for i := FPluginList.Count-1 downto 0 do
   begin
-    plugin := Item[i];
+    plugin := Items[i];
     if HandlePlugin(plugin, AMapView) then
       plugin.MouseUp(AMapView, AButton, AShift, X, Y, Result);
   end;
@@ -1142,7 +1163,7 @@ begin
   Result := False;
   for i := 0 to FPluginList.Count-1 do
   begin
-    plugin := Item[i];
+    plugin := Items[i];
     if HandlePlugin(plugin, AMapView) then
       plugin.MouseWheel(AMapView, AShift, AWheelDelta, AMousePos, Result);
   end;
@@ -1192,7 +1213,7 @@ begin
   Result := false;
   for i := 0 to FPluginList.Count-1 do
   begin
-    plugin := Item[i];
+    plugin := Items[i];
     if HandlePlugin(plugin, AMapView) then
       plugin.ZoomChange(AMapView, Result);
   end;
@@ -1207,7 +1228,7 @@ begin
   Result := false;
   for i := 0 to FPluginList.Count-1 do
   begin
-    plugin := Item[i];
+    plugin := Items[i];
     if HandlePlugin(plugin, AMapView) then
       plugin.ZoomChanging(AMapView, NewZoom, Allow, Result);
   end;
