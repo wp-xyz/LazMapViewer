@@ -10,15 +10,14 @@ uses
   athreads,
   {$ENDIF}
   Interfaces, // this includes the LCL widgetset
-  Forms, lazrgbgraphics, mvtilemodifyplugin, tachartlazaruspkg, Unit1, 
-uycbcrtools
-  { you can add units after this };
+  Forms, mvtilemodifyplugin, tachartlazaruspkg, Unit1,
+  uYCbCrTools;
 
 {$R *.res}
 
 begin
   RequireDerivedFormResource := True;
-  Application.Scaled:=True;
+  Application.Scaled := True;
   {$PUSH}{$WARN 5044 OFF}
   Application.MainFormOnTaskbar := True;
   {$POP}

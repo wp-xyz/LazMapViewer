@@ -1042,14 +1042,14 @@ begin
   Result := TMvCustomPlugin(FPluginList.Items[AIndex]);
 end;
 
-function TMvPluginManager.GetMapViews(AIndex: Integer): TMapView;
-begin
-  Result := TMapView(FMapList[AIndex]);
-end;
-
 function TMvPluginManager.GetMapViewCount: Integer;
 begin
   Result := FMapList.Count;
+end;
+
+function TMvPluginManager.GetMapViews(AIndex: Integer): TMapView;
+begin
+  Result := TMapView(FMapList[AIndex]);
 end;
 
 function TMvPluginManager.GPSItemsModified(AMapView: TMapView;

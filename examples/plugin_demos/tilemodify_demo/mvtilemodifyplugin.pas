@@ -521,7 +521,8 @@ begin
 end;
 
 initialization
-  RegisterPluginClass(TTileModifyPlugin, 'Tile Modify');
+  // RegisterPluginClass(TTileModifyPlugin, 'Tile Modify');
+  // This plugin cannot be registered because it would pull other packages into LazMapViewer.
 
 end.
 
