@@ -213,13 +213,10 @@ type
 
   TMvPluginList = class(TMvIndexedComponentList)
   private
-    FOwner : TMvCustomPluginManager;
     function GetItem(AIndex: Integer): TMvCustomPlugin;
     procedure SetItem(AIndex: Integer; AValue: TMvCustomPlugin);
   public
     property Items[AIndex: Integer]: TMvCustomPlugin read GetItem write SetItem; default;
-    function Add(Item: Pointer): Integer; {$ifdef CLASSESINLINE} inline; {$endif CLASSESINLINE}
-    constructor Create(const AOwner : TMvCustomPluginManager);
   end;
 
   { TMvPluginManager }
@@ -270,13 +267,13 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
+    procedure AddPlugin(APlugin: TMvCustomPlugin);
     procedure GetChildren(Proc: TGetChildProc; Root: TComponent); override;
     procedure SetChildOrder(Child: TComponent; Order: Integer); override;
     property Count: Integer read GetCount;
     property Items[AIndex: Integer]: TMvCustomPlugin read GetItems; default;
     property MapViews[AIndex: Integer]: TMapView read GetMapViews;
     property MapViewCount: Integer read GetMapViewCount;
-//    property MapList: TFPList read FMapList;
   published
     property PluginList: TMvPluginList read FPluginList;
   end;
@@ -879,42 +876,18 @@ begin
   inherited Items[AIndex] := AValue;
 end;
 
-{ Add is overwritten to guaranty that if this add method is used to add a Plugin
-  the plugin is
-  a) removed from a possible previous list, and
-  b) the property PluginManager of the plugin is set to the owner of this list. }
-function TMvPluginList.Add(Item: Pointer): Integer;
-var
-  o : TObject absolute Item;
-begin
-  if (not (o is TMvCustomPlugin)) or
-     ((o is TMvCustomPlugin) and (TMvCustomPlugin(Item).PluginManager = FOwner)) then
-    Result := inherited Add(Item)
-  else
-    TMvCustomPlugin(Item).PluginManager := TMvPluginManager(FOwner);
-end;
-
-constructor TMvPluginList.Create(const AOwner: TMvCustomPluginManager);
-begin
-  inherited Create;
-  FOwner := AOwner;
-end;
 
 { TMvPluginManager }
 
 constructor TMvPluginManager.Create(AOwner: TComponent);
 begin
   inherited;
-  FPluginList := TMvPluginList.Create(Self);
+  FPluginList := TMvPluginList.Create;
   FMapList := TFPList.Create;
 end;
 
 destructor TMvPluginManager.Destroy;
 begin
-{
-  while FPluginList.Count > 0 do
-    FPluginList[FPluginList.Count - 1].Free;
-    }
   FPluginList.Free;
   FMapList.Free;
   inherited;
@@ -927,6 +900,12 @@ begin
   idx := FMaplist.IndexOf(AMapView);
   if idx = -1 then
     FMapList.Add(AMapView);
+end;
+
+procedure TMvPluginManager.AddPlugin(APlugin: TMvCustomPlugin);
+begin
+  Assert(APlugin <> nil, 'Plugin argument must not be nil');
+  APlugin.PluginManager := self;
 end;
 
 function TMvPluginManager.AfterDrawObjects(AMapView: TMapView): Boolean;

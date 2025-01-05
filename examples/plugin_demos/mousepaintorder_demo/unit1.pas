@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ExtCtrls, mvMapViewer,
-  mvPluginCore, uDragColoredItemPlugin;
+  mvPluginCore, uDragColoredItemPlugin, StdCtrls;
 
 type
 
@@ -38,19 +38,14 @@ const
 procedure TForm1.FormCreate(Sender: TObject);
 var
   lDragColoredItemPlugin : TDragColoredItemPlugin;
-  i : Integer;
+  i: Integer;
 begin
   for i := 0 to High(PluginColors) do
   begin
     lDragColoredItemPlugin := TDragColoredItemPlugin.Create(Self);
     lDragColoredItemPlugin.Color := PluginColors[i];
     lDragColoredItemPlugin.MapView := MapView1;
-// Both methods
-// a) adding the PluginManager to the Plugin-property, and
-// b) adding the Plugin to the PluginList
-// work with the same result
-//    lDragColoredItemPlugin.PluginManager := MvPluginManager1;
-    MvPluginManager1.PluginList.Add(lDragColoredItemPlugin);
+    MvPluginManager1.AddPlugin(lDragColoredItemPlugin);
   end;
 end;
 

@@ -36,9 +36,9 @@ begin
     TMapTrack, 'Points', TMapTrackPointsPropertyEditor);
 
   RegisterPropertyEditor(TypeInfo(String),
-    TMapView,'MapProvider',TMapProviderPropertyEditor);
+    TMapView, 'MapProvider', TMapProviderPropertyEditor);
   RegisterPropertyEditor(TypeInfo(String),
-    TMapLayer,'MapProvider',TMapProviderPropertyEditor);
+    TMapLayer, 'MapProvider', TMapProviderPropertyEditor);
   RegisterPropertyEditor(TypeInfo(TImageIndex),
     TMapPointOfInterest, 'ImageIndex', TPointOfInterestImageIndexPropertyEditor);
   RegisterPropertyEditor(TypeInfo(TDateTime),
