@@ -1189,7 +1189,7 @@ var
   plugin: TMvCustomPlugin;
 begin
   Result := False;
-  for i := 0 to FPluginList.Count-1 do
+  for i := FPluginList.Count-1 downto 0 do
   begin
     plugin := Items[i];
     if HandlePlugin(plugin, AMapView) then
