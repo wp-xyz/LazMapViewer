@@ -47,26 +47,25 @@ implementation
 function TDragColoredItemPlugin.IsAtMousePosition(const X, Y: Integer): Boolean;
 var
   pt, ptc : TPoint;
-  aArea, bArea : TRealArea;
+  aArea : TRealArea;
+  ptR : TRealPoint;
   w2 : Integer;
 begin
   Result := False;
-  w2 := FRectSize div 2;
-  pt.X := X-w2;
-  pt.Y := Y-w2;
-  aArea.TopLeft := MapView.ScreenToLatLon(pt);
-  pt.X := X+w2;
-  pt.Y := Y+w2;
-  aArea.BottomRight := MapView.ScreenToLatLon(pt);
-
+  pt.X := X;
+  pt.Y := Y;
+  ptR := MapView.ScreenToLatLon(pt);
   ptc := MapView.LatLonToScreen(FCurrentCoord);
+  w2 := FRectSize div 2;
   pt.X := ptc.X-w2;
   pt.Y := ptc.Y-w2;
-  bArea.TopLeft := MapView.ScreenToLatLon(pt);
+  aArea.TopLeft := MapView.ScreenToLatLon(pt);
   pt.X := ptc.X+w2;
   pt.Y := ptc.Y+w2;
-  bArea.BottomRight := MapView.ScreenToLatLon(pt);
-  Result := hasIntersectArea(aArea,bArea);
+  aArea.BottomRight := MapView.ScreenToLatLon(pt);
+  Result := False;
+  if PtInsideArea(ptR,aArea) then
+    Result := True;
 end;
 
 procedure TDragColoredItemPlugin.SetRectSize(Value: Integer);
