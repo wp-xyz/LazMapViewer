@@ -23,7 +23,10 @@ type
     property Index: Integer read GetIndex write SetIndex;
   end;
 
+  { TMvIndexedComponentList }
+
   TMvIndexedComponentList = class(TFPList)
+  private
   public
     procedure ChangeNamePrefix(const AOld, ANew: String);
   end;
@@ -206,12 +209,17 @@ type
 
   TMvCustomPluginClass = class of TMvCustomPlugin;
 
+  { TMvPluginList }
+
   TMvPluginList = class(TMvIndexedComponentList)
   private
+    FOwner : TMvCustomPluginManager;
     function GetItem(AIndex: Integer): TMvCustomPlugin;
     procedure SetItem(AIndex: Integer; AValue: TMvCustomPlugin);
   public
     property Items[AIndex: Integer]: TMvCustomPlugin read GetItem write SetItem; default;
+    function Add(Item: Pointer): Integer; {$ifdef CLASSESINLINE} inline; {$endif CLASSESINLINE}
+    constructor Create(const AOwner : TMvCustomPluginManager);
   end;
 
   { TMvPluginManager }
@@ -308,7 +316,6 @@ begin
   if (failed <> '') then
     ShowMessage(Format('Failed to rename components: %s', [failed]));
 end;
-
 
 { TMvCustomPlugin }
 
@@ -503,6 +510,7 @@ begin
   if FPluginManager = AValue then exit;
   if FPluginManager <> nil then
     FPluginManager.PluginList.Remove(Self);
+  // Caution: The property FPluginManager must be assigned prior adding to the PluginList!!
   FPluginManager := AValue;
   if FPluginManager <> nil then
     FPluginManager.PluginList.Add(Self);
@@ -866,18 +874,38 @@ begin
   Result := TMvCustomPlugin(inherited Items[AIndex]);
 end;
 
-procedure TMvPluginList.SetItem(AIndex: Integer; AValue: TMvcustomPlugin);
+procedure TMvPluginList.SetItem(AIndex: Integer; AValue: TMvCustomPlugin);
 begin
   inherited Items[AIndex] := AValue;
 end;
 
+{ Add is overwritten to guaranty that if this add method is used to add a Plugin
+  the plugin is
+  a) removed from a possible previous list, and
+  b) the property PluginManager of the plugin is set to the owner of this list. }
+function TMvPluginList.Add(Item: Pointer): Integer;
+var
+  o : TObject absolute Item;
+begin
+  if (not (o is TMvCustomPlugin)) or
+     ((o is TMvCustomPlugin) and (TMvCustomPlugin(Item).PluginManager = FOwner)) then
+    Result := inherited Add(Item)
+  else
+    TMvCustomPlugin(Item).PluginManager := TMvPluginManager(FOwner);
+end;
+
+constructor TMvPluginList.Create(const AOwner: TMvCustomPluginManager);
+begin
+  inherited Create;
+  FOwner := AOwner;
+end;
 
 { TMvPluginManager }
 
 constructor TMvPluginManager.Create(AOwner: TComponent);
 begin
   inherited;
-  FPluginList := TMvPluginList.Create;
+  FPluginList := TMvPluginList.Create(Self);
   FMapList := TFPList.Create;
 end;
 

@@ -1,0 +1,38 @@
+object Form1: TForm1
+  Left = 324
+  Height = 323
+  Top = 119
+  Width = 429
+  Caption = 'Form1'
+  ClientHeight = 323
+  ClientWidth = 429
+  OnCreate = FormCreate
+  LCLVersion = '3.6.0.0'
+  object MapView1: TMapView
+    Left = 0
+    Height = 297
+    Top = 0
+    Width = 429
+    Active = True
+    Align = alClient
+    DownloadEngine = MapView1.BuiltInDLE
+    DrawingEngine = MapView1.BuiltInDE
+    Layers = <>
+    Font.Color = clBlack
+    MapProvider = 'OpenStreetMap Mapnik'
+    PluginManager = MvPluginManager1
+  end
+  object Panel1: TPanel
+    Left = 0
+    Height = 26
+    Top = 297
+    Width = 429
+    Align = alBottom
+    Caption = 'Drag the colored items with the right mouse button'
+    TabOrder = 1
+  end
+  object MvPluginManager1: TMvPluginManager
+    Left = 320
+    Top = 24
+  end
+end
