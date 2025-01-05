@@ -6,24 +6,37 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ExtCtrls, Buttons,
-  CollectionPropEditForm, mvMapViewer, mvGpsObj, mvTypes;
+  ComCtrls, ActnList, Menus,
+  PropEdits, IDEImagesIntf, ComponentEditors, CollectionPropEditForm,
+  mvMapViewer, mvGpsObj, mvGPX, mvTypes;
 
 type
 
   { TLayersPropertyEditForm }
 
   TLayersPropertyEditForm = class(TCollectionPropertyEditorForm)
-    btnLoad: TBitBtn;
-    btnSave: TBitBtn;
-    Panel1: TPanel;
-    procedure btnLoadClick(Sender: TObject);
-    procedure btnSaveClick(Sender: TObject);
+    actLoadAndZoom: TAction;
+    actSaveGPX: TAction;
+    actLoadGPX: TAction;
+    mnuLoadGPX: TMenuItem;
+    mnuLoadAndZoom: TMenuItem;
+    LoadPopup: TPopupMenu;
+    ToolButton1: TToolButton;
+    LoadButton: TToolButton;
+    SaveButton: TToolButton;
+    procedure actAddExecute(Sender: TObject);
+    procedure actDelExecute(Sender: TObject);
+    procedure actLoadGPXExecute(Sender: TObject);
+    procedure actSaveGPXExecute(Sender: TObject);
     procedure CollectionListBoxClick(Sender: TObject);
+    procedure FormActivate(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
   private
-    procedure UpdateVisuals;
+    function GetMapView: TMapView;
     procedure Modified;
+    procedure LoadFromFile(AFileName: String; ALayer: TMapLayer; ZoomToBounds: Boolean);
     procedure SaveToFile(AFileName: String; ALayer: TMapLayer);
-    procedure LoadFromFile(AFileName: String; ALayer: TMapLayer);
+    procedure UpdateVisuals;
   public
     procedure UpdateButtons;
 
@@ -33,9 +46,6 @@ var
   LayersPropertyEditForm: TLayersPropertyEditForm;
 
 implementation
-
-uses mvGPX, PropEdits;
-
 
 {$R *.lfm}
 
@@ -47,7 +57,87 @@ begin
   UpdateVisuals;
 end;
 
-procedure TLayersPropertyEditForm.btnSaveClick(Sender: TObject);
+procedure TLayersPropertyEditForm.FormActivate(Sender: TObject);
+begin
+  UpdateVisuals;
+end;
+
+procedure TLayersPropertyEditForm.FormCreate(Sender: TObject);
+begin
+  inherited;
+  LoadButton.ImageIndex := IDEImages.LoadImage('items_load');
+  actSaveGPX.ImageIndex := IDEImages.LoadImage('items_save');
+  UpdateVisuals;
+end;
+
+function TLayersPropertyEditForm.GetMapView: TMapView;
+begin
+  Result := OwnerPersistent as TMapView;
+end;
+
+procedure TLayersPropertyEditForm.actAddExecute(Sender: TObject);
+var
+  L: TMapLayer;
+begin
+  if not Assigned(GlobalDesignHook) then
+    Exit;
+  if not Assigned(Collection) then
+    Exit;
+
+  L := Collection.Add as TMapLayer;
+  GlobalDesignHook.PersistentAdded(L, true);
+  CollectionListbox.ItemIndex := L.Index;
+
+  UpdateVisuals;
+end;
+
+procedure TLayersPropertyEditForm.actDelExecute(Sender: TObject);
+var
+  I: Integer;
+  L: TMapLayer;
+begin
+  if not Assigned(GlobalDesignHook) then
+    exit;
+  if not Assigned(Collection) then
+    exit;
+
+  I := CollectionListbox.ItemIndex;
+  if I = -1 then
+    exit;
+
+  L := Collection.Items[I] as TMapLayer;
+  GlobalDesignHook.DeletePersistent(TPersistent(L));
+
+  //inherited;
+
+  UpdateVisuals;
+end;
+
+procedure TLayersPropertyEditForm.actLoadGPXExecute(Sender: TObject);
+var
+  I: Integer;
+  L: TMapLayer;
+begin
+  if not Assigned(Collection) then
+    Exit;
+
+  I := CollectionListBox.ItemIndex;
+  if I = -1 then
+    L := Collection.Add as TMapLayer
+  else
+    L := Collection.Items[I] as TMapLayer;
+  with TOpenDialog.Create(Nil) do
+    try
+      DefaultExt := '.gpx';
+      Filter := 'GPX file|*.gpx|All files|*.*';
+      if Execute then
+        LoadFromFile(FileName, L, Sender=actLoadAndZoom);
+    finally
+      Free;
+    end;
+end;
+
+procedure TLayersPropertyEditForm.actSaveGPXExecute(Sender: TObject);
 var
   I: Integer;
   L: TMapLayer;
@@ -69,30 +159,12 @@ begin
     end;
 end;
 
-procedure TLayersPropertyEditForm.btnLoadClick(Sender: TObject);
-var
-  I: Integer;
-  L: TMapLayer;
-begin
-  if not Assigned(Collection) then
-    Exit;
-  I := CollectionListBox.ItemIndex;
-  L := Collection.Items[I] as TMapLayer;
-  with TOpenDialog.Create(Nil) do
-    try
-      DefaultExt := '.gpx';
-      Filter := 'GPX file|*.gpx|All files|*.*';
-      if Execute then
-        LoadFromFile(FileName, L);
-    finally
-      Free;
-    end;
-end;
-
 procedure TLayersPropertyEditForm.UpdateVisuals;
 begin
-  btnLoad.Enabled := (Collection <> Nil) {and btnLoad.Visible};
-  btnSave.Enabled := (Collection <> Nil) {and btnSave.Visible};
+  actLoadGPX.Enabled := (Collection <> Nil) and (CollectionListbox.ItemIndex > -1) and GetMapView.Active; {and btnLoad.Visible};
+  actLoadAndZoom.Enabled := actLoadGPX.Enabled;
+  actSaveGPX.Enabled := actLoadGPX.Enabled;
+  LoadButton.Enabled := actLoadGPX.Enabled or actLoadAndZoom.Enabled;
 end;
 
 procedure TLayersPropertyEditForm.Modified;
@@ -107,17 +179,55 @@ begin
 end;
 
 procedure TLayersPropertyEditForm.LoadFromFile(AFileName: String;
-  ALayer: TMapLayer);
+  ALayer: TMapLayer; ZoomToBounds: Boolean);
+const
+  DO_NOT_CLEAR = false;
 var
   List: TGpsObjectList;
-  LBounds: TRealArea;
+  lBounds: TRealArea;
+  tracks, pois: TFPList;
+  T: TMapTrack;
+  P: TMapPoint;
+  V: TMapView;
 begin
   with TGpxReader.Create do
     try
       List := TGPSObjectList.Create;
       try
-        LoadFromFile(AFileName, List, LBounds);
-        ALayer.AssignFromGPSList(List);
+        LoadFromFile(AFileName, List, lBounds);
+        if ZoomToBounds then
+          with GetMapView do
+          begin
+            Engine.ZoomOnArea(lBounds);
+            MapCenter.RealPt := Center;
+          end;
+
+        // Update the object tree
+        tracks := TFPList.Create;
+        pois := TFPList.Create;
+        try
+          ALayer.AssignFromGPSList(List, DO_NOT_CLEAR, tracks, pois);
+          if GlobalDesignHook <> nil then
+          begin
+            // Add the track and its points to the object tree
+            // (significant speed-up by explicitely adding only the last track point)
+            if tracks.Count > 0 then
+            begin
+              T := TMapTrack(tracks[tracks.Count-1]);
+              if T.Points.Count > 0 then
+                GlobalDesignHook.PersistentAdded(TMapTrackPoint(T.Points[T.Points.Count-1]), false);
+            end;
+            // Add the last map point to the object tree.
+            if pois.Count > 0 then
+            begin
+              P := TMapPoint(pois[pois.Count-1]);
+              GlobalDesignHook.PersistentAdded(P, false);
+            end;
+          end;
+        finally
+          pois.Free;
+          tracks.Free;
+        end;
       finally
         List.Free;
       end;
@@ -127,6 +237,7 @@ begin
   Modified;
 end;
 
+// wp: UpdateButtons should be virtual...
 procedure TLayersPropertyEditForm.UpdateButtons;
 begin
   inherited;  // Make it "public" in Laz 2.0.x

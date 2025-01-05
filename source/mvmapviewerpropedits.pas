@@ -17,22 +17,26 @@ unit
 interface
 
 uses
-  Classes, Forms, SysUtils, PropEdits, GraphPropEdits, ComponentEditors,
-  ImgList, mvMapProvider;
+  Classes, Forms, SysUtils, LCLIntf, LCLType, ImgList, LazLoggerBase,
+  PropEdits, GraphPropEdits, ComponentEditors,
+  mvMapProvider;
 
 type
 
   { TMapViewComponentEditor }
 
   TMapViewComponentEditor = class(TComponentEditor)
+  private
     FOldDirtyHandler: TNotifyEvent;
+  protected
+    procedure DoShowPointsEditor;
+    procedure DoShowLayerEditor;
   public
     constructor Create(AComponent: TComponent;
       ADesigner: TComponentEditorDesigner); override;
     procedure ExecuteVerb(Index: Integer); override;
     function GetVerb(Index: Integer): String; override;
     function GetVerbCount: Integer; override;
-    procedure DoEdit;
   end;
 
   { TMapLayersPropertyEditor }
@@ -106,6 +110,7 @@ uses
 const
   sNONE = '(none)';
   sEDITMapView = 'Edit MapView Points';
+  sLayerEditor = 'Layer Editor...';
 
 { TMapTrackPointsPropertyEditor }
 
@@ -128,7 +133,8 @@ end;
 procedure TMapViewComponentEditor.ExecuteVerb(Index: Integer);
 begin
   case Index of
-    0: DoEdit;
+    0: DoShowLayerEditor;
+    1: DoShowPointsEditor;
   end;
 end;
 
@@ -136,23 +142,73 @@ function TMapViewComponentEditor.GetVerb(Index: Integer): String;
 begin
   Result := '';
   case Index of
-    0: Result := sEDITMapView;
+    0: Result := sLayerEditor;
+    1: Result := sEDITMapView;
   end;
 end;
 
 function TMapViewComponentEditor.GetVerbCount: Integer;
 begin
-  Result := 1;
+  Result := 2;
 end;
 
-procedure TMapViewComponentEditor.DoEdit;
+procedure TMapViewComponentEditor.DoShowPointsEditor;
+
+  function FindPopupPoint(AMapView: TMapView): TPoint;
+  var
+    R: TRect;
+    Orig: TPoint;  // Top/left corner of map in screen coordinates
+    P: TPoint;     // EditMark position in screen coordinates
+    W, H: Integer; // Width and heigh tof editor form
+  begin
+    R := Screen.WorkAreaRect;
+    W := MapViewerPathEditDsgForm.Width;
+    H := MapViewerPathEditDsgForm.Height;
+    Orig := AMapView.ClientToScreen(Point(0, 0));
+    Result := Orig;
+
+    // Make sure that the editor form is fully visible vertically
+    if Result.Y < R.Top then
+      Result.Y := R.Top
+    else
+    if Result.Y + H > R.Bottom then
+      Result.Y := R.Bottom - H - GetSystemMetrics(SM_CYCAPTION) - GetSystemMetrics(SM_CYSIZEFRAME);
+
+    // Check position at the right of the map
+    Result.X := Orig.X + AMapView.Width;
+    if Result.X + W <= R.Right then
+      exit;
+
+    // Check position at the left of the map
+    Result.X := Orig.X - W;
+    if Result.X >= R.Left then
+      exit;
+
+    if AMapView.EditMark.Visible then
+    begin
+      // Check position inside. Make sure that the EditMark is not covered by
+      // the editor form.
+      P := AMapView.LatLonToScreen(AMapView.EditMark.RealPt);
+      // Check form position at the right of the EditMark
+      Result.X := Orig.X + P.X + 10;
+      if Result.X <= R.Right then
+        exit;
+      // Check form position at the left of the EditMark
+      Result.X := Orig.X + P.X - W - 10;
+      if Result.X >= R.Left then
+        exit;
+    end;
+
+    // Fallback: center
+    Result.X := Orig.X + (AMapView.Width - W) div 2;
+  end;
+
 var
   V: TMapView;
   P: TPoint;
 begin
   if not Assigned(MapViewerPathEditDsgForm) then
-     MapViewerPathEditDsgForm := TMapViewerPathEditDsgForm.Create(
-       LazarusIDE.OwningComponent);
+     MapViewerPathEditDsgForm := TMapViewerPathEditDsgForm.Create(LazarusIDE.OwningComponent);
   V := GetComponent as TMapView;
   if not (mvoEditorEnabled in V.Options) then
      case QuestionDlg(V.ClassName,
@@ -166,12 +222,33 @@ begin
      otherwise
        Exit;
      end;
+  P := FindPopupPoint(V);
   MapViewerPathEditDsgForm.MapView := V;
-  P := V.ControlToScreen(Point(V.Width, 0));
   MapViewerPathEditDsgForm.Left := P.X;
   MapViewerPathEditDsgForm.Top := P.Y;
   MapViewerPathEditDsgForm.Show;
 end;
+
+procedure TMapViewComponentEditor.DoShowLayerEditor;
+var
+  V: TMapView;
+begin
+  V := GetComponent as TMapView;
+  if LayersPropertyEditForm = nil then
+    LayersPropertyEditForm := TLayersPropertyEditForm.Create(Application);
+  LayersPropertyEditForm.SetCollection(V.Layers, V, 'Layers');
+  LayersPropertyEditForm.actAdd.Visible := true;
+  LayersPropertyEditForm.actDel.Visible := true;
+  LayersPropertyEditForm.AddButton.Left := 0;
+  LayersPropertyEditForm.DeleteButton.Left := 1;
+  LayersPropertyEditForm.DividerToolButton.Show;
+  LayersPropertyEditForm.DividerToolButton.Left := LayersPropertyEditForm.DeleteButton.Left + 1;
+  SetPopupModeParentForPropertyEditor(LayersPropertyEditForm);
+  LayersPropertyEditForm.EnsureVisible;
+  LayersPropertyEditForm.UpdateButtons;
+  //Result := LayersPropertyEditForm;
+end;
+
 
 { TMapLayersPropertyEditor }
 

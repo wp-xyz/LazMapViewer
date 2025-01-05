@@ -26,7 +26,6 @@ type
   { TMvIndexedComponentList }
 
   TMvIndexedComponentList = class(TFPList)
-  private
   public
     procedure ChangeNamePrefix(const AOld, ANew: String);
   end;
@@ -206,8 +205,8 @@ type
     procedure Assign(ASource: TPersistent); override;
   end;
 
-
   TMvCustomPluginClass = class of TMvCustomPlugin;
+
 
   { TMvPluginList }
 
@@ -218,6 +217,7 @@ type
   public
     property Items[AIndex: Integer]: TMvCustomPlugin read GetItem write SetItem; default;
   end;
+
 
   { TMvPluginManager }
 
@@ -313,6 +313,7 @@ begin
   if (failed <> '') then
     ShowMessage(Format('Failed to rename components: %s', [failed]));
 end;
+
 
 { TMvCustomPlugin }
 
@@ -507,7 +508,6 @@ begin
   if FPluginManager = AValue then exit;
   if FPluginManager <> nil then
     FPluginManager.PluginList.Remove(Self);
-  // Caution: The property FPluginManager must be assigned prior adding to the PluginList!!
   FPluginManager := AValue;
   if FPluginManager <> nil then
     FPluginManager.PluginList.Add(Self);

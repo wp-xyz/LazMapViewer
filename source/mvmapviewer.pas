@@ -194,6 +194,8 @@ type
     function HitTest(constref Area: TRealArea): TMapObjectList; override;
     function AddPointOfInterest(APoint: TRealPoint; ACaption: String = ''): TMapPointOfInterest;
     procedure AssignFromGPSList(AList: TGPSObjectList);
+    procedure AssignFromGPSList(AList: TGPSObjectList;
+      AClear: Boolean; ATracks, APoints: TFPList);
     property ComboLayer: TGPSComboLayer read FComboLayer;
   published
     property MapProvider: String read GetMapProvider write SetMapProvider;
@@ -222,14 +224,17 @@ type
     FLongitude: Double;
     FView: TMapView;
     function GetLatLonInDMS: Boolean;
+    function GetRealPt: TRealPoint;
     procedure SetLatitude(AValue: Double);
     procedure SetLongitude(AValue: Double);
+    procedure SetRealPt(AValue: TRealPoint);
     procedure SetViewCenter;
   protected
     function GetOwner: TPersistent; override;
   public
     constructor Create(AView: TMapView);
     property LatLonInDMS: Boolean read GetLatLonInDMS;
+    property RealPt: TRealPoint read GetRealPt write SetRealPt;
   published
     property Longitude: Double read FLongitude write SetLongitude;
     property Latitude: Double read FLatitude write SetLatitude;
@@ -663,10 +668,11 @@ type
       procedure SaveToStream(AClass: TRasterImageClass; AStream: TStream);
       function ScreenToLatLon(aPt: TPoint): TRealPoint;
       function ScreenToLonLat(aPt: TPoint): TRealPoint; deprecated 'Use ScreenToLatLon';
-      procedure CenterOnObj(obj: TGPSObj);
       procedure Redraw; inline;
       function UsesDefaultDownloadEngine: Boolean;
       function UsesDefaultDrawingEngine: Boolean;
+      procedure CenterOnArea(const aArea: TRealArea);
+      procedure CenterOnObj(obj: TGPSObj);
       procedure ZoomOnArea(const aArea: TRealArea);
       procedure ZoomOnObj(obj: TGPSObj);
       procedure WaitEndOfRendering;
@@ -1775,9 +1781,23 @@ begin
   SetViewCenter;
 end;
 
+procedure TMapCenter.SetRealPt(AValue: TRealPoint);
+begin
+  if (FLatitude = AValue.Lat) and (FLongitude = AValue.Lon) then Exit;
+  FLatitude := AValue.Lat;
+  FLongitude := AValue.Lon;
+  SetViewCenter;
+end;
+
 function TMapCenter.GetLatLonInDMS: Boolean;
 begin
   Result := Assigned(FView) and (mvoLatLonInDMS in FView.Options);
+end;
+
+function TMapCenter.GetRealPt: TRealPoint;
+begin
+  Result.Lon := FLongitude;
+  Result.Lat := FLatitude;
 end;
 
 procedure TMapCenter.SetViewCenter;
@@ -1968,11 +1988,19 @@ begin
   Result.Caption := ACaption;
 end;
 
-procedure TMapLayer.AssignFromGPSList(AList: TGPSObjectList);
+{ Creates MapPoints and MapTracks from the objects in AList. When AClear is true,
+  the internal collections are cleared first.
+  The created MapPoints and MapTracks are stored in the specified
+  APoints and ATracks lists - they are needed at designtime. }
+procedure TMapLayer.AssignFromGPSList(AList: TGPSObjectList; AClear: Boolean;
+  ATracks, APoints: TFPList);
 
   procedure AddPoint(APoint: TGPSPoint);
+  var
+    P: TMapPoint;
   begin
-    with PointsOfInterest.Add as TMapPoint do
+    P := PointsOfInterest.Add as TMapPoint;
+    with P do
     begin
       Caption := APoint.Name;
       Longitude := APoint.Lon;
@@ -1980,14 +2008,18 @@ procedure TMapLayer.AssignFromGPSList(AList: TGPSObjectList);
       Elevation := APoint.Elevation;
       DateTime := APoint.DateTime;
     end;
+    if Assigned(APoints) then
+      APoints.Add(P);
   end;
 
   procedure AddTrack(ATrack: TGPSTrack);
   var
     I: Integer;
     P: TGPSPoint;
+    T: TMapTrack;
   begin
-    with Tracks.Add as TMapTrack do
+    T := Tracks.Add as TMapTrack;
+    with T do
     begin
       Caption := ATrack.Name;
       for I := 0 to Pred(ATrack.Points.Count) do
@@ -2008,6 +2040,8 @@ procedure TMapLayer.AssignFromGPSList(AList: TGPSObjectList);
         LineColor := TTrackExtraData(ATrack.ExtraData).Color;
       end;
     end;
+    if Assigned(ATracks) then
+      ATracks.Add(T);
   end;
 
 var
@@ -2015,8 +2049,13 @@ var
 begin
   if not Assigned(AList) then
     Exit;
-  PointsOfInterest.Clear;
-  Tracks.Clear;
+
+  if AClear then
+  begin
+    PointsOfInterest.Clear;
+    Tracks.Clear;
+  end;
+
   for I := 0 to Pred(AList.Count) do
   if AList[I] is TGPSPoint then
     AddPoint(TGPSPoint(AList[I]))
@@ -2025,6 +2064,12 @@ begin
   else
     {TODO};
 end;
+
+procedure TMapLayer.AssignFromGPSList(AList: TGPSObjectList);
+begin
+  AssignFromGPSList(AList, true, nil, nil);
+end;
+
 
 { TMapLayers }
 
@@ -3665,15 +3710,21 @@ begin
   Result := FindObjsAtScreenPt(X, Y, ATolerance, true);
 end;
 
+procedure TMapView.CenterOnArea(const aArea: TRealArea);
+var
+  Pt: TRealPoint;
+begin
+  Pt.Lon := (aArea.TopLeft.Lon + aArea.BottomRight.Lon) /2;
+  Pt.Lat := (aArea.TopLeft.Lat + aArea.BottomRight.Lat) /2;
+  Center := Pt;
+end;
+
 procedure TMapView.CenterOnObj(obj: TGPSObj);
 var
   Area: TRealArea;
-  Pt: TRealPoint;
 begin
   obj.GetArea(Area);
-  Pt.Lon := (Area.TopLeft.Lon + Area.BottomRight.Lon) /2;
-  Pt.Lat := (Area.TopLeft.Lat + Area.BottomRight.Lat) /2;
-  Center := Pt;
+  CenterOnArea(Area);
 end;
 
 procedure TMapView.ZoomOnObj(obj: TGPSObj);
