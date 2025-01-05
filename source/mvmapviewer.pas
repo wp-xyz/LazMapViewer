@@ -525,6 +525,7 @@ type
       procedure DrawGpsObj(const {%H-}Area: TRealArea; AObj: TGPSObj);
       function GetCacheMaxAge: Integer;
       function GetCacheOnDisk: boolean;
+      function GetCacheMemMaxItemCount : Integer;
       function GetCenter: TRealPoint;
       function GetCyclic: Boolean;
       function GetDownloadEngine: TMvCustomDownloadEngine;
@@ -544,6 +545,7 @@ type
       function GetZoom: integer;
       function GetZoomToCursor: Boolean;
       function IsCacheMaxAgeStored: Boolean;
+      function IsCacheMemMaxItemCountStored : Boolean;
       function IsCachePathStored: Boolean;
       function IsFontStored: Boolean;
       function IsLayersStored: Boolean;
@@ -552,6 +554,7 @@ type
       procedure SetCacheMaxAge(AValue: Integer);
       procedure SetCacheOnDisk(AValue: boolean);
       procedure SetCachePath(AValue: String);
+      procedure SetCacheMemMaxItemCount(AValue : Integer);
       procedure SetCenter(AValue: TRealPoint);
       procedure SetCyclic(AValue: Boolean);
       procedure SetDebugTiles(AValue: Boolean);
@@ -686,6 +689,7 @@ type
       property CachePath: String read FCachePath write SetCachePath stored IsCachePathStored;
       property CacheFullPath: String read FCacheFullPath stored False;
       property CacheMaxAge: Integer read GetCacheMaxAge write SetCacheMaxAge stored IsCacheMaxAgeStored;
+      property CacheMemMaxItemCount : Integer read GetCacheMemMaxItemCount write SetCacheMemMaxItemCount stored IsCacheMemMaxItemCountStored;
       property Cyclic: Boolean read GetCyclic write SetCyclic default false;
       property DebugTiles: Boolean read FDebugTiles write SetDebugTiles default false;
       property DefaultTrackColor: TColor read FDefaultTrackColor write SetDefaultTrackColor default clRed;
@@ -2166,6 +2170,11 @@ begin
   Result := FCacheOnDisk; 
 end;
 
+function TMapView.GetCacheMemMaxItemCount: Integer;
+begin
+  Result := Engine.CacheMemMaxItemCount;
+end;
+
 function TMapView.GetCenter: TRealPoint;
 begin
   Result := Engine.Center;
@@ -2283,6 +2292,11 @@ begin
   Result := Engine.CacheMaxAge <> MaxInt;
 end;
 
+function TMapView.IsCacheMemMaxItemCountStored: Boolean;
+begin
+  Result := (Engine.CacheMemMaxItemCount <> Engine.CacheMemMaxItemCountDefault);
+end;
+
 function TMapView.IsCachePathStored: Boolean;
 begin
   Result := not SameText(CachePath, 'cache/');
@@ -2319,6 +2333,11 @@ begin
   if NewPath = Engine.CachePath then
     Exit;
   ChangeCachePath(CacheLocation, NewPath);
+end;
+
+procedure TMapView.SetCacheMemMaxItemCount(AValue: Integer);
+begin
+  Engine.CacheMemMaxItemCount:= AValue;
 end;
 
 procedure TMapView.SetCenter(AValue: TRealPoint);

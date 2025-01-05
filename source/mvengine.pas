@@ -92,6 +92,8 @@ type
       function GetCacheMaxAge: Integer;
       function GetCacheOnDisk: Boolean;
       function GetCachePath: String;
+      function GetCacheMemMaxItemCount : Integer;
+      function GetCacheMemMaxItemCountDefault : Integer;
       function GetCenter: TRealPoint;
       function GetHeight: integer;
       class function GetProjectionType(const aWin: TMapWindow): TProjectionType;
@@ -108,6 +110,7 @@ type
       procedure SetCacheMaxAge(AValue: Integer);
       procedure SetCacheOnDisk(AValue: Boolean);
       procedure SetCachePath(AValue: String);
+      procedure SetCacheMemMaxItemCount(AValue : Integer);
       procedure SetCenter(ACenter: TRealPoint);
       procedure SetCyclic(AValue: Boolean);
       procedure SetDownloadEngine(AValue: TMvCustomDownloadEngine);
@@ -196,11 +199,12 @@ type
       property CacheMaxAge: Integer read GetCacheMaxAge write SetCacheMaxAge;
       property ZoomMin: Integer read FZoomMax write FZoomMin;
       property ZoomMax: Integer read FZoomMax write FZoomMax;
-
+      property CacheMemMaxItemCountDefault : Integer read GetCacheMemMaxItemCountDefault;
     published
       property Active: Boolean read FActive write SetActive default false;
       property CacheOnDisk: Boolean read GetCacheOnDisk write SetCacheOnDisk;
       property CachePath: String read GetCachePath write SetCachePath;
+      property CacheMemMaxItemCount : Integer read GetCacheMemMaxItemCount write SetCacheMemMaxItemCount;
       property Cyclic: Boolean read FCyclic write SetCyclic default false;
       property DownloadEngine: TMvCustomDownloadEngine
         read FDownloadEngine write SetDownloadEngine;
@@ -577,6 +581,16 @@ end;
 function TMapViewerEngine.GetCachePath: String;
 begin
   Result := Cache.BasePath;
+end;
+
+function TMapViewerEngine.GetCacheMemMaxItemCount: Integer;
+begin
+  Result := Cache.MemMaxItemCount;
+end;
+
+function TMapViewerEngine.GetCacheMemMaxItemCountDefault: Integer;
+begin
+  Result := Cache.CacheMemMaxItemCountDefault;
 end;
 
 function TMapViewerEngine.GetCenter: TRealPoint;
@@ -1296,6 +1310,11 @@ end;
 procedure TMapViewerEngine.SetCachePath(AValue: String);
 begin
   Cache.BasePath := SetDirSeparators(aValue);
+end;
+
+procedure TMapViewerEngine.SetCacheMemMaxItemCount(AValue: Integer);
+begin
+  Cache.MemMaxItemCount := AValue;
 end;
 
 procedure TMapViewerEngine.SetCenter(ACenter: TRealPoint);
