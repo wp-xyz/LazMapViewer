@@ -207,11 +207,11 @@ end;
 
 destructor TPictureCache.Destroy;
 begin
-  inherited;
   ClearCache;
   FreeAndNil(FCacheObjectList);
   FreeAndNil(FCacheIDs);
   FreeAndNil(FLock);
+  inherited;
 end;
 
 procedure TPictureCache.SetUseThreads(AValue: Boolean);

@@ -487,7 +487,10 @@ begin
     {$endif}
     ;
     if Assigned(picitem) then
+    begin
       FInternalPictureCache.Add(AMapProvider,ATileID,picitem);
+      FInternalPictureCache.CheckCacheSize(Nil);
+    end;
   end;
 
   {$ifdef USE_EPIKTIMER}
