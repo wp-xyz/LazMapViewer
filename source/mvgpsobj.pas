@@ -126,12 +126,20 @@ type
 
   TGPSPointOfInterest = class(TGPSPoint)
   private
+    FImageAnchorX: Single;
+    FImageAnchorY: Single;
     FImageIndex: Integer;
+    FTextPositionHor: TTextPositionHor;
+    FTextPositionVert: TTextPositionVert;
   public
     constructor Create(ALon, ALat: Double; AElevation: Double = NO_ELE;
       ADateTime: TDateTime = NO_DATE);
     procedure Draw({%H-}AView: TObject; {%H-}Area: TRealArea); override;
+    property ImageAnchorX: Single read FImageAnchorX write FImageAnchorX;
+    property ImageAnchorY: Single read FImageAnchorY write FImageAnchorY;
     property ImageIndex: Integer read FImageIndex write FImageIndex default -1;
+    property TextPositionHor: TTextPositionHor read FTextPositionHor write FTextPositionHor default tphCenter;
+    property TextPositionVert: TTextPositionVert read FTextPositionVert write FTextPositionVert default tpvBelow;
   end;
 
   { TGPSPolyLine }
@@ -1113,7 +1121,11 @@ constructor TGPSPointOfInterest.Create(ALon, ALat: Double;
   AElevation: Double = NO_ELE; ADateTime: TDateTime = NO_DATE);
 begin
   inherited;
+  FImageAnchorX := 0.5;
+  FImageAnchorY := 1.0;
   FImageIndex := -1;
+  FTextPositionHor := tphCenter;
+  FTextPositionVert := tpvBelow;
 end;
 
 procedure TGPSPointOfInterest.Draw(AView: TObject; Area: TRealArea);

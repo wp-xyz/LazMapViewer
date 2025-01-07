@@ -72,6 +72,9 @@ Type
     Z: integer;
   end;
 
+  TTextPositionHor = (tphLeft, tphCenter, tphRight);
+  TTextPositionVert = (tpvAbove, tpvCenter, tpvBelow);
+
 function RealPoint(Lat, Lon: Double): TRealPoint;
 
 // Call this to silence 'parameter is unused' hint

@@ -325,10 +325,18 @@ type
 
   TMapPointOfInterest = class(TMapPoint)
   private
+    FImageAnchor: Array[0..1] of Single;
     FImageIndex: TImageIndex;
+    FTextPositionHor: TTextPositionHor;
+    FTextPositionVert: TTextPositionVert;
     FOnDrawPoint: TMapPointOfInterestDrawEvent;
+    function GetImageAnchor(AIndex: Integer): Single;
+    function IsImageAnchorStored(AIndex: Integer): Boolean;
+    procedure SetImageAnchor(AIndex: Integer; AValue: Single);
     procedure SetImageIndex(AValue: TImageIndex);
     procedure SetOnDrawPoint(AValue: TMapPointOfInterestDrawEvent);
+    procedure SetTextPositionHor(AValue: TTextPositionHor);
+    procedure SetTextPositionVert(AValue: TTextPositionVert);
   protected
     procedure DrawPoint(Sender: TObject; {%H-}AGPSObj: TGPSObj; {%H-}AArea: TRealArea);
     procedure ItemChanged; override;
@@ -338,7 +346,11 @@ type
     constructor Create(ACollection: TCollection); override;
     procedure AssignTo(Dest: TPersistent); override;
   published
+    property ImageAnchorX: Single index 0 read GetImageAnchor write SetImageAnchor stored IsImageAnchorStored;
+    property ImageAnchorY: Single index 1 read GetImageAnchor write SetImageAnchor stored IsImageAnchorStored;
     property ImageIndex: TImageIndex read FImageIndex write SetImageIndex default -1;
+    property TextPositionHor: TTextPositionHor read FTextPositionHor write SetTextPositionHor default tphCenter;
+    property TextPositionVert: TTextPositionVert read FTextPositionVert write SetTextPositionVert default tpvBelow;
     property OnDrawPoint: TMapPointOfInterestDrawEvent read FOnDrawPoint write SetOnDrawPoint;
   end;
 
@@ -598,8 +610,9 @@ type
       procedure DoCenterMove(Sender: TObject);
       procedure DoCenterMoving(Sender: TObject; var NewCenter: TRealPoint; var Allow: Boolean);
       procedure DoDrawMissingTile(ATileID: TTileID; ARect: TRect);
-      procedure DoDrawPoint(const Area: TRealArea; APt: TGPSPoint; AImageIndex: Integer);
-      procedure DoDrawStretchedTile(const TileId: TTileID; X, Y: Integer; TileImg: TPictureCacheItem; const R: TRect);
+      procedure DoDrawPoint(const Area: TRealArea; APt: TGPSPoint);
+      procedure DoDrawStretchedTile(const TileId: TTileID; X, Y: Integer;
+        TileImg: TPictureCacheItem; const R: TRect);
       procedure DoDrawTile(const TileId: TTileId; X,Y: integer; TileImg: TPictureCacheItem);
       procedure DoTileAfterGetFromCache(const AMapProvider: TMapProvider;
                                         const ATileId: TTileId;
@@ -1709,6 +1722,26 @@ end;
 
 { TMapPointOfInterest }
 
+function TMapPointOfInterest.GetImageAnchor(AIndex: Integer): Single;
+begin
+  Result := FImageAnchor[AIndex];
+end;
+
+function TMapPointOfInterest.IsImageAnchorStored(AIndex: Integer): Boolean;
+begin
+  case AIndex of
+    0: Result := FImageAnchor[0] = 0.5;
+    1: Result := FImageAnchor[1] = 1.0;
+  end;
+end;
+
+procedure TMapPointOfInterest.SetImageAnchor(AIndex: Integer; AValue: Single);
+begin
+  if FImageAnchor[AIndex] = AValue then exit;
+  FImageAnchor[AIndex] := AValue;
+  ItemChanged;
+end;
+
 procedure TMapPointOfInterest.SetImageIndex(AValue: TImageIndex);
 begin
   if FImageIndex = AValue then Exit;
@@ -1727,6 +1760,20 @@ begin
   ItemChanged;
 end;
 
+procedure TMapPointOfInterest.SetTextPositionHor(AValue: TTextPositionHor);
+begin
+  if FTextPositionHor = AValue then Exit;
+  FTextPositionHor := AValue;
+  ItemChanged;
+end;
+
+procedure TMapPointOfInterest.SetTextPositionVert(AValue: TTextPositionVert);
+begin
+  if FTextPositionVert = AValue then Exit;
+  FTextPositionVert := AValue;
+  ItemChanged;
+end;
+
 procedure TMapPointOfInterest.DrawPoint(Sender: TObject; AGPSObj: TGPSObj;
   AArea: TRealArea);
 begin
@@ -1737,12 +1784,21 @@ end;
 procedure TMapPointOfInterest.ItemChanged;
 begin
   TGPSPointOfInterest(FPoint).ImageIndex := FImageIndex;
+  TGPSPointOfInterest(FPoint).ImageAnchorX := FImageAnchor[0];
+  TGPSPointOfInterest(FPoint).ImageAnchorY := FImageAnchor[1];
+  TGPSPointOfInterest(FPoint).TextPositionHor := FTextPositionHor;
+  TGPSPointOfInterest(FPoint).TextPositionVert := FTextPositionVert;
   inherited ItemChanged;
 end;
 
 function TMapPointOfInterest.CreatePoint: TGPSPoint;
 begin
   Result := TGPSPointOfInterest.Create(FLongitude, FLatitude);
+  TGPSPointOfInterest(Result).ImageIndex := FImageIndex;
+  TGPSPointOfInterest(Result).ImageAnchorX := FImageAnchor[0];
+  TGPSPointOfInterest(Result).ImageAnchorY := FImageAnchor[1];
+  TGPSPointOfInterest(Result).TextPositionHor := FTextPositionHor;
+  TGPSPointOfInterest(Result).TextPositionVert := FTextPositionVert;
   Layer.ComboLayer.Add(Result, Pred(_TILELAYERS_ID_), Self.Index + BASE_Z_POI);
 end;
 
@@ -1755,14 +1811,24 @@ end;
 constructor TMapPointOfInterest.Create(ACollection: TCollection);
 begin
   inherited Create(ACollection);
+  FImageAnchor[0] := 0.5;     // Anchor is a bottom center of icon
+  FImageAnchor[1] := 1.0;
   FImageIndex := -1;
+  FTextPositionHor := tphCenter;   // Text is centered below the point
+  FTextPositionVert := tpvBelow;
 end;
 
 procedure TMapPointOfInterest.AssignTo(Dest: TPersistent);
 begin
   inherited AssignTo(Dest);
   if Dest is TMapPointOfInterest then
+  begin
+    TMapPointOfInterest(Dest).ImageAnchorX := Self.ImageAnchorX;
+    TMapPointOfInterest(Dest).ImageAnchorY := Self.ImageAnchorY;
     TMapPointOfInterest(Dest).ImageIndex := Self.ImageIndex;
+    TMapPointOfInterest(Dest).TextPositionHor := Self.TextPositionHor;
+    TMapPointOfInterest(Dest).TextPositionVert := Self.TextPositionVert;
+  end;
 end;
 
 { TMapCenter }
@@ -3120,7 +3186,7 @@ begin
   end;
 end;
 
-procedure TMapView.DoDrawPoint(const Area: TRealArea; APt: TGPSPoint; AImageIndex: Integer);
+procedure TMapView.DoDrawPoint(const Area: TRealArea; APt: TGPSPoint);
 var
   pt: TPoint;
   ptCyc: TPointArray;
@@ -3129,16 +3195,22 @@ var
   txtExtent: TSize;
   bmp: TBitmap;
   wBmp, hBmp: Integer;
+  imgIndex: Integer = -1;
+  imgAnchorX: Single = 0.0;
+  imgAnchorY: Single = 0.0;
+  txtPosHor: TTextPositionHor = tphCenter;
+  txtPosVert: TTextPositionVert = tpvBelow;
   savedOpacity: Single;
   savedPen: TMvPen;
 
   procedure DrawOne(P: TPoint);
   const
     SYMBOL_SIZE = 5;
+    TXT_DISTANCE = 5;
   begin
     // Draw as bitmap from ImageList...
     if Assigned(bmp) then
-      DrawingEngine.DrawBitmap(P.X - wBmp div 2, P.Y - hBmp, bmp, true)
+      DrawingEngine.DrawBitmap(P.X - round(wBmp * imgAnchorX), P.Y - round(hBmp * imgAnchorY), bmp, true)
     else
     // ... or draw as global POI bitmap image ...
     if Assigned(FPOIImage) and not (FPOIImage.Empty) then
@@ -3159,7 +3231,20 @@ var
       DrawingEngine.BrushStyle := bsSolid;
       DrawingEngine.BrushColor := FPOITextBgColor;
     end;
-    DrawingEngine.TextOut(P.X - txtExtent.CX div 2, P.Y + 5, txt);
+    
+    // Text is at the left/centered/right of the GPS point...
+    case txtPosHor of
+      tphLeft: P.X := P.X - txtExtent.CX;
+      tphCenter: P.X := P.X - txtExtent.CX div 2;
+      tphRight: ;
+    end;
+    // ... and above/centered/below the GPS point
+    case txtPosVert of
+      tpvAbove: P.Y := P.Y - txtExtent.CY - TXT_DISTANCE;
+      tpvCenter: P.Y := P.Y - txtExtent.CY div 2;
+      tpvBelow: P.Y := P.Y + TXT_DISTANCE;
+    end;
+    DrawingEngine.TextOut(P.X, P.Y, txt);
   end;
 
 begin
@@ -3171,6 +3256,15 @@ begin
     exit;
   end;
 
+  if (APt is TGpsPointOfInterest) then
+  begin
+    imgIndex := TGpsPointOfInterest(APt).ImageIndex;
+    imgAnchorX := TGpsPointOfInterest(APt).ImageAnchorX;
+    imgAnchorY := TGpsPointOfInterest(APt).ImageAnchorY;
+    txtPosHor := TGpsPointOfInterest(APt).TextPositionHor;
+    txtPosVert := TGpsPointOfInterest(APt).TextPositionVert;
+  end;
+
   savedOpacity := DrawingEngine.Opacity;
   savedPen := DrawingEngine.GetPen;
   bmp := nil;
@@ -3178,10 +3272,10 @@ begin
     DrawingEngine.Opacity := 1.0;
 
     // Prepare point image as symbol from image list ...
-    if Assigned(FPOIImages) and (AImageIndex <> -1) and (AImageIndex < FPOIImages.Count) then
+    if Assigned(FPOIImages) and (imgIndex <> -1) and (imgIndex < FPOIImages.Count) then
     begin
       bmp := TBitmap.Create;
-      FPOIImages.GetBitmap(AImageIndex, bmp);
+      FPOIImages.GetBitmap(imgIndex, bmp);
       {$IF LCL_FullVersion >= 2000000}
       wBmp := FPOIImages.WidthForPPI[FPOIImagesWidth, Font.PixelsPerInch];
       hBmp := FPOIImages.HeightForPPI[FPOIImagesWidth, Font.PixelsPerInch];
@@ -3228,12 +3322,12 @@ end;
 
 procedure TMapView.DrawPointOfInterest(const Area: TRealArea; APt: TGPSPointOfInterest);
 begin
-  DoDrawPoint(ARea, APt, APt.ImageIndex);
+  DoDrawPoint(ARea, APt);
 end;
 
 procedure TMapView.DrawPt(const Area: TRealArea; APt: TGPSPoint);
 begin
-  DoDrawPoint(Area, APt, -1);
+  DoDrawPoint(Area, APt);
 end;
 
 procedure TMapView.DrawGpsObj(const Area: TRealArea; AObj: TGPSObj);
