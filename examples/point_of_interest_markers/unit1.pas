@@ -5,16 +5,18 @@ unit Unit1;
 interface
 
 uses
-  Classes, mvMapViewer, mvPluginCore, mvPlugins, SysUtils, Forms, Controls,
-  Graphics, Dialogs, mvTypes;
+  Classes, mvMapViewer, mvPluginCore, mvPlugins, StdCtrls, SysUtils, Forms,
+  Controls, Graphics, Dialogs, mvTypes;
 
 type
-  TForm1 = class(TForm)
-    ImageList1: TImageList;
-    MapView1: TMapView;
-    MvPluginManager1: TMvPluginManager;
-    MvPluginManager1LegalNoticePlugin1: TLegalNoticePlugin;
-    MvPluginManager1LegalNoticePlugin2: TLegalNoticePlugin;
+  TMainForm = class(TForm)
+    cbAllowDragging: TCheckBox;
+    MarkerImages: TImageList;
+    MapView: TMapView;
+    PluginManager: TMvPluginManager;
+    LegalNoticePlugin_Icons: TLegalNoticePlugin;
+    LegalNoticePlugin_Map: TLegalNoticePlugin;
+    procedure cbAllowDraggingChange(Sender: TObject);
     procedure FormCreate(Sender: TObject);
   private
 
@@ -23,18 +25,18 @@ type
   end;
 
 var
-  Form1: TForm1;
+  MainForm: TMainForm;
 
 implementation
 
 {$R *.lfm}
 
-procedure TForm1.FormCreate(Sender: TObject);
+procedure TMainForm.FormCreate(Sender: TObject);
 var
   L: TMapLayer;
   P: TMapPointOfInterest;
 begin
-  L := MapView1.Layers.Add as TMapLayer;
+  L := MapView.Layers.Add as TMapLayer;
 
   P := L.PointsOfInterest.Add as TMapPointOfInterest;
   // or: P := TMapPointOfInterest.Create(L.PointsOfInterest);
@@ -53,16 +55,24 @@ begin
   P := L.PointsOfInterest.Add as TMapPointOfInterest;
   P.RealPoint := RealPoint(0.0, 0.0);
   P.ImageIndex := 1;
-  P.Caption := 'Location';
+  P.Caption := 'Marker';
 
   P := L.PointsOfInterest.Add as TMapPointOfInterest;
   P.RealPoint := RealPoint(0.0, -120.0);
   P.ImageIndex := 3;
-  P.ImageAnchorX := 0.2;
+  P.ImageAnchorX := 0.27;
   P.ImageAnchorY := 0;
   P.TextPositionHor := tphLeft;
   P.TextPositionVert := tpvAbove;
   P.Caption := 'Safety Pin';
+end;
+
+procedure TMainForm.cbAllowDraggingChange(Sender: TObject);
+begin
+  if cbAllowDragging.Checked then
+    MapView.Options := MapView.Options + [mvoEditorEnabled]
+  else
+    MapView.Options := MapView.Options - [mvoEditorEnabled];
 end;
 
 end.

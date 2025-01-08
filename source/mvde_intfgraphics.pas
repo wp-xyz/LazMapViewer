@@ -767,7 +767,6 @@ end;
 procedure TMvIntfGraphicsDrawingEngine.TextOut(X, Y: Integer; const AText: String);
 var
   bmp: TBitmap;
-  ex: TSize;
   R: TRect;
   txtFlags: Integer = DT_CENTER + DT_WORDBREAK;
 begin
@@ -781,9 +780,9 @@ begin
     bmp.Canvas.Font.Size := FFontSize;
     bmp.Canvas.Font.Style := FFontStyle;
     bmp.Canvas.Font.Color := FFontColor;
-    ex := bmp.Canvas.TextExtent(AText);
-    bmp.SetSize(ex.CX, ex.CY);
-    R := Rect(0, 0, ex.CX, ex.CY);
+    R := Rect(0, 0, MaxInt, 0);
+    DrawText(bmp.Canvas.Handle, PChar(AText), Length(AText), R, DT_CALCRECT + DT_WORDBREAK);
+    bmp.SetSize(R.Right - R.Left, R.Bottom - R.Top);
     if GetBrushStyle <> bsClear then begin
       bmp.Canvas.Brush.Color := GetBrushColor;
       bmp.Canvas.FillRect(0, 0, bmp.Width, bmp.Height);

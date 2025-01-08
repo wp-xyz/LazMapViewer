@@ -640,12 +640,12 @@ end;
 
 function TMvCustomDrawingEngine.TextHeight(const AText: String): Integer;
 begin
-  Result := TextExtent(AText).CX;
+  Result := TextExtent(AText).CY;
 end;
 
 function TMvCustomDrawingEngine.TextWidth(const AText: String): Integer;
 begin
-  Result := TextExtent(AText).CY;
+  Result := TextExtent(AText).CX;
 end;
 
 end.
