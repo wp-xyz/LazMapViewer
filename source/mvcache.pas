@@ -70,7 +70,8 @@ Type
      constructor Create(aOwner: TComponent); override;
      destructor Destroy; override;
      procedure Add(const MapProvider: TMapProvider; const TileId: TTileId; const Stream: TMemoryStream);
-     procedure CheckCacheSize(Sender: TObject);
+     procedure CheckCacheSize;
+     procedure CheckCacheSize(Sender: TObject); deprecated 'Use CheckCacheSize without parameters!';
      procedure GetFromCache(const MapProvider: TMapProvider; const TileId: TTileId; out Item: TPictureCacheItem);
      function GetPreviewFromCache(const MapProvider: TMapProvider; var TileId: TTileId; out ARect: TRect): boolean;
      function InCache(const MapProvider: TMapProvider; const TileId: TTileId): Boolean;
@@ -234,7 +235,7 @@ begin
   if FMemMaxItemCount <> newcnt then
   begin
     FMemMaxItemCount := newcnt;
-    CheckCacheSize(Self);
+    CheckCacheSize;
   end;
 end;
 
@@ -263,13 +264,11 @@ begin
 end;
 
 procedure TPictureCache.ClearCache;
-var
-  I: Integer;
 begin
   EnterLock;
   try
-    for I := FCacheObjectList.Count-1 downto 0 do
-      DeleteItem(I);
+    FCacheIDs.Clear; // Delete all ID strings
+    FCacheObjectList.Clear;
   finally
     LeaveLock;
   end;
@@ -365,6 +364,7 @@ begin
         pci0 := pci; // from here the Item is in the object list
         pci := Nil; // so nil
         FCacheIDs.AddObject(AIDString,pci0);
+        CheckCacheSize();
       except
       end;
     finally
@@ -406,24 +406,6 @@ begin
   end;
 end;
 
-procedure TPictureCache.CheckCacheSize(Sender: TObject);
-var
-  cnt: Integer;
-begin
-  EnterLock;
-  try
-    cnt := FCacheObjectList.Count;
-    if cnt < FMemMaxItemCount then Exit;
-    repeat
-      cnt := FCacheObjectList.Count;
-      if cnt < (FMemMaxItemCount-MEMCACHE_SWEEP_CNT) then Break;
-      DeleteItem(0);
-    until False;
-  finally
-    LeaveLock;
-  end;
-end;
-
 procedure TPictureCache.Add(const MapProvider: TMapProvider;
   const TileId: TTileId; const Stream: TMemoryStream);
 var
@@ -456,6 +438,30 @@ begin
     end;
   end;
 end;
+
+procedure TPictureCache.CheckCacheSize;
+var
+  cnt: Integer;
+begin
+  EnterLock;
+  try
+    cnt := FCacheObjectList.Count;
+    if cnt < FMemMaxItemCount then Exit;
+    repeat
+      cnt := FCacheObjectList.Count;
+      if cnt < (FMemMaxItemCount-MEMCACHE_SWEEP_CNT) then Break;
+      DeleteItem(0);
+    until False;
+  finally
+    LeaveLock;
+  end;
+end;
+
+procedure TPictureCache.CheckCacheSize(Sender: TObject);
+begin
+  CheckCacheSize();
+end;
+
 
 procedure TPictureCache.GetFromCache(const MapProvider: TMapProvider;
   const TileId: TTileId; out Item: TPictureCacheItem);
