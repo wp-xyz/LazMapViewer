@@ -334,13 +334,13 @@ var
 begin
   prov := MapProvider2FileName(MapProvider);
   if FLAT_CACHE then
-    Result := Format('%s_%d_%d_%d', [prov, TileId.X, TileId.Y, TileId.Z])
+    {%H-}Result := Format('%s_%d_%d_%d', [prov, TileId.X, TileId.Y, TileId.Z])
   else
     Result := SetDirSeparators(Format('%s/%d/%d_%d', [prov, TileID.Z, TileID.X, TileID.Y]));
 end;
 
 { AddItem allows the insertion of an existing TPictureCacheItem.
-  CAUTION: This will not create any File on Disk!! }
+  CAUTION: This will not create any file on disk! }
 procedure TPictureCache.AddItem(const Item: TPictureCacheItem;
   const AIDString: String);
 var
@@ -461,7 +461,6 @@ procedure TPictureCache.CheckCacheSize(Sender: TObject);
 begin
   CheckCacheSize();
 end;
-
 
 procedure TPictureCache.GetFromCache(const MapProvider: TMapProvider;
   const TileId: TTileId; out Item: TPictureCacheItem);

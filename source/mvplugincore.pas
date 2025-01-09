@@ -888,6 +888,8 @@ end;
 
 destructor TMvPluginManager.Destroy;
 begin
+  while FPluginList.Count > 0 do
+    FPluginList[FPluginList.Count-1].Free;
   FPluginList.Free;
   FMapList.Free;
   inherited;
