@@ -46,46 +46,43 @@ Type
      FCacheItemClass: TPictureCacheItemClass;
      FMaxAge: Integer;
      FMemMaxItemCount: Integer;
-     FCacheObjectList : TObjectList;
+     FCacheObjectList : TFPObjectList;
      FCacheIDs: TStringList;
      FLock: TCriticalSection;
      FBasePath: String;
      FUseDisk: Boolean;
      FUseThreads: Boolean;
-     procedure SetMemMaxItemCount(Value : Integer);
+     procedure SetMemMaxItemCount(Value: Integer);
      procedure SetCacheItemClass(AValue: TPictureCacheItemClass);
      procedure SetUseThreads(AValue: Boolean);
      procedure EnterLock;
      procedure LeaveLock;
      function GetCacheMemMaxItemCountDefault: Integer;
    protected
-     //function GetNewImgFor(aStream: TStream): TLazIntfImage;
+     procedure AddItem(const Item: TPictureCacheItem; const AIDString: String);
      procedure ClearCache;
-     function MapProvider2FileName(MapProvider: TMapProvider): String;
-     function DiskCached(const aFileName: String): Boolean;
-     procedure LoadFromDisk(const aFileName: String; out Item: TPictureCacheItem);
-     function GetFileName(MapProvider: TMapProvider; const TileId: TTileId): String;
-     { The follwing AddItem methods allows the insertion of an existing TPictureCacheItem.
-       CAUTION: This will not create any File on Disk!! }
-     procedure AddItem(const Item: TPictureCacheItem; const AIDString : String);
      procedure DeleteItem(const AItemIndex : Integer);
+     function DiskCached(const aFileName: String): Boolean;
+     function GetFileName(MapProvider: TMapProvider; const TileId: TTileId): String;
+     procedure LoadFromDisk(const aFileName: String; out Item: TPictureCacheItem);
+     function MapProvider2FileName(MapProvider: TMapProvider): String;
    public
-     procedure CheckCacheSize(Sender: TObject);
      constructor Create(aOwner: TComponent); override;
      destructor Destroy; override;
      procedure Add(const MapProvider: TMapProvider; const TileId: TTileId; const Stream: TMemoryStream);
+     procedure CheckCacheSize(Sender: TObject);
      procedure GetFromCache(const MapProvider: TMapProvider; const TileId: TTileId; out Item: TPictureCacheItem);
      function GetPreviewFromCache(const MapProvider: TMapProvider; var TileId: TTileId; out ARect: TRect): boolean;
      function InCache(const MapProvider: TMapProvider; const TileId: TTileId): Boolean;
      procedure Prepare(const MapProvider: TMapProvider);
 
-     property UseDisk: Boolean read FUseDisk write FUseDisk;
      property BasePath: String read FBasePath write FBasePath;
-     property UseThreads: Boolean read FUseThreads write SetUseThreads;
      property CacheItemClass: TPictureCacheItemClass read FCacheItemClass write SetCacheItemClass;
+     property CacheMemMaxItemCountDefault: Integer read GetCacheMemMaxItemCountDefault;
      property MaxAge: Integer read FMaxAge write FMaxAge; // in days
-     property MemMaxItemCount : Integer read FMemMaxItemCount write SetMemMaxItemCount;
-     property CacheMemMaxItemCountDefault : Integer read GetCacheMemMaxItemCountDefault;
+     property MemMaxItemCount: Integer read FMemMaxItemCount write SetMemMaxItemCount;
+     property UseDisk: Boolean read FUseDisk write FUseDisk;
+     property UseThreads: Boolean read FUseThreads write SetUseThreads;
    end;
 
 
@@ -141,23 +138,6 @@ end;
 
 { TPictureCacheItem }
 
-function TPictureCacheItem.GetImageObject: TObject;
-begin
-  Result := Nil;
-end;
-
-class function TPictureCacheItem.GetImageReader(AStream: TStream
-  ): TFPCustomImageReader;
-begin
-  Result := Nil;
-  if not Assigned(AStream) then
-     Exit;
-  if IsValidJPEG(AStream) then
-    Result := TFPReaderJPEG.Create
-  else if IsValidPNG(AStream) then
-    Result := TLazReaderPNG.Create;
-end;
-
 constructor TPictureCacheItem.Create(ASource: TPictureCacheItem);
 begin
   inherited Create;
@@ -173,35 +153,53 @@ begin
   inherited Destroy;
 end;
 
+function TPictureCacheItem.GetImageObject: TObject;
+begin
+  Result := Nil;
+end;
 
-{ TPictureCache }
+class function TPictureCacheItem.GetImageReader(AStream: TStream): TFPCustomImageReader;
+begin
+  Result := Nil;
+  if not Assigned(AStream) then
+     Exit;
+  if IsValidJPEG(AStream) then
+    Result := TFPReaderJPEG.Create
+  else if IsValidPNG(AStream) then
+    Result := TLazReaderPNG.Create;
+end;
 
-{
+{ TPictureCache
+
   Some explanation about the internal cache memory.
+
   There are two lists.
-  The first is the FCacheObjectList : ObjectList, which contains the stored objects.
-  The second is the FCacheIDs : StringList, which contains the IDString (= most likely the filename)
-  and in the objects property the reference to the object stored in the ObjectList.
-  This StringList is sorted to speed up the access to the cache items.
-  The FCacheObjectList contains the oldest objects in the lower indicees,
-  the newer ones at the end. If an Item is retrieved and located in the lower half
-  of the Indicees, it is place again at the end. This keeps often used items in the
+  - The first one is the FCacheObjectList (type TFPObjectList) which contains
+    the stored objects (cache items).
+  - The second one is the FCacheIDs (type TStringList), which contains the
+    IDString (corresponding to the filename) and in the objects property the
+    reference to the object stored in the FCacheObjectList.
+
+  This stringlist is sorted to speed up the access to the cache items.
+
+  The FCacheObjectList contains the oldest objects in the lower indices,
+  the newer ones at the end. If an item is retrieved and located in the lower half
+  of the indices, it is placed again at the end. This keeps often-used items in the
   cache.
+
   If the cache is full, the list is reduced to FMemMaxItemCount-MEMCACHE_SWEEP_CNT,
-  so that not on every added tile another has to be deleted.
+  so that tiles do not have to be deleted on every added tile.
 }
-
-
 constructor TPictureCache.Create(aOwner: TComponent);
 begin
   inherited Create(aOwner);
   FCacheItemClass := TPictureCacheItem;
   FMemMaxItemCount := MEMCACHE_DEFAULT;
   FMaxAge := MaxInt;
-  FCacheObjectList := TObjectList.Create(True); //Owner of Objects
+  FCacheObjectList := TFPObjectList.Create(True);  // Owns the objects
   FCacheIDs := TStringList.Create;
   FCacheIDs.Sorted := True;
-  FCacheIDs.Duplicates:= dupAccept;
+  FCacheIDs.Duplicates := dupAccept;
 end;
 
 destructor TPictureCache.Destroy;
@@ -264,47 +262,14 @@ begin
   Result := MEMCACHE_DEFAULT;
 end;
 
-{
-function TPictureCache.GetNewImgFor(aStream: TStream): TLazIntfImage;
-var
-  reader: TFPCustomImageReader;
-  rawImg: TRawImage;
-begin
-  Result := nil;
-  Reader := nil;
-  if not Assigned(aStream) then
-     exit;
-  if IsValidJPEG(astream) then
-    Reader := TFPReaderJPEG.create
-  else
-  if IsValidPNG(astream) then
-    Reader  := TLazReaderPNG.create;
-  if Assigned(reader) then
-  begin
-    try
-      rawImg.Init;
-      rawImg.Description.Init_BPP24_B8G8R8_BIO_TTB(TILE_SIZE, TILE_SIZE);
-      Result := TLazIntfImage.Create(rawImg, true);
-      try
-         Result.LoadFromStream(aStream, reader);
-      except
-         FreeAndNil(Result);
-      end;
-    finally
-      FreeAndNil(Reader)
-    end;
-  end;
-end;
-}
-
 procedure TPictureCache.ClearCache;
 var
-  i: Integer;
+  I: Integer;
 begin
   EnterLock;
   try
-    for i := FCacheObjectList.Count-1 downto 0 do
-      DeleteItem(i);
+    for I := FCacheObjectList.Count-1 downto 0 do
+      DeleteItem(I);
   finally
     LeaveLock;
   end;
@@ -338,25 +303,25 @@ begin
     Result := False;
 end;
 
-procedure TPictureCache.LoadFromDisk(const aFileName: String; out
-  Item: TPictureCacheItem);
+procedure TPictureCache.LoadFromDisk(const aFileName: String; 
+  out Item: TPictureCacheItem);
 var
   FullFileName: String;
   lStream: TFileStream;
 begin
-  Item := Nil;
+  Item := nil;
   if DiskCached(aFileName) then
   begin
     FullFileName := BasePath + aFileName;
     lStream := TFileStream.Create(FullFileName, fmOpenRead);
     try
       try
-        Item := FCacheItemClass.Create(lStream); //GetNewImgFor(lStream);
+        Item := FCacheItemClass.Create(lStream);
       except
         FreeAndNil(Item);
       end;
       if Assigned(Item) then
-        AddItem(Item,aFileName);
+        AddItem(Item, aFileName);
     finally
       lStream.Free;
     end;
@@ -374,6 +339,9 @@ begin
   else
     Result := SetDirSeparators(Format('%s/%d/%d_%d', [prov, TileID.Z, TileID.X, TileID.Y]));
 end;
+
+{ AddItem allows the insertion of an existing TPictureCacheItem.
+  CAUTION: This will not create any File on Disk!! }
 procedure TPictureCache.AddItem(const Item: TPictureCacheItem;
   const AIDString: String);
 var
@@ -440,7 +408,7 @@ end;
 
 procedure TPictureCache.CheckCacheSize(Sender: TObject);
 var
-  cnt : Integer;
+  cnt: Integer;
 begin
   EnterLock;
   try
@@ -466,8 +434,8 @@ begin
   FileName := GetFileName(MapProvider, TileId);
   EnterLock;
   try
-    item := FCacheItemClass.Create(Stream); //GetNewImgFor(Stream);
-    AddItem(Item,FileName);
+    item := FCacheItemClass.Create(Stream);
+    AddItem(Item, FileName);
   finally
     LeaveLock;
   end;
