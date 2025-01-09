@@ -233,11 +233,11 @@ begin
     Lon := Lon2;
     Exit;
   end;
-  aD := CalcGeoDistance(Lat1, Lon1, Lat2, Lon2) / EARTH_EQUATORIAL_RADIUS;
   latFrom := DegToRad(Lat1);
   lonFrom := DegToRad(Lon1);
   latTo := DegToRad(Lat2);
   lonTo := DegToRad(Lon2);
+  aD := (CalcGeoDistance(Lat1, Lon1, Lat2, Lon2)*1000.0) / EARTH_EQUATORIAL_RADIUS;
   A := Sin((1.0 - AFrac) * aD) / Sin(aD);
   B := Sin(AFrac * aD) / Sin(aD);
   X := A * Cos(latFrom) * Cos(lonFrom) + B * Cos(latTo) * Cos(lonTo);
