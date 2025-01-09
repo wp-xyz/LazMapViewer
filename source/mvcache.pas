@@ -65,10 +65,9 @@ Type
      function DiskCached(const aFileName: String): Boolean;
      procedure LoadFromDisk(const aFileName: String; out Item: TPictureCacheItem);
      function GetFileName(MapProvider: TMapProvider; const TileId: TTileId): String;
-     { The follwing Add methods allows the insertion of an existing TPictureCacheItem.
+     { The follwing AddItem methods allows the insertion of an existing TPictureCacheItem.
        CAUTION: This will not create any File on Disk!! }
-     procedure Add(const MapProvider: TMapProvider; const TileId: TTileId; const Item: TPictureCacheItem; const AIDString : String = '');
-     procedure Add(const Item: TPictureCacheItem; const AIDString : String);
+     procedure AddItem(const Item: TPictureCacheItem; const AIDString : String);
      procedure DeleteItem(const AItemIndex : Integer);
    public
      procedure CheckCacheSize(Sender: TObject);
@@ -357,7 +356,7 @@ begin
         FreeAndNil(Item);
       end;
       if Assigned(Item) then
-        Add(Item,aFileName);
+        AddItem(Item,aFileName);
     finally
       lStream.Free;
     end;
@@ -375,21 +374,7 @@ begin
   else
     Result := SetDirSeparators(Format('%s/%d/%d_%d', [prov, TileID.Z, TileID.X, TileID.Y]));
 end;
-
-procedure TPictureCache.Add(const MapProvider: TMapProvider; const TileId: TTileId;
-  const Item: TPictureCacheItem; const AIDString: String);
-var
-  lids : String;
-begin
-  if not Assigned(Item) then Exit;
-  if Length(AIDString) <= 0 then
-    lids := GetFileName(MapProvider, TileId)
-  else
-    lids := AIDString;
-  Add(Item,lids);
-end;
-
-procedure TPictureCache.Add(const Item: TPictureCacheItem;
+procedure TPictureCache.AddItem(const Item: TPictureCacheItem;
   const AIDString: String);
 var
   pci, pci0 : TPictureCacheItem;
@@ -482,7 +467,7 @@ begin
   EnterLock;
   try
     item := FCacheItemClass.Create(Stream); //GetNewImgFor(Stream);
-    Add(Item,FileName);
+    AddItem(Item,FileName);
   finally
     LeaveLock;
   end;

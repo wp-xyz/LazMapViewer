@@ -48,7 +48,7 @@ type
   TTileModifyPluginPictureCache = class(TPictureCache)
   public
     procedure ClearCache;
-    procedure Add(MapProvider: TMapProvider; const TileId: TTileId; const Item: TPictureCacheItem);
+    procedure AddPureItem(MapProvider: TMapProvider; const TileId: TTileId; const Item: TPictureCacheItem);
   end;
 
   { TTileModifyPlugin }
@@ -137,10 +137,14 @@ begin
   inherited ClearCache;
 end;
 
-procedure TTileModifyPluginPictureCache.Add(MapProvider: TMapProvider;
+procedure TTileModifyPluginPictureCache.AddPureItem(MapProvider: TMapProvider;
   const TileId: TTileId; const Item: TPictureCacheItem);
+var
+  lids : String;
 begin
-  inherited Add(MapProvider,TileId,Item);
+  if not Assigned(Item) then Exit;
+  lids := GetFileName(MapProvider, TileId);
+  AddItem(Item,lids);
 end;
 
 { TTileModifyPlugin }
@@ -488,7 +492,7 @@ begin
     ;
     if Assigned(picitem) then
     begin
-      FInternalPictureCache.Add(AMapProvider,ATileID,picitem);
+      FInternalPictureCache.AddPureItem(AMapProvider,ATileID,picitem);
       FInternalPictureCache.CheckCacheSize(Nil);
     end;
   end;
