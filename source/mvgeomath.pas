@@ -76,7 +76,7 @@ end;
 function HaversineAngle(Lat1, Lon1, Lat2, Lon2: Double): Double;
 var
   latFrom, latTo, lonDiff: Double;
-  dx, dy, dz: Double;
+  dx, dy, dz, arg: Double;
 begin
   lonDiff := Lon1 - Lon2;
   latFrom := Lat1;
@@ -86,7 +86,14 @@ begin
   dx := cos(lonDiff) * cos(latFrom) - cos(latTo);
   dy := sin(lonDiff) * cos(latFrom);
 
-  Result := arcsin(sqrt(sqr(dx) + sqr(dy) + sqr(dz)) / 2.0) * 2.0;
+  arg := sqrt(sqr(dx) + sqr(dy) + sqr(dz)) / 2.0;
+  if arg > 1.0 then
+    Result := pi
+  else
+  if arg < -1.0 then
+    Result := -pi
+  else
+    Result := arcsin(arg) * 2.0;
 end;
 
 // Angles in degrees
@@ -237,7 +244,7 @@ begin
   lonFrom := DegToRad(Lon1);
   latTo := DegToRad(Lat2);
   lonTo := DegToRad(Lon2);
-  aD := (CalcGeoDistance(Lat1, Lon1, Lat2, Lon2)*1000.0) / EARTH_EQUATORIAL_RADIUS;
+  aD := CalcGeoDistance(Lat1, Lon1, Lat2, Lon2, duMeters) / EARTH_EQUATORIAL_RADIUS;
   A := Sin((1.0 - AFrac) * aD) / Sin(aD);
   B := Sin(AFrac * aD) / Sin(aD);
   X := A * Cos(latFrom) * Cos(lonFrom) + B * Cos(latTo) * Cos(lonTo);
