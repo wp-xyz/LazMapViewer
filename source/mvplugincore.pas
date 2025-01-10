@@ -212,9 +212,13 @@ type
 
   TMvPluginList = class(TMvIndexedComponentList)
   private
+    FPluginManager: TMvPluginManager;
     function GetItem(AIndex: Integer): TMvCustomPlugin;
     procedure SetItem(AIndex: Integer; AValue: TMvCustomPlugin);
   public
+    constructor Create(APluginManager: TMvPluginManager);
+    function Add(AItem: Pointer): Integer;
+    procedure Delete(AIndex: Integer);
     property Items[AIndex: Integer]: TMvCustomPlugin read GetItem write SetItem; default;
   end;
 
@@ -268,6 +272,7 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     procedure AddPlugin(APlugin: TMvCustomPlugin);
+    procedure DeletePlugin(APlugin: TMvCustomPlugin);
     procedure GetChildren(Proc: TGetChildProc; Root: TComponent); override;
     procedure SetChildOrder(Child: TComponent; Order: Integer); override;
     property Count: Integer read GetCount;
@@ -546,7 +551,15 @@ begin
 end;
 
 destructor TMvDrawPlugin.Destroy;
+var
+  idx: Integer;
 begin
+  if Assigned(FPluginManager) then
+  begin
+    idx := FPluginManager.PluginList.IndexOf(Self);
+    if idx > -1 then
+      FPluginManager.PluginList.Delete(idx);
+  end;
   FFont.Free;
   FPen.Free;
   inherited Destroy;
@@ -866,6 +879,37 @@ end;
 
 { TMvPluginList }
 
+constructor TMvPluginList.Create(APluginManager: TMvPluginManager);
+begin
+  inherited Create;
+  FPluginManager := APluginManager;
+end;
+
+function TMvPluginList.Add(AItem: Pointer): Integer;
+begin
+  if not (TObject(AItem) is TMvCustomPlugin) then
+    raise Exception.Create('PluginList can only contain descendants of TMvCustomPlugin');
+  Result := IndexOf(AItem);
+  if Result < 0 then       // Don't add plugin twice
+  begin
+    TMvCustomPlugin(AItem).PluginManager := FPluginManager;
+    Result := inherited Add(AItem);
+  end;
+end;
+
+procedure TMvPluginList.Delete(AIndex: Integer);
+var
+  item: TMvCustomPlugin;
+begin
+  item := Items[AIndex];
+  if item <> nil then
+    TMvCustomPlugin(item).SetPluginManager(nil);
+
+  AIndex := IndexOf(item);
+  if AIndex > -1 then
+    inherited Delete(AIndex);
+end;
+
 function TMvPluginList.GetItem(AIndex: Integer): TMvCustomPlugin;
 begin
   Result := TMvCustomPlugin(inherited Items[AIndex]);
@@ -882,7 +926,7 @@ end;
 constructor TMvPluginManager.Create(AOwner: TComponent);
 begin
   inherited;
-  FPluginList := TMvPluginList.Create;
+  FPluginList := TMvPluginList.Create(Self);
   FMapList := TFPList.Create;
 end;
 
@@ -979,6 +1023,12 @@ begin
     if HandlePlugin(plugin, AMapView) then
       plugin.CenterMoving(AMapView, NewCenter, Allow, Result);
   end;
+end;
+
+procedure TMvPluginManager.DeletePlugin(APlugin: TMvCustomPlugin);
+begin
+  if APlugin <> nil then
+    APlugin.PluginManager := nil;
 end;
 
 function TMvPluginManager.DrawGPSPoint(AMapView: TMapView;
@@ -1179,12 +1229,19 @@ begin
 end;
 
 procedure TMvPluginManager.Notification(AComponent: TComponent; Operation: TOperation);
+var
+  idx: Integer;
 begin
   inherited;
   if Operation = opRemove then
   begin
     if AComponent is TMapView then
       RemoveMapView(TMapView(AComponent));
+    if AComponent is TMvCustomPlugin then
+    begin
+      idx := FPluginList.IndexOf(AComponent);
+    end;
+
     // Do no handle deleted plugins here -- will crash
   end;
 end;
