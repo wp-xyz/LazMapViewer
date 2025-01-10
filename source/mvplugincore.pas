@@ -14,6 +14,8 @@ type
   TMvCustomPlugin = class;
   TMvPluginManager = class;
 
+  EMvPluginException = class(EMapViewerException);
+
   TMvIndexedComponent = class(TComponent)
   strict protected
     function GetIndex: Integer; virtual; abstract;
@@ -215,10 +217,16 @@ type
     FPluginManager: TMvPluginManager;
     function GetItem(AIndex: Integer): TMvCustomPlugin;
     procedure SetItem(AIndex: Integer; AValue: TMvCustomPlugin);
+  protected
+    procedure CheckPlugin(AItem: Pointer);
+    function IsPlugin(AItem: Pointer): Boolean;
   public
     constructor Create(APluginManager: TMvPluginManager);
     function Add(AItem: Pointer): Integer;
+    procedure Clear;
     procedure Delete(AIndex: Integer);
+    procedure Insert(AIndex: Integer; AItem: Pointer);
+    procedure Remove(AItem: Pointer);
     property Items[AIndex: Integer]: TMvCustomPlugin read GetItem write SetItem; default;
   end;
 
@@ -886,15 +894,43 @@ begin
 end;
 
 function TMvPluginList.Add(AItem: Pointer): Integer;
+var
+  plugin: TMvCustomPlugin;
 begin
-  if not (TObject(AItem) is TMvCustomPlugin) then
-    raise Exception.Create('PluginList can only contain descendants of TMvCustomPlugin');
+  CheckPlugin(AItem);
   Result := IndexOf(AItem);
-  if Result < 0 then       // Don't add plugin twice
+  if (Result < 0) and IsPlugin(AItem) then  // Don't add plugin twice
   begin
-    TMvCustomPlugin(AItem).PluginManager := FPluginManager;
-    Result := inherited Add(AItem);
+    plugin := TMvCustomPlugin(AItem);
+    if plugin.PluginManager = FPluginManager then
+      Result := inherited Add(AItem)
+    else
+    begin
+      // Plugin already has been assigned to another plugin manager
+      // --> we must remove the plugin from the old and add it to the new plugin list.
+      plugin.PluginManager := FPluginManager;
+      Result := IndexOf(plugin);
+    end;
   end;
+end;
+
+{ Inheriting from TFPList, TMvPluginlist basically can store any pointer.
+  CheckPlugin raises an exception when the user attempts to add an item
+  which does not point to a TMvCustomPlugin descendant. }
+procedure TMvPluginList.CheckPlugin(AItem: Pointer);
+begin
+  if not IsPlugin(AItem) then
+    raise EMvPluginException.Create('The PluginList can only store descendants of TMvCustomPlugin.');
+end;
+
+procedure TMvPluginList.Clear;
+var
+  i: Integer;
+begin
+  for i := 0 to Count-1 do
+    if IsPlugin(Items[i]) then
+      TMvCustomPlugin(Items[i]).FPluginManager := nil;
+  inherited Clear;
 end;
 
 procedure TMvPluginList.Delete(AIndex: Integer);
@@ -902,17 +938,38 @@ var
   item: TMvCustomPlugin;
 begin
   item := Items[AIndex];
-  if item <> nil then
-    TMvCustomPlugin(item).SetPluginManager(nil);
-
   AIndex := IndexOf(item);
   if AIndex > -1 then
+  begin
+    if IsPlugin(item) then
+      TMvCustomPlugin(item).FPluginManager := nil;
     inherited Delete(AIndex);
+  end;
 end;
 
 function TMvPluginList.GetItem(AIndex: Integer): TMvCustomPlugin;
 begin
   Result := TMvCustomPlugin(inherited Items[AIndex]);
+end;
+
+procedure TMvPluginList.Insert(AIndex: Integer; AItem: Pointer);
+begin
+  raise EMvPluginException.Create('TMvPluginList.Insert not supported.');
+end;
+
+{ Checks whether the stored item descends from TMvCustomPlugin. If the user
+  calls the inherited Add method items of the incorrect type could make it
+  into the list. }
+function TMvPluginList.IsPlugin(AItem: Pointer): Boolean;
+begin
+  Result := TObject(AItem) is TMvCustomPlugin;
+end;
+
+procedure TMvPluginList.Remove(AItem: Pointer);
+begin
+  if IsPlugin(AItem) then
+    TMvCustomPlugin(AItem).FPluginManager := nil;
+  inherited Remove(AItem);
 end;
 
 procedure TMvPluginList.SetItem(AIndex: Integer; AValue: TMvCustomPlugin);
@@ -1028,7 +1085,7 @@ end;
 procedure TMvPluginManager.DeletePlugin(APlugin: TMvCustomPlugin);
 begin
   if APlugin <> nil then
-    APlugin.PluginManager := nil;
+    FPluginList.Remove(APlugin);
 end;
 
 function TMvPluginManager.DrawGPSPoint(AMapView: TMapView;

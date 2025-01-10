@@ -25,6 +25,8 @@ var
   TileSize: TSize = (CX:256; CY:256);
 
 Type
+  EMapViewerException = class(Exception);
+
   { TArea }
   TArea = record
     top, left, bottom, right: Int64;

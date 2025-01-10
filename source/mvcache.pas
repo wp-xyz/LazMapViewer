@@ -21,7 +21,7 @@ uses
   mvMapProvider, mvTypes, FPImage;
 
 Type
-   EMvCacheException = class(Exception);
+   EMvCacheException = class(EMapViewerException);
 
    { TPictureCacheItem }
 
@@ -30,7 +30,7 @@ Type
      function GetImageObject: TObject; virtual;
      class function GetImageReader({%H-}AStream: TStream): TFPCustomImageReader;
    public
-     {Create(ASource ...) must be only used by the descendands of this
+     {Create(ASource ...) must be only used by the descendants of this
        class to create a copy of an existing item. The passed source must be
        of the same type as the creation class!}
      constructor Create(ASource : TPictureCacheItem); virtual;
@@ -41,6 +41,7 @@ Type
    TPictureCacheItemClass = class of TPictureCacheItem;
 
    { TPictureCache }
+
    TPictureCache = Class(TComponent)
    private
      FCacheItemClass: TPictureCacheItemClass;
