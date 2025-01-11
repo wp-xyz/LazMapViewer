@@ -567,15 +567,7 @@ begin
 end;
 
 destructor TMvDrawPlugin.Destroy;
-var
-  idx: Integer;
 begin
-  if Assigned(FPluginManager) then
-  begin
-    idx := FPluginManager.PluginList.IndexOf(Self);
-    if idx > -1 then
-      FPluginManager.PluginList.Delete(idx);
-  end;
   FFont.Free;
   FPen.Free;
   inherited Destroy;
