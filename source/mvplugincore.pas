@@ -16,6 +16,9 @@ type
 
   EMvPluginException = class(EMapViewerException);
 
+
+  { TMvIndexedComponent }
+  
   TMvIndexedComponent = class(TComponent)
   strict protected
     function GetIndex: Integer; virtual; abstract;
@@ -25,12 +28,14 @@ type
     property Index: Integer read GetIndex write SetIndex;
   end;
 
+
   { TMvIndexedComponentList }
 
   TMvIndexedComponentList = class(TFPList)
   public
     procedure ChangeNamePrefix(const AOld, ANew: String);
   end;
+
 
   { TMvCustomPlugin }
 
@@ -90,6 +95,7 @@ type
   published
   end;
 
+
   { TMvPlugin }
 
   TMvPlugin = class(TMvCustomPlugin)
@@ -126,6 +132,7 @@ type
     destructor Destroy; override;
     procedure Assign(ASource: TPersistent); override;
   end;
+  
 
   { TMvMultiMapsPluginData }
 const
@@ -147,6 +154,7 @@ type
     property MapView : TMapView read FMapView write FMapView;
     constructor Create;
   end;
+
 
   { TMvMultiMapsPlugin }
 
@@ -970,7 +978,7 @@ begin
   if IsPlugin(AItem) then
     TMvCustomPlugin(AItem).FPluginManager := nil;
   inherited Remove(AItem);
-end;
+end;  
 
 procedure TMvPluginList.SetItem(AIndex: Integer; AValue: TMvCustomPlugin);
 begin
@@ -1286,19 +1294,12 @@ begin
 end;
 
 procedure TMvPluginManager.Notification(AComponent: TComponent; Operation: TOperation);
-var
-  idx: Integer;
 begin
   inherited;
   if Operation = opRemove then
   begin
     if AComponent is TMapView then
       RemoveMapView(TMapView(AComponent));
-    if AComponent is TMvCustomPlugin then
-    begin
-      idx := FPluginList.IndexOf(AComponent);
-    end;
-
     // Do no handle deleted plugins here -- will crash
   end;
 end;
