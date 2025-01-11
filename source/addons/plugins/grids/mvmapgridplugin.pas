@@ -9,7 +9,7 @@ interface
 uses
   Classes, SysUtils, Math,
   Graphics, Controls, LCLIntf, //LazLoggerBase,
-  mvMapViewer, mvDrawingEngine, mvPluginCore,  mvGeoMath, mvTypes;
+  mvMapViewer, mvDrawingEngine, mvPluginCommon,  mvGeoMath, mvTypes;
 
 type
   TMapGridPlugin = class;

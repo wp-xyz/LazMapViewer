@@ -7,7 +7,7 @@ interface
 uses
   Buttons, Classes, SysUtils, Math,
   Graphics, Controls, StdCtrls, ExtCtrls, Forms,
-  mvMapViewer, mvPluginCore, mvPlugins;
+  mvMapViewer, mvPluginCommon, mvPlugins;
 
 type
 

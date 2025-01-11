@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, Contnrs,
   Graphics, Controls, LCLIntf, //LazLoggerBase,
-  mvMapViewer, mvDrawingEngine, mvPluginCore, mvGPSObj, mvTypes;
+  mvMapViewer, mvDrawingEngine, mvPluginCommon, mvGPSObj, mvTypes;
 
 type
   { TCenterMarkerPlugin - draws a cross in the map center }

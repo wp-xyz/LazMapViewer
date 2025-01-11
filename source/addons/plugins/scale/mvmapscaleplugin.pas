@@ -9,7 +9,7 @@ interface
 uses
   Classes, SysUtils, Math,
   Graphics, Controls, Types,
-  mvMapViewer, mvGeoMath, mvPluginCore;
+  mvMapViewer, mvGeoMath, mvPluginCommon;
 
 type
   { TMapScalePlugin }

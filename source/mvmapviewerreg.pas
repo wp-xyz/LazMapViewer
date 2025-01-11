@@ -15,7 +15,7 @@ implementation
 
 uses
   Controls, ImgList,
-  mvTypes, mvGeoNames, mvMapViewer, mvDLEFpc, mvDLECache, mvPluginCore,
+  mvTypes, mvGeoNames, mvMapViewer, mvDLEFpc, mvDLECache, mvPluginCommon,
   mvMapViewerPropEdits, mvPlugins, mvPluginEditors;
 
 procedure Register;

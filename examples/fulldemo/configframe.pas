@@ -6,9 +6,9 @@ interface
 
 uses
   Classes, SysUtils, IniFiles,
-  Graphics,
-  Forms, Controls, StdCtrls, Buttons, Dialogs, ExtCtrls, ColorBox, ExtDlgs, Spin,
-  mvMapViewer, mvEngine, mvPluginCore, mvMapGridPlugin, mvMapScalePlugin,
+  Graphics, Forms, Controls, StdCtrls, Buttons, Dialogs, ExtCtrls,
+  ColorBox, ExtDlgs, Spin,
+  mvMapViewer, mvEngine, mvPluginCommon, mvMapGridPlugin, mvMapScalePlugin,
   globals;
 
 type

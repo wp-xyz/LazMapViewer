@@ -33,7 +33,7 @@ interface
 uses
   Classes, SysUtils,
   Graphics, Controls, LCLIntf, //LazLoggerBase,
-  mvMapViewer, mvPluginCore,  mvTypes,
+  mvMapViewer, mvPluginCommon,  mvTypes,
   mvMapProvider, mvDrawingEngine, mvCache,
   FPImage, IntfGraphics, mvDE_IntfGraphics,
   uYCbCrTools

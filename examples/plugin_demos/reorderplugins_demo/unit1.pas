@@ -5,8 +5,9 @@ unit Unit1;
 interface
 
 uses
-  Classes, ExtCtrls, mvMapViewer, mvPluginCore, mvPlugins, StdCtrls, SysUtils,
-  Forms, Controls, Graphics, Dialogs, ValEdit;
+  SysUtils, Classes,
+  Forms, Controls, Graphics, StdCtrls, ExtCtrls, Dialogs, ValEdit,
+  mvMapViewer, mvPluginCommon, mvPlugins;
 
 type
   TForm1 = class(TForm)

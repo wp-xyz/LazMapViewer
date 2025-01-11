@@ -4043,7 +4043,7 @@ procedure TGPSTileLayerBase.DoTileAfterGetFromCache(
 var
   lHandled: Boolean;
 begin
-  lHandled := FParentView.PluginManager.TileAfterGetFromCache(FParentView, Self,
+  lHandled := FParentView.GetPluginManager.TileAfterGetFromCache(FParentView, Self,
                                                      AMapProvider, ATileID, ATileImg);
 end;
 

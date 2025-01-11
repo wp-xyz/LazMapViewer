@@ -27,7 +27,6 @@ object MainForm: TMainForm
     MapCenter.Longitude = 10
     MapCenter.Latitude = 50
     PluginManager = PluginManager
-    UseThreads = True
     Zoom = 8
     OnZoomChange = MapViewZoomChange
   end

@@ -105,7 +105,7 @@ implementation
 uses
   System.UITypes, Dialogs, IDEWindowIntf, LazIDEIntf, StrUtils, mvMapViewer,
   mvGpsObj, mvLayersPropEditForm, mvEngine, mvGeoMath,
-  mvMapViewerPathEditDsgForm, mvPluginCore;
+  mvMapViewerPathEditDsgForm, mvPluginCommon;
 
 const
   sNONE = '(none)';

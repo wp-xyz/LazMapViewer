@@ -5,7 +5,7 @@ unit Unit1;
 interface
 
 uses
-  Classes, mvMapViewer, mvPluginCore, mvPlugins, StdCtrls, SysUtils, Forms,
+  Classes, mvMapViewer, mvPluginCommon, mvPlugins, StdCtrls, SysUtils, Forms,
   Controls, Graphics, Dialogs, mvTypes;
 
 type

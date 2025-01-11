@@ -12,7 +12,7 @@ interface
 uses
   Classes, SysUtils, Forms, ExtCtrls, ComCtrls,
   LCLIntf, Graphics, Dialogs, StdCtrls, Windows,
-  mvMapViewer, mvPluginCore, mvPlugins,
+  mvMapViewer, mvPluginCommon, mvPlugins,
   mvDE_BGRA, mvDE_RGBGraphics,
   mvtilemodifyplugin, Controls;
 

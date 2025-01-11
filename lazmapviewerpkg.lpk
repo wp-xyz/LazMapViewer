@@ -129,8 +129,8 @@ FPC 3.2.0 or newer required."/>
         <UnitName Value="mvClassRegistration"/>
       </Item26>
       <Item27>
-        <Filename Value="source/mvplugincore.pas"/>
-        <UnitName Value="mvPluginCore"/>
+        <Filename Value="source/mvplugincommon.pas"/>
+        <UnitName Value="mvPluginCommon"/>
       </Item27>
       <Item28>
         <Filename Value="source/addons/plugins/mvplugins.pas"/>

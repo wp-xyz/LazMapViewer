@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ExtCtrls, StdCtrls,
-  mvMapViewer, mvPluginCore, uAreaSelectionPlugin, mvTypes;
+  mvMapViewer, mvPluginCommon, uAreaSelectionPlugin, mvTypes;
 
 type
 
@@ -20,7 +20,6 @@ type
     Panel1: TPanel;
     procedure FormChangeBounds(Sender: TObject);
     procedure FormCreate(Sender: TObject);
-    procedure Timer1Timer(Sender: TObject);
   private
     FAreaSelectionPlugin : TAreaSelectionPlugin;
     procedure OnSelectedAreaChanged(Sender : TObject);
@@ -44,10 +43,6 @@ begin
   FAreaSelectionPlugin.MapView := MapView1;
   FAreaSelectionPlugin.OnSelectedAreaChanged:= @OnSelectedAreaChanged;
   FAreaSelectionPlugin.OnSelectedAreaChanging:= @OnSelectedAreaChanging;
-end;
-
-procedure TForm1.Timer1Timer(Sender: TObject);
-begin
 end;
 
 procedure TForm1.OnSelectedAreaChanged(Sender: TObject);

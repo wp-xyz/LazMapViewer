@@ -5,8 +5,8 @@ unit Unit1;
 interface
 
 uses
-  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ExtCtrls, mvMapViewer,
-  mvPluginCore, uDragColoredItemPlugin, StdCtrls;
+  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ExtCtrls,
+  mvMapViewer, mvPluginCommon, uDragColoredItemPlugin;
 
 type
 

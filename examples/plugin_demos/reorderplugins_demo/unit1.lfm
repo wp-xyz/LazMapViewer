@@ -76,24 +76,24 @@ object Form1: TForm1
     object MvPluginManager1LegalNoticePlugin1: TLegalNoticePlugin
       BackgroundColor = clWhite
       BackgroundOpacity = 1
-      Font.Height = -19
       LegalNotice = 'Test 1'
+      Font.Height = -19
     end
     object MvPluginManager1LegalNoticePlugin2: TLegalNoticePlugin
       BackgroundColor = clYellow
       BackgroundOpacity = 1
-      Font.Color = clRed
-      Font.Height = -19
       LegalNotice = 'Test 2'
       Spacing = 14
+      Font.Color = clRed
+      Font.Height = -19
     end
     object MvPluginManager1LegalNoticePlugin3: TLegalNoticePlugin
       BackgroundColor = clBlue
       BackgroundOpacity = 1
-      Font.Color = clWhite
-      Font.Height = -19
       LegalNotice = 'Test 3'
       Spacing = 24
+      Font.Color = clWhite
+      Font.Height = -19
     end
   end
 end

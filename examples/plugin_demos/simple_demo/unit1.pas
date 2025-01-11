@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, TAGraph,
-  TATools, mvMapViewer, mvPluginCore;
+  TATools, mvMapViewer, mvPluginCommon;
 
 type
   TForm1 = class(TForm)

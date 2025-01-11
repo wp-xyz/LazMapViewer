@@ -7,7 +7,7 @@ interface
 uses
   Classes, ComCtrls, DividerBevel, ExtCtrls, Spin, StdCtrls, SysUtils,
   Forms, Controls, Graphics, Dialogs, //LazLogger,
-  mvMapViewer, mvTypes, mvEngine, mvPluginCore, mvMapGridPlugin;
+  mvMapViewer, mvTypes, mvEngine, mvPluginCommon, mvMapGridPlugin;
 
 type
   TMainForm = class(TForm)

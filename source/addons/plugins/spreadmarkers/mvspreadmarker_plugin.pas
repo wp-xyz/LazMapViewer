@@ -18,7 +18,7 @@ interface
 
 uses
   Classes, SysUtils, Controls, Graphics,
-  mvMapViewer, mvTypes, mvGpsObj,mvPluginCore,mvDrawingEngine,mvGeoMath,
+  mvMapViewer, mvTypes, mvGpsObj, mvPluginCommon, mvDrawingEngine, mvGeoMath,
   uInactivityAlarmTimer;
 
 type

@@ -6,9 +6,9 @@ object Form1: TForm1
   Caption = 'Tile Modify Demo'
   ClientHeight = 517
   ClientWidth = 597
+  LCLVersion = '4.99.0.0'
   OnCreate = FormCreate
   OnDestroy = FormDestroy
-  LCLVersion = '3.6.0.0'
   object MapView1: TMapView
     Left = 144
     Height = 517
@@ -65,8 +65,8 @@ object Form1: TForm1
         'Color exchange'
         'Brightness/Contrast'
       )
-      OnClick = rgModeClick
       TabOrder = 0
+      OnClick = rgModeClick
     end
     object gbColorExchange: TGroupBox
       Left = 1
@@ -113,16 +113,16 @@ object Form1: TForm1
         Top = 64
         Width = 120
         Max = 100
-        OnChange = tbColorThreshChange
         Position = 0
         TickStyle = tsNone
+        OnChange = tbColorThreshChange
         TabOrder = 0
       end
       object Label3: TLabel
         Left = 9
         Height = 15
         Top = 48
-        Width = 52
+        Width = 53
         Caption = 'Threshold'
       end
     end
@@ -143,9 +143,9 @@ object Form1: TForm1
         Top = 16
         Width = 120
         Max = 100
-        OnChange = tbBrightnessChange
         Position = 0
         TickStyle = tsNone
+        OnChange = tbBrightnessChange
         TabOrder = 0
       end
       object tbContrast: TTrackBar
@@ -154,9 +154,9 @@ object Form1: TForm1
         Top = 48
         Width = 120
         Max = 100
-        OnChange = tbContrastChange
         Position = 0
         TickStyle = tsNone
+        OnChange = tbContrastChange
         TabOrder = 1
       end
       object Label5: TLabel
@@ -256,7 +256,7 @@ object Form1: TForm1
         Left = 8
         Height = 15
         Top = 0
-        Width = 39
+        Width = 40
         Caption = 'ms/Tile'
       end
       object lblMsPerTile: TLabel

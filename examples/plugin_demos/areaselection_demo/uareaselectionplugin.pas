@@ -39,7 +39,7 @@ interface
 
 uses
   Classes, SysUtils, Controls, Graphics,Contnrs,
-  mvPluginCore, mvPlugins, mvMapViewer, mvTypes, mvGeoMath, mvDrawingEngine;
+  mvPluginCommon, mvPlugins, mvMapViewer, mvTypes, mvGeoMath, mvDrawingEngine;
 
 type
   { class TMouseHitItem

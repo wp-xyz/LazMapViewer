@@ -7,7 +7,7 @@ interface
 uses
   SysUtils, Classes, Math,
   Graphics, Forms, Controls, StdCtrls, ExtCtrls,
-  mvDLEFpc, mvMapViewer, mvPluginCore, mvPlugins, mvGPSObj;
+  mvDLEFpc, mvMapViewer, mvPluginCommon, mvPlugins, mvGPSObj;
 
 type
 

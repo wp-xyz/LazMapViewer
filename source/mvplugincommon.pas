@@ -1,4 +1,4 @@
-unit mvPluginCore;
+unit mvPluginCommon;
 
 {$mode objfpc}{$H+}
 

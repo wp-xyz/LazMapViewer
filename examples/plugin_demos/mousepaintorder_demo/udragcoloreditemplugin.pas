@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Controls, Graphics,
-  mvPluginCore, mvPlugins, mvMapViewer, mvTypes, mvGPSObj, mvGeoMath;
+  mvPluginCommon, mvPlugins, mvMapViewer, mvTypes, mvGPSObj, mvGeoMath;
 
 type
 

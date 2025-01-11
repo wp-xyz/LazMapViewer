@@ -5,7 +5,7 @@ unit main;
 interface
 
 uses
-  Classes, ExtCtrls, mvMapViewer, mvPluginCore, mvPlugins, StdCtrls, SysUtils,
+  Classes, ExtCtrls, mvMapViewer, mvPluginCommon, mvPlugins, StdCtrls, SysUtils,
   Forms, Controls, Graphics, Dialogs;
 
 type

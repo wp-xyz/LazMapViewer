@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils,
   LCLIntf, Forms, Controls, Graphics, ExtCtrls, StdCtrls, Dialogs, Spin,
-  mvMapViewer, mvPluginCore, mvPlugins;
+  mvMapViewer, mvPluginCommon, mvPlugins;
 
 type
   TMainForm = class(TForm)

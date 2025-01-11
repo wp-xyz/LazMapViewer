@@ -121,7 +121,7 @@ implementation
 {$R *.lfm}
 
 uses
-  mvPluginCore;
+  mvPluginCommon;
 
 { TMvComponentListPropertyEditor }
 
