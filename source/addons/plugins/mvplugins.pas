@@ -7,8 +7,7 @@ interface
 uses
   Classes, SysUtils, Contnrs,
   Graphics, Controls, LCLIntf, //LazLoggerBase,
-  mvMapViewer, mvDrawingEngine, mvPluginCore, mvGPSObj, mvTypes,
-  mvMapProvider, mvCache;
+  mvMapViewer, mvDrawingEngine, mvPluginCore, mvGPSObj, mvTypes;
 
 type
   { TCenterMarkerPlugin - draws a cross in the map center }
@@ -114,9 +113,13 @@ type
 
   TDraggableMarkerPlugin = class(TMvMultiMapsPlugin)
   private
+    const
+      DEFAULT_TOLERANCE = 5;
+  private
     FDraggableMarkerCanMoveEvent : TDraggableMarkerCanMoveEvent;
     FDraggableMarkerMovedEvent : TDraggableMarkerMovedEvent;
     FDragMouseButton: TMouseButton;
+    FTolerance: Integer;
     function GetFirstMarkerAtMousePos(const AMapView: TMapView; const AX, AY : Integer) : TGPSPoint;
     function GetDraggedMarker(AMapView : TMapView) : TGPSPoint;
     function GetOrgPosition(AMapView : TMapView): TRealPoint;
@@ -127,14 +130,16 @@ type
       var Handled: Boolean); override;
     procedure MouseUp(AMapView: TMapView; {%H-}Button: TMouseButton; {%H-}Shift: TShiftState;
       {%H-}X, {%H-}Y: Integer; var Handled: Boolean); override;
+  public
+    constructor Create(AOwner: TComponent); override;
+    procedure Assign(Source: TPersistent); override;
+    property DraggedMarker[AMapView : TMapView] : TGPSPoint read GetDraggedMarker;
+    property OrgPosition[AMapView : TMapView] : TRealPoint read GetOrgPosition;
   published
     property DraggableMarkerCanMoveEvent : TDraggableMarkerCanMoveEvent read FDraggableMarkerCanMoveEvent write FDraggableMarkerCanMoveEvent;
     property DraggableMarkerMovedEvent : TDraggableMarkerMovedEvent read FDraggableMarkerMovedEvent write FDraggableMarkerMovedEvent;
     property DragMouseButton : TMouseButton read FDragMouseButton write FDragMouseButton default mbLeft;
-  public
-    property DraggedMarker[AMapView : TMapView] : TGPSPoint read GetDraggedMarker;
-    property OrgPosition[AMapView : TMapView] : TRealPoint read GetOrgPosition;
-    procedure Assign(Source: TPersistent); override;
+    property Tolerance: Integer read FTolerance write FTolerance default DEFAULT_TOLERANCE;
   end;
 
 type
@@ -146,11 +151,6 @@ type
 
   TMvPluginDrawMissingTileEvent = procedure (Sender: TObject; AMapView: TMapView;
     ADrawingEngine: TMvCustomDrawingEngine; ATileID: TTileID; ARect: TRect;
-    var Handled: Boolean) of object;
-
-  TMvPluginTileAfterGetFromCacheEvent = procedure (Sender: TObject; AMapView: TMapView;
-    ATileLayer: TGPSTileLayerBase; AMapProvider: TMapProvider;
-    ATileID: TTileID; ATileImg: TPictureCacheItem;
     var Handled: Boolean) of object;
 
   TMvPluginGPSItemsModifiedEvent = procedure (Sender: TObject; AMapView: TMapView;
@@ -183,7 +183,6 @@ type
     FCenterMovingEvent: TMvPluginCenterMovingEvent;
     FDrawGPSPointEvent: TMvPluginDrawGPSPointEvent;
     FDrawMissingTileEvent: TMvPluginDrawMissingTileEvent;
-    FTileAfterGetFromCacheEvent: TMvPluginTileAfterGetFromCacheEvent;
     FGPSItemsModifiedEvent : TMvPluginGPSItemsModifiedEvent;
     FMouseDownEvent : TMvPluginMouseEvent;
     FMouseEnterEvent : TMvPluginNotifyEvent;
@@ -204,9 +203,6 @@ type
       APoint: TGPSPoint; var Handled: Boolean); override;
     procedure DrawMissingTile(AMapView: TMapView; ADrawingEngine: TMvCustomDrawingEngine;
       ATileID: TTileID; ARect: TRect; var Handled: Boolean); override;
-    procedure TileAfterGetFromCache(AMapView: TMapView; ATileLayer: TGPSTileLayerBase;
-      AMapProvider: TMapProvider; ATileID: TTileID; ATileImg: TPictureCacheItem;
-      var Handled: Boolean); override;
     procedure GPSItemsModified(AMapView: TMapView; ChangedList: TGPSObjectList;
       ActualObjs: TGPSObjList; Adding: Boolean; var Handled: Boolean); override;
     procedure MouseDown(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
@@ -710,30 +706,38 @@ end;
 
 { TDraggableMarkerPlugin }
 
+constructor TDraggableMarkerPlugin.Create(AOwner: TComponent);
+begin
+  inherited;
+  FTolerance := DEFAULT_TOLERANCE;
+end;
+
+procedure TDraggableMarkerPlugin.Assign(Source: TPersistent);
+begin
+  if Source is TDraggableMarkerPlugin then
+  begin
+    FDraggableMarkerCanMoveEvent := TDraggableMarkerPlugin(Source).DraggableMarkerCanMoveEvent;
+    FDraggableMarkerMovedEvent := TDraggableMarkerPlugin(Source).DraggableMarkerMovedEvent;
+    FDragMouseButton := TDraggableMarkerPlugin(Source).DragMouseButton;
+    FTolerance := TDraggableMarkerPlugin(Source).Tolerance;
+  end;
+  inherited;
+end;
+
 function TDraggableMarkerPlugin.GetFirstMarkerAtMousePos(const AMapView: TMapView;
   const AX, AY: Integer): TGPSPoint;
 var
-  pt : TPoint;
   aArea : TRealArea;
-  cs2 : Integer;
   lGpsPt : TGpsPoint;
   gpsList: TGpsObjList;
-  cnt : Integer;
   i : Integer;
 begin
   Result := Nil;
-  cs2 := 2;
-  pt.X := AX-cs2;
-  pt.Y := AY-cs2;
-  aArea.TopLeft := AMapView.ScreenToLatLon(pt);
-  pt.X := AX+cs2;
-  pt.Y := AY+cs2;
-  aArea.BottomRight := AMapView.ScreenToLatLon(pt);
+  aArea.TopLeft := AMapView.ScreenToLatLon(Point(AX - FTolerance, AY - FTolerance));
+  aArea.BottomRight := AMapView.ScreenToLatLon(Point(AX + FTolerance, AY + FTolerance));
   gpsList := AMapView.GPSItems.GetObjectsInArea(aArea);
   try
-    cnt := gpsList.Count;
-    if cnt < 1 then Exit;
-    for i:=0 to gpsList.Count-1 do
+    for i := gpsList.Count-1 downto 0 do
     begin
       if (gpsList[i] is TGpsPoint)  then
       begin
@@ -844,17 +848,6 @@ begin
   end;
 end;
 
-procedure TDraggableMarkerPlugin.Assign(Source: TPersistent);
-begin
-  if Source is TDraggableMarkerPlugin then
-  begin
-    FDraggableMarkerCanMoveEvent := TDraggableMarkerPlugin(Source).DraggableMarkerCanMoveEvent;
-    FDraggableMarkerMovedEvent := TDraggableMarkerPlugin(Source).DraggableMarkerMovedEvent;
-    FDragMouseButton := TDraggableMarkerPlugin(Source).DragMouseButton;
-  end;
-  inherited;
-end;
-
 
 { TMvCustomPlugin }
 
@@ -904,15 +897,6 @@ procedure TUserDefinedPlugin.DrawMissingTile(AMapView: TMapView;
 begin
   if Assigned(FDrawMissingTileEvent) then
     FDrawMissingTileEvent(Self, AMapView, ADrawingEngine, ATileID, ARect, Handled);
-end;
-
-procedure TUserDefinedPlugin.TileAfterGetFromCache(AMapView: TMapView;
-  ATileLayer: TGPSTileLayerBase; AMapProvider: TMapProvider; ATileID: TTileID;
-  ATileImg: TPictureCacheItem; var Handled: Boolean);
-begin
-  if Assigned(FTileAfterGetFromCacheEvent) then
-    FTileAfterGetFromCacheEvent(Self, AMapView, ATileLayer, AMapProvider,
-                                ATileID, ATileImg, Handled);
 end;
 
 procedure TUserDefinedPlugin.GPSItemsModified(AMapView: TMapView;
