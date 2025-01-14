@@ -190,6 +190,7 @@ type
     FMouseMoveEvent : TMvPluginMouseMoveEvent;
     FMouseUpEvent : TMvPluginMouseEvent;
     FMouseWheelEvent : TMvPluginMouseWheelEvent;
+    FResizeEvent: TMvPluginNotifyEvent;
     FZoomChangeEvent : TMvPluginNotifyEvent;
     FZoomChangingEvent : TMvPluginZoomChangingEvent;
   protected
@@ -215,6 +216,7 @@ type
       X, Y: Integer; var Handled: Boolean); override;
     procedure MouseWheel(AMapView: TMapView; AShift: TShiftState;
       AWheelDelta: Integer; AMousePos: TPoint; var Handled: Boolean); override;
+    procedure Resize(AMapView: TMapView; var Handled: Boolean); override;
     procedure ZoomChange(AMapView: TMapView; var Handled: Boolean); override;
     procedure ZoomChanging(AMapView: TMapView; NewZoom: Integer; var Allow, Handled: Boolean); override;
   public
@@ -945,6 +947,12 @@ procedure TUserDefinedPlugin.MouseWheel(AMapView: TMapView; AShift: TShiftState;
 begin
   if Assigned(FMouseWheelEvent) then
     FMouseWheelEvent(Self, AMapView, AShift, AWheelDelta, AMousePos, Handled);
+end;
+
+procedure TUserDefinedPlugin.Resize(AMapView: TMapView; var Handled: Boolean);
+begin
+  if Assigned(FResizeEvent) then
+    FResizeEvent(Self, AMapView, Handled);
 end;
 
 procedure TUserDefinedPlugin.ZoomChange(AMapView: TMapView; var Handled: Boolean);

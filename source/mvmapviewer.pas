@@ -485,6 +485,7 @@ type
       X, Y: Integer): Boolean; virtual;
     function MouseWheel(AMapView: TMapView; AShift: TShiftState; AWheelDelta: Integer;
       AMousePos: TPoint): Boolean; virtual;
+    function Resize(AMapView: TMapView): Boolean; virtual;
     function ZoomChange(AMapView: TMapView): Boolean; virtual;
     function ZoomChanging(AMapView: TMapView; NewZoom: Integer; var Allow: Boolean): Boolean; virtual;
   public
@@ -756,6 +757,7 @@ type
       property OnMouseMove;
       property OnMouseUp;
       property OnMouseWheel;
+      property OnResize;
 
   end;
 
@@ -2866,7 +2868,6 @@ end;
 
 procedure TMapView.DoOnResize;
 begin
-  inherited DoOnResize;
   //cancel all rendering threads
   Engine.CancelCurrentDrawing;
   DrawingEngine.CreateBuffer(ClientWidth, ClientHeight);
@@ -2875,6 +2876,9 @@ begin
     Engine.SetSize(ClientWidth, ClientHeight);
     Invalidate;
   end;
+
+  GetPluginManager.Resize(Self);
+  inherited DoOnResize;
 end;
 
 procedure TMapView.Paint;
@@ -4785,6 +4789,12 @@ end;
 procedure TMvCustomPluginManager.RemoveMapView(AMapView: TMapView);
 begin
   Unused(AMapView);
+end;
+
+function TMvCustomPluginManager.Resize(AMapView: TMapView): Boolean;
+begin
+  Unused(AMapView);
+  Result := false;
 end;
 
 function TMvCustomPluginManager.ZoomChange(AMapView: TMapView): Boolean;

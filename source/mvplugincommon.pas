@@ -80,6 +80,7 @@ type
       X,Y: Integer; var Handled: Boolean); virtual;
     procedure MouseWheel(AMapView: TMapView; AShift: TShiftState;
       AWheelDelta: Integer; AMousePos: TPoint; var Handled: Boolean); virtual;
+    procedure Resize(AMapView: TMapView; var Handled: Boolean); virtual;
     procedure ZoomChange(AMapView: TMapView; var Handled: Boolean); virtual;
     procedure ZoomChanging(AMapView: TMapView; NewZoom: Integer; var Allow, Handled: Boolean); virtual;
   protected
@@ -281,6 +282,7 @@ type
       X, Y: Integer): Boolean; override;
     function MouseWheel(AMapView: TMapView; AShift: TShiftState; AWheelDelta: Integer;
       AMousePos: TPoint): Boolean; override;
+    function Resize(AMapView: TMapView): Boolean; override;
     function ZoomChange(AMapView: TMapView): Boolean; override;
     function ZoomChanging(AMapView: TMapView; NewZoom: Integer; var Allow: Boolean): Boolean; override;
 
@@ -491,6 +493,11 @@ begin
   inherited ReadState(Reader);
   if Reader.Parent is TMvPluginManager then
     SetPluginManager(TMvPluginManager(Reader.Parent));
+end;
+
+procedure TMvCustomPlugin.Resize(AMapView: TMapView; var Handled: Boolean);
+begin
+  Unused(AMapView, Handled);
 end;
 
 procedure TMvCustomPlugin.SetEnabled(AValue: Boolean);
@@ -1282,6 +1289,20 @@ begin
     plugin := Items[i];
     if HandlePlugin(plugin, AMapView) then
       plugin.MouseWheel(AMapView, AShift, AWheelDelta, AMousePos, Result);
+  end;
+end;
+
+function TMvPluginManager.Resize(AMapView: TMapView): Boolean;
+var
+  i: Integer;
+  plugin: TMvCustomPlugin;
+begin
+  Result := False;
+  for i := FPluginList.Count-1 downto 0 do
+  begin
+    plugin := Items[i];
+    if HandlePlugin(plugin, AMapView) then
+      plugin.Resize(AMapView, Result);
   end;
 end;
 
