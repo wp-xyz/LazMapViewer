@@ -18,7 +18,6 @@ type
     MapView1: TMapView;
     MvPluginManager1: TMvPluginManager;
     Panel1: TPanel;
-    procedure FormChangeBounds(Sender: TObject);
     procedure FormCreate(Sender: TObject);
   private
     FAreaSelectionPlugin : TAreaSelectionPlugin;
@@ -64,11 +63,6 @@ begin
                             ANewArea.BottomRight.Lon,
                             ANewArea.BottomRight.Lat
                             ]);
-end;
-
-procedure TForm1.FormChangeBounds(Sender: TObject);
-begin
-  FAreaSelectionPlugin.SetupRectShifter;
 end;
 
 end.

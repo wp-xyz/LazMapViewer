@@ -137,6 +137,7 @@ type
           X,Y: Integer; var Handled: Boolean); override;
     procedure CenterMove(AMapView: TMapView; var Handled: Boolean); override;
     procedure ZoomChange(AMapView: TMapView; var Handled: Boolean); override;
+    procedure Resize(AMapView: TMapView; var Handled: Boolean); override;
   published
     property MouseButton : TMouseButton read FMouseButton write SetMouseButton;
     property PenColor : TColor read FPenColor write SetPenColor default DefaultAreaSelectionPluginPenColor;
@@ -919,6 +920,11 @@ procedure TAreaSelectionPlugin.ZoomChange(AMapView: TMapView;
 begin
   Unused(AMapView, Handled);
 
+  SetupRectShifter;
+end;
+
+procedure TAreaSelectionPlugin.Resize(AMapView: TMapView; var Handled: Boolean);
+begin
   SetupRectShifter;
 end;
 
