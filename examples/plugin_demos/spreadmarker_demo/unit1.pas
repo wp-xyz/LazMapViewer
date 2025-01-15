@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils,
-  Forms, Controls, Graphics, Dialogs,
+  Forms, Controls, Graphics, Dialogs, ExtCtrls, StdCtrls,
   mvMapViewer, mvPluginCommon, mvPlugins, mvGPSObj, mvspreadmarker_plugin;
 
 type
@@ -14,7 +14,9 @@ type
   { TMainForm }
 
   TMainForm = class(TForm)
+    CheckBox1: TCheckBox;
     MapView: TMapView;
+    Panel1: TPanel;
     PluginManager: TMvPluginManager;
     DraggableMarkerPlugin: TDraggableMarkerPlugin;
     MvPluginManager1DraggableMarkerPlugin2: TDraggableMarkerPlugin;
@@ -92,6 +94,7 @@ var
   ndx : Integer;
   i : Integer;
 begin
+  if not CheckBox1.Checked then Exit;
   if Button <> mbLeft then Exit;
   if (not Handled) and SpreadMarkerPlugin.SpreadModeActive[AMapView] then
   begin
