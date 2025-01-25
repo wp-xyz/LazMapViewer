@@ -1199,7 +1199,7 @@ begin
             if Cache.GetPreviewFromCache(AWin.MapProvider, tile, R) then
             begin
               Cache.GetFromCache(AWin.MapProvider, tile, previewImg);
-              tmpImg := Nil;
+              tmpImg := nil;
               try
                 if FCreateTempTileCopy then
                 begin

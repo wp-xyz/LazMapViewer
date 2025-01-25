@@ -1,4 +1,4 @@
-program project1;
+program areaselection_demo;
 
 {$mode objfpc}{$H+}
 
@@ -10,7 +10,7 @@ uses
   athreads,
   {$ENDIF}
   Interfaces, // this includes the LCL widgetset
-  Forms, unit1, uAreaSelectionPlugin;
+  Forms, Main, uAreaSelectionPlugin;
 
 {$R *.res}
 

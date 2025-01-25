@@ -1,4 +1,4 @@
-program project1;
+program spreadmarkerdemo;
 
 {$mode objfpc}{$H+}
 
@@ -10,7 +10,7 @@ uses
   athreads,
   {$ENDIF}
   Interfaces, // this includes the LCL widgetset
-  Forms, unit1, lazmapviewerpkg
+  Forms, Main
   { you can add units after this };
 
 {$R *.res}
