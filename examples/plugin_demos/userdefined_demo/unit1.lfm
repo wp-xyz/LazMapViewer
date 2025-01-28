@@ -18,7 +18,7 @@ object MainForm: TMainForm
     DrawingEngine = MapView.BuiltInDE
     Layers = <>
     Font.Color = clBlack
-    MapProvider = 'OpenStreetMap Mapnik'
+    MapProvider = 'OpenStreetMap Standard'
     PluginManager = PluginManager
   end
   object InfoPanel: TPanel

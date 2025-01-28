@@ -18,7 +18,7 @@ object MainForm: TMainForm
     DrawingEngine = MapView.BuiltInDE
     Layers = <>
     Font.Color = clBlack
-    MapProvider = 'OpenStreetMap Mapnik'
+    MapProvider = 'OpenRailwayMap Standard'
     OnZoomChange = MapViewZoomChange
   end
   object ParamsPanel: TPanel
@@ -114,12 +114,12 @@ object MainForm: TMainForm
       ItemHeight = 15
       ItemIndex = 0
       Items.Strings = (
-        'OpenStreetMap Mapnik'
+        'OpenStreetMap Standard'
         'Open Topo Map'
       )
       Style = csDropDownList
       TabOrder = 3
-      Text = 'OpenStreetMap Mapnik'
+      Text = 'OpenStreetMap Standard'
       OnChange = cbProvidersChange
     end
     object lblProviders: TLabel

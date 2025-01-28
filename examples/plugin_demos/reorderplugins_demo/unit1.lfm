@@ -13,13 +13,12 @@ object Form1: TForm1
     Height = 372
     Top = 0
     Width = 482
-    Active = True
     Align = alClient
     DownloadEngine = MapView1.BuiltInDLE
     DrawingEngine = MapView1.BuiltInDE
     Layers = <>
     Font.Color = clBlack
-    MapProvider = 'OpenStreetMap Mapnik'
+    MapProvider = 'OpenStreetMap Standard'
     PluginManager = MvPluginManager1
   end
   object Panel1: TPanel

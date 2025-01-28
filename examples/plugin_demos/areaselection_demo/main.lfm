@@ -6,21 +6,20 @@ object Form1: TForm1
   Caption = 'Form1'
   ClientHeight = 323
   ClientWidth = 429
+  LCLVersion = '4.99.0.0'
   OnCreate = FormCreate
-  LCLVersion = '3.6.0.0'
   object MapView1: TMapView
     Left = 0
     Height = 288
     Top = 0
     Width = 429
-    Active = True
     Align = alClient
     Cyclic = True
     DownloadEngine = MapView1.BuiltInDLE
     DrawingEngine = MapView1.BuiltInDE
     Layers = <>
     Font.Color = clBlack
-    MapProvider = 'OpenStreetMap Mapnik'
+    MapProvider = 'OpenStreetMap Standard'
     PluginManager = MvPluginManager1
   end
   object Panel1: TPanel

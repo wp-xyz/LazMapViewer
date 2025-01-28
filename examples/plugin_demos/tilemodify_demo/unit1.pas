@@ -152,6 +152,8 @@ procedure TForm1.FormCreate(Sender: TObject);
 var
   lmvOptions : TMapViewOptions;
 begin
+  MapView1.Active := true;
+
   FMvBGRADrawingEngine := TMvBGRADrawingEngine.Create(Self);
   FMvRGBGraphicsDrawingEngine := TMvRGBGraphicsDrawingEngine.Create(Self);
   FTileModifyPlugin := TTileModifyPlugin.Create(Self);
@@ -167,12 +169,12 @@ begin
   tbBrightness.Position := Trunc(FTileModifyPlugin.Brightness * tbBrightness.Max);
   FTileModifyPlugin.Contrast := 0.5;
   tbContrast.Position := Trunc(FTileModifyPlugin.Contrast * tbContrast.Max);
-
-
-
+   {
   lmvOptions := MapView1.Options;
   Include(lmvOptions, mvoPluginCopyTiles);
   MapView1.Options := lmvOptions;
+  }
+  MapView1.Options := MapView1.Options + [mvoPluginCopyTiles];
   MvPluginManager1.PluginList.Add(FTileModifyPlugin);
 end;
 

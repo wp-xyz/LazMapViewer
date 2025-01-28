@@ -7,11 +7,11 @@ object MainForm: TMainForm
   ClientHeight = 586
   ClientWidth = 750
   Font.Height = -12
+  ShowHint = True
+  LCLVersion = '4.99.0.0'
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnShow = FormShow
-  ShowHint = True
-  LCLVersion = '3.4.0.0'
   object MapView: TMapView
     Left = 0
     Height = 586
@@ -25,13 +25,12 @@ object MainForm: TMainForm
     DrawingEngine = MapView.BuiltInDE
     Layers = <>
     Font.Color = clBlack
-    MapProvider = 'OpenStreetMap Mapnik'
+    MapProvider = 'OpenStreetMap Standard'
     POIImages = POIImages
-    UseThreads = True
     ZoomToCursor = False
     OnAfterDrawObjects = MapViewAfterDrawObjects
-    OnZoomChange = MapViewZoomChange
     OnChange = MapViewChange
+    OnZoomChange = MapViewZoomChange
     OnMouseDown = MapViewMouseDown
     OnMouseLeave = MapViewMouseLeave
     OnMouseMove = MapViewMouseMove
@@ -62,9 +61,9 @@ object MainForm: TMainForm
         Width = 263
         Max = 19
         Min = 1
-        OnChange = ZoomTrackBarChange
         Position = 1
         TickMarks = tmBoth
+        OnChange = ZoomTrackBarChange
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Left = 2
         BorderSpacing.Right = 2
@@ -583,10 +582,10 @@ object MainForm: TMainForm
         Width = 259
         Frequency = 10
         Max = 100
-        OnChange = tbOpacityChange
         PageSize = 5
         Position = 25
         TickMarks = tmBoth
+        OnChange = tbOpacityChange
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Top = 2
         TabOrder = 0
@@ -711,8 +710,8 @@ object MainForm: TMainForm
           'Use Opacity'
           'Tile alpha'
         )
-        OnSelectionChanged = rgDrawModeSelectionChanged
         TabOrder = 2
+        OnSelectionChanged = rgDrawModeSelectionChanged
       end
     end
     object PgConfig: TTabSheet

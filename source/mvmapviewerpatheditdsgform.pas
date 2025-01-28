@@ -39,9 +39,6 @@ var
 
 implementation
 
-type
-  TPersistentAccess = class(TPersistent);
-
 {$R *.lfm}
 
 { TMapViewerPathEditDsgForm }
@@ -95,43 +92,21 @@ end;
 procedure TMapViewerPathEditDsgForm.OnSetSelection(
   const ASelection: TPersistentSelectionList);
 var
-  I, LC: Integer;
+  I: Integer;
   V: TMapView = Nil;
-  L: TMapLayer = Nil;
-  L2: TMapLayer = Nil;
   PtCnt: Integer = 0;
   P: TMapPoint = Nil;
-
-  function GetMV(ANested: TPersistent): TMapView;
-  begin
-    Result := Nil;
-    while Assigned(ANested) do
-      if ANested is TMapView
-        then Exit(TMapView(ANested))
-        else ANested := TPersistentAccess(ANested).GetOwner;
-  end;
-
-  function GetLA(ANested: TPersistent): TMapLayer;
-  begin
-    Result := Nil;
-    while Assigned(ANested) do
-      if ANested is TMapLayer
-        then Exit(TMapLayer(ANested))
-        else ANested := TPersistentAccess(ANested).GetOwner;
-  end;
-
 begin
   // Try to find the the containing map view
   for I := 0 to Pred(ASelection.Count) do
   begin
-    V := GetMV(ASelection[I]);
+    V := TMapView(GetOwnerOfType(ASelection[I], TMapView));
     if Assigned(V) then
       Break;
   end;
-  MapView := V;
   if Assigned(V) then
   begin
-    LC := 0;
+    MapView := V;
     for I := 0 to Pred(ASelection.Count) do
     begin
       // If not internal select (i.e. from designer tree view)
@@ -146,17 +121,7 @@ begin
         else
           V.EditMark.Select(TMapPoint(ASelection[I]), False);
       end;
-      L2 := GetLA(ASelection[I]); // Containing layer
-      if Assigned(L2) and L2.Visible and (L <> L2)  then
-      begin
-        Inc(LC);
-        L := L2;
-      end;
     end;
-    if LC = 1 // Just one layer?
-      then MapLayer := L // Yes, assign it
-      else MapLayer := Nil; // Multiple layers or no layer
-
     // From the designer and no points into?
     if not InternalSelect and not Assigned(P) then
       V.EditMark.ClearSelection;
@@ -174,7 +139,7 @@ end;
 
 procedure TMapViewerPathEditDsgForm.DeletePersistent(APersistent: TPersistent);
 begin
-  inherited DeletePersistent(APersistent);
+  //inherited DeletePersistent(APersistent);
   if Assigned(GlobalDesignHook) then
     GlobalDesignHook.DeletePersistent(APersistent);
 end;

@@ -38,6 +38,8 @@ implementation
 { TForm1 }
 procedure TForm1.FormCreate(Sender: TObject);
 begin
+  MapView1.Active := true;
+
   FAreaSelectionPlugin := TAreaSelectionPlugin.Create(MvPluginManager1);
   FAreaSelectionPlugin.MapView := MapView1;
   FAreaSelectionPlugin.OnSelectedAreaChanged:= @OnSelectedAreaChanged;

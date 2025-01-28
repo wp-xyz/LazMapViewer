@@ -35,7 +35,7 @@ object MainForm: TMainForm
       DrawingEngine = MapView1.BuiltInDE
       Layers = <>
       Font.Color = clBlack
-      MapProvider = 'OpenStreetMap Mapnik'
+      MapProvider = 'OpenStreetMap Standard'
       PluginManager = PluginManager
       ZoomToCursor = False
       OnZoomChange = MapView1ZoomChange

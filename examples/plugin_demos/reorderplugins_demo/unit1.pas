@@ -68,6 +68,7 @@ procedure TForm1.FormCreate(Sender: TObject);
 var
   i: Integer;
 begin
+  MapView1.Active := true;
   Combobox1.Items.Clear;
   for i := 0 to MvPluginManager1.PluginList.Count-1 do
     Combobox1.Items.Add(TLegalNoticePlugin(MvPluginManager1.PluginList[i]).LegalNotice);

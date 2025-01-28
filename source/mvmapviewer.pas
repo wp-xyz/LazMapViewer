@@ -855,11 +855,13 @@ type
     FDirty: Boolean;
     FTruncSelection: Boolean;
     FClearSelection: Boolean;
+    FCursorShape: TCursor;
 
     function GetCurrentArea: TMapArea;
     function GetCurrentPoint: TMapPoint;
     function GetCurrentTrack: TMapTrack;
     function GetCursorShape: TCursor;
+    procedure SetCursorShape(AValue: TCursor);
     function GetHasSelection: Boolean;
 
     procedure FPOObservedChanged(ASender: TObject;
@@ -892,7 +894,7 @@ type
     property Lat: Double read FRealPt.Lat write FRealPt.Lat;
     property RealPt: TRealPoint read FRealPt write FRealPt;
 
-    property CursorShape: TCursor read GetCursorShape;
+    property CursorShape: TCursor read GetCursorShape write SetCursorShape;
     property HasSelection: Boolean read GetHasSelection;
     property CurrentPoint: TMapPoint read GetCurrentPoint;
     property CurrentTrack: TMapTrack read GetCurrentTrack;
@@ -2540,9 +2542,21 @@ begin
 end;
 
 procedure TMapView.SetMapProvider(AValue: String);
+var
+  msg: String;
 begin
   //if AValue = '' then
   //  raise EArgumentException.Create('Empty map provider is not allowed.');
+  if (AValue <> '') and not Engine.ValidProvider(AValue) then
+  begin
+    Active := false;
+    msg := Format('Map provider "%s" is not registered.', [AValue]);
+    if AValue = 'OpenStreetMap Mapnik' then
+      msg := msg + LineEnding + 'Use "OpenStreetMap Standard" instead.';
+    Application.MessageBox(PChar(msg), PChar('Error'));
+    exit;
+  end;
+
   Engine.MapProvider := AValue;
   if AValue = '' then
     Active := False;
@@ -4223,9 +4237,9 @@ end;
 
 function TMapEditMark.GetCursorShape: TCursor;
 begin
-  if Assigned(FLit)
+  if (FCursorShape = crDefault) and Assigned(FLit)
     then Result := crHandPoint
-    else Result := crDefault;
+    else Result := FCursorShape;
 end;
 
 function TMapEditMark.GetCurrentPoint: TMapPoint;
@@ -4344,6 +4358,11 @@ begin
     if Assigned(FOnDirty) then
       FOnDirty(Self);
   end;
+end;
+
+procedure TMapEditMark.SetCursorShape(AValue: TCursor);
+begin
+  FCursorShape := AValue;
 end;
 
 procedure TMapEditMark.FPOObservedChanged(ASender: TObject;
@@ -4589,7 +4608,15 @@ var
   MapPoint: TMapPoint;
 begin
   if not FDragStarted then
+  begin
     DoStartDrag(Sender);
+    // Drag aborted?
+    if not FDragStarted then
+    begin
+      Sender.AbortDrag;
+      Exit;
+    end;
+  end;
   if FMarquee then
   begin
     FMarqueeRect := Rect(Sender.StartX, Sender.StartY, Sender.EndX, Sender.EndY);

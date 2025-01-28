@@ -373,6 +373,8 @@ procedure TMainForm.FormCreate(Sender: TObject);
 var
   I: Integer;
 begin
+  MapView.Active := true;
+
   {$IFDEF SPREADMARKER_USE}
   FSpreadMarkerHelper := TMapViewSpreadMarkerHelper.Create(MapView,MapView.GPSItems);
   FSpreadMarkerHelper.OnSpreadModeEntered:= @OnSpreadModeEntered;

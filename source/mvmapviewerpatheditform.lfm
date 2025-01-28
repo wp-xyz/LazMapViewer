@@ -1,253 +1,358 @@
 object MapViewerPathEditForm: TMapViewerPathEditForm
   Left = 370
-  Height = 90
+  Height = 205
   Top = 31
-  Width = 293
+  Width = 324
+  AutoSize = True
   BorderStyle = bsToolWindow
   Caption = 'MapViewer Path Editor'
-  ClientHeight = 90
-  ClientWidth = 293
+  ClientHeight = 205
+  ClientWidth = 324
+  OnShow = FormShow
+  object pnlTools: TPanel
+    Left = 0
+    Height = 33
+    Top = 0
+    Width = 324
+    Align = alTop
+    ClientHeight = 33
+    ClientWidth = 324
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 2
+    object btnSelect: TSpeedButton
+      AnchorSideTop.Control = pnlTools
+      AnchorSideBottom.Control = pnlTools
+      AnchorSideBottom.Side = asrBottom
+      Left = 2
+      Height = 27
+      Top = 3
+      Width = 26
+      Action = actSelect
+      AllowAllUp = True
+      Anchors = [akTop, akLeft, akBottom]
+      BorderSpacing.Left = 2
+      BorderSpacing.Top = 2
+      BorderSpacing.Bottom = 2
+      Down = True
+      GroupIndex = 999
+      Images = ilImages
+      ImageIndex = 0
+      ShowCaption = False
+    end
+    object btnNewTP: TSpeedButton
+      AnchorSideLeft.Control = btnSelect
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = pnlTools
+      AnchorSideBottom.Control = pnlTools
+      AnchorSideBottom.Side = asrBottom
+      Left = 28
+      Height = 27
+      Top = 3
+      Width = 26
+      Action = actNewTP
+      AllowAllUp = True
+      Anchors = [akTop, akLeft, akBottom]
+      BorderSpacing.Top = 2
+      BorderSpacing.Bottom = 2
+      Images = ilImages
+      ImageIndex = 1
+      ShowCaption = False
+    end
+    object btnDelTP: TSpeedButton
+      AnchorSideLeft.Control = btnNewTP
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = pnlTools
+      AnchorSideBottom.Control = pnlTools
+      AnchorSideBottom.Side = asrBottom
+      Left = 54
+      Height = 27
+      Top = 3
+      Width = 26
+      Action = actDelTP
+      AllowAllUp = True
+      Anchors = [akTop, akLeft, akBottom]
+      BorderSpacing.Top = 2
+      BorderSpacing.Bottom = 2
+      Images = ilImages
+      ImageIndex = 2
+      ShowCaption = False
+    end
+    object btnNewPOI: TSpeedButton
+      AnchorSideLeft.Control = btnDelTP
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = pnlTools
+      AnchorSideBottom.Control = pnlTools
+      AnchorSideBottom.Side = asrBottom
+      Left = 82
+      Height = 27
+      Top = 3
+      Width = 26
+      Action = actNewPOI
+      AllowAllUp = True
+      Anchors = [akTop, akLeft, akBottom]
+      BorderSpacing.Left = 2
+      BorderSpacing.Top = 2
+      BorderSpacing.Bottom = 2
+      GroupIndex = 999
+      Images = ilImages
+      ImageIndex = 5
+      ShowCaption = False
+    end
+    object btnNewArea: TSpeedButton
+      AnchorSideLeft.Control = btnNewPOI
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = pnlTools
+      AnchorSideBottom.Control = pnlTools
+      AnchorSideBottom.Side = asrBottom
+      Left = 108
+      Height = 27
+      Top = 3
+      Width = 26
+      Action = actNewArea
+      AllowAllUp = True
+      Anchors = [akTop, akLeft, akBottom]
+      BorderSpacing.Top = 2
+      BorderSpacing.Bottom = 2
+      GroupIndex = 999
+      Images = ilImages
+      ImageIndex = 6
+      ShowCaption = False
+    end
+    object btnNewTrack: TSpeedButton
+      AnchorSideLeft.Control = btnNewArea
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = pnlTools
+      AnchorSideBottom.Control = pnlTools
+      AnchorSideBottom.Side = asrBottom
+      Left = 134
+      Height = 27
+      Top = 3
+      Width = 26
+      Action = actNewTrack
+      AllowAllUp = True
+      Anchors = [akTop, akLeft, akBottom]
+      BorderSpacing.Top = 2
+      BorderSpacing.Bottom = 2
+      GroupIndex = 999
+      Images = ilImages
+      ImageIndex = 3
+      ShowCaption = False
+    end
+    object btnZoomIn: TSpeedButton
+      AnchorSideLeft.Control = btnNewTrack
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = pnlTools
+      AnchorSideBottom.Control = pnlTools
+      AnchorSideBottom.Side = asrBottom
+      Left = 162
+      Height = 27
+      Top = 3
+      Width = 26
+      Action = actZoomIn
+      Anchors = [akTop, akLeft, akBottom]
+      BorderSpacing.Left = 2
+      BorderSpacing.Top = 2
+      BorderSpacing.Bottom = 2
+      Images = ilImages
+      ImageIndex = 7
+      ShowCaption = False
+    end
+    object btnZoomOut: TSpeedButton
+      AnchorSideLeft.Control = btnZoomIn
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = pnlTools
+      AnchorSideBottom.Control = pnlTools
+      AnchorSideBottom.Side = asrBottom
+      Left = 188
+      Height = 27
+      Top = 3
+      Width = 26
+      Action = actZoomOut
+      Anchors = [akTop, akLeft, akBottom]
+      BorderSpacing.Top = 2
+      BorderSpacing.Bottom = 2
+      Images = ilImages
+      ImageIndex = 8
+      ShowCaption = False
+    end
+  end
   object pnlFrame: TPanel
     Left = 0
-    Height = 90
-    Top = 0
-    Width = 293
+    Height = 146
+    Top = 33
+    Width = 324
     Align = alClient
-    ClientHeight = 90
-    ClientWidth = 293
+    ClientHeight = 146
+    ClientWidth = 324
     TabOrder = 0
-    object pnlTools: TPanel
-      Left = 1
-      Height = 33
-      Top = 1
-      Width = 291
-      Align = alTop
-      ClientHeight = 33
-      ClientWidth = 291
-      ParentShowHint = False
-      ShowHint = True
-      TabOrder = 0
-      object btnSelect: TSpeedButton
-        AnchorSideTop.Control = pnlTools
-        AnchorSideBottom.Control = pnlTools
-        AnchorSideBottom.Side = asrBottom
-        Left = 2
-        Height = 27
-        Top = 3
-        Width = 26
-        Action = actSelect
-        AllowAllUp = True
-        Anchors = [akTop, akLeft, akBottom]
-        BorderSpacing.Left = 2
-        BorderSpacing.Top = 2
-        BorderSpacing.Bottom = 2
-        Images = ilImages
-        ImageIndex = 0
-        ShowCaption = False
-      end
-      object btnNewTP: TSpeedButton
-        AnchorSideLeft.Control = btnSelect
-        AnchorSideLeft.Side = asrBottom
-        AnchorSideTop.Control = pnlTools
-        AnchorSideBottom.Control = pnlTools
-        AnchorSideBottom.Side = asrBottom
-        Left = 28
-        Height = 27
-        Top = 3
-        Width = 26
-        Action = actNewTP
-        Anchors = [akTop, akLeft, akBottom]
-        BorderSpacing.Top = 2
-        BorderSpacing.Bottom = 2
-        Images = ilImages
-        ImageIndex = 1
-        ShowCaption = False
-      end
-      object btnDelTP: TSpeedButton
-        AnchorSideLeft.Control = btnNewTP
-        AnchorSideLeft.Side = asrBottom
-        AnchorSideTop.Control = pnlTools
-        AnchorSideBottom.Control = pnlTools
-        AnchorSideBottom.Side = asrBottom
-        Left = 54
-        Height = 27
-        Top = 3
-        Width = 26
-        Action = actDelTP
-        Anchors = [akTop, akLeft, akBottom]
-        BorderSpacing.Top = 2
-        BorderSpacing.Bottom = 2
-        Images = ilImages
-        ImageIndex = 2
-        ShowCaption = False
-      end
-      object btnNewPOI: TSpeedButton
-        AnchorSideLeft.Control = btnDelTP
-        AnchorSideLeft.Side = asrBottom
-        AnchorSideTop.Control = pnlTools
-        AnchorSideBottom.Control = pnlTools
-        AnchorSideBottom.Side = asrBottom
-        Left = 82
-        Height = 27
-        Top = 3
-        Width = 26
-        Action = actNewPOI
-        AllowAllUp = True
-        Anchors = [akTop, akLeft, akBottom]
-        BorderSpacing.Left = 2
-        BorderSpacing.Top = 2
-        BorderSpacing.Bottom = 2
-        Images = ilImages
-        ImageIndex = 5
-        ShowCaption = False
-      end
-      object btnNewArea: TSpeedButton
-        AnchorSideLeft.Control = btnNewPOI
-        AnchorSideLeft.Side = asrBottom
-        AnchorSideTop.Control = pnlTools
-        AnchorSideBottom.Control = pnlTools
-        AnchorSideBottom.Side = asrBottom
-        Left = 108
-        Height = 27
-        Top = 3
-        Width = 26
-        Action = actNewArea
-        AllowAllUp = True
-        Anchors = [akTop, akLeft, akBottom]
-        BorderSpacing.Top = 2
-        BorderSpacing.Bottom = 2
-        Images = ilImages
-        ImageIndex = 6
-        ShowCaption = False
-      end
-      object btnNewTrack: TSpeedButton
-        AnchorSideLeft.Control = btnNewArea
-        AnchorSideLeft.Side = asrBottom
-        AnchorSideTop.Control = pnlTools
-        AnchorSideBottom.Control = pnlTools
-        AnchorSideBottom.Side = asrBottom
-        Left = 134
-        Height = 27
-        Top = 3
-        Width = 26
-        Action = actNewTrack
-        AllowAllUp = True
-        Anchors = [akTop, akLeft, akBottom]
-        BorderSpacing.Top = 2
-        BorderSpacing.Bottom = 2
-        Images = ilImages
-        ImageIndex = 3
-        ShowCaption = False
-      end
-      object btnZoomIn: TSpeedButton
-        AnchorSideLeft.Control = btnNewTrack
-        AnchorSideLeft.Side = asrBottom
-        AnchorSideTop.Control = pnlTools
-        AnchorSideBottom.Control = pnlTools
-        AnchorSideBottom.Side = asrBottom
-        Left = 162
-        Height = 27
-        Top = 3
-        Width = 26
-        Action = actZoomIn
-        Anchors = [akTop, akLeft, akBottom]
-        BorderSpacing.Left = 2
-        BorderSpacing.Top = 2
-        BorderSpacing.Bottom = 2
-        Images = ilImages
-        ImageIndex = 7
-        ShowCaption = False
-      end
-      object btnZoomOut: TSpeedButton
-        AnchorSideLeft.Control = btnZoomIn
-        AnchorSideLeft.Side = asrBottom
-        AnchorSideTop.Control = pnlTools
-        AnchorSideBottom.Control = pnlTools
-        AnchorSideBottom.Side = asrBottom
-        Left = 188
-        Height = 27
-        Top = 3
-        Width = 26
-        Action = actZoomOut
-        Anchors = [akTop, akLeft, akBottom]
-        BorderSpacing.Top = 2
-        BorderSpacing.Bottom = 2
-        Images = ilImages
-        ImageIndex = 8
-        ShowCaption = False
-      end
-    end
-    object lblSelectedPt: TLabel
-      AnchorSideLeft.Control = pnlFrame
-      AnchorSideTop.Control = cbSelectedPt
-      Left = 1
-      Height = 16
-      Top = 37
-      Width = 83
-      Alignment = taRightJustify
-      Anchors = [akTop, akLeft, akRight]
-      AutoSize = False
-      BorderSpacing.Right = 5
-      Caption = 'Selection:'
-      ParentColor = False
-    end
     object lblSelectedLayer: TLabel
       AnchorSideLeft.Control = pnlFrame
       AnchorSideTop.Control = cbSelectedLayer
+      AnchorSideTop.Side = asrCenter
+      AnchorSideRight.Control = cbSelectedLayer
       Left = 1
       Height = 16
-      Top = 62
-      Width = 83
+      Top = 121
+      Width = 95
       Alignment = taRightJustify
       Anchors = [akTop, akLeft, akRight]
       AutoSize = False
       BorderSpacing.Right = 5
-      Caption = 'On Layer:'
+      Caption = 'Layer:'
       ParentColor = False
     end
-    object cbSelectedPt: TEdit
-      AnchorSideTop.Control = pnlTools
+    object cbSelectedLayer: TComboBox
+      AnchorSideTop.Control = pnlSel
       AnchorSideTop.Side = asrBottom
       AnchorSideRight.Control = pnlFrame
       AnchorSideRight.Side = asrBottom
-      Left = 88
-      Height = 22
-      Top = 37
-      Width = 201
+      Left = 101
+      Height = 26
+      Top = 116
+      Width = 219
       Anchors = [akTop, akRight]
-      AutoSize = False
+      BorderSpacing.Top = 5
       BorderSpacing.Around = 3
-      BorderStyle = bsNone
+      ItemHeight = 0
+      OnDropDown = cbSelectedLayerDropDown
+      OnSelect = cbSelectedLayerSelect
       ParentColor = True
       ParentShowHint = False
       ReadOnly = True
       ShowHint = True
+      TabOrder = 0
+    end
+    object pnlSel: TPanel
+      AnchorSideLeft.Control = pnlFrame
+      AnchorSideTop.Control = pnlFrame
+      AnchorSideRight.Control = pnlFrame
+      AnchorSideRight.Side = asrBottom
+      Left = 4
+      Height = 104
+      Top = 4
+      Width = 316
+      Anchors = [akTop, akLeft, akRight]
+      AutoSize = True
+      BorderSpacing.Around = 3
+      BevelInner = bvRaised
+      BevelOuter = bvLowered
+      ClientHeight = 104
+      ClientWidth = 316
       TabOrder = 1
+      object lblSelectedPt: TLabel
+        AnchorSideLeft.Control = pnlSel
+        AnchorSideTop.Control = cbSelectedPt
+        AnchorSideTop.Side = asrCenter
+        AnchorSideRight.Control = cbSelectedPt
+        Left = 2
+        Height = 16
+        Top = 15
+        Width = 66
+        Alignment = taRightJustify
+        Anchors = [akTop, akLeft, akRight]
+        AutoSize = False
+        BorderSpacing.Right = 5
+        Caption = 'Selection:'
+        ParentColor = False
+      end
+      object cbSelectedPt: TEdit
+        AnchorSideLeft.Control = pnlSel
+        AnchorSideTop.Control = pnlSel
+        AnchorSideRight.Control = pnlSel
+        AnchorSideRight.Side = asrBottom
+        Left = 73
+        Height = 26
+        Top = 10
+        Width = 238
+        Anchors = [akTop, akRight]
+        BorderSpacing.Top = 5
+        BorderSpacing.Around = 3
+        ParentColor = True
+        ParentShowHint = False
+        ReadOnly = True
+        ShowHint = True
+        TabOrder = 0
+      end
+      object lblLat: TLabel
+        AnchorSideTop.Control = cbLat
+        AnchorSideTop.Side = asrCenter
+        AnchorSideRight.Control = cbLat
+        Left = 153
+        Height = 17
+        Top = 44
+        Width = 26
+        Alignment = taRightJustify
+        Anchors = [akTop, akRight]
+        BorderSpacing.Right = 5
+        Caption = 'Lat:'
+        ParentColor = False
+      end
+      object cbLat: TEdit
+        AnchorSideTop.Control = cbSelectedPt
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = pnlSel
+        AnchorSideRight.Side = asrBottom
+        Left = 184
+        Height = 26
+        Top = 39
+        Width = 127
+        Anchors = [akTop, akRight]
+        BorderSpacing.Around = 3
+        OnEditingDone = cbLatLonEditingDone
+        OnEnter = cbLatEnter
+        OnExit = cbLatLonExit
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 1
+      end
+      object lblLon: TLabel
+        AnchorSideTop.Control = cbLon
+        AnchorSideTop.Side = asrCenter
+        AnchorSideRight.Control = cbLon
+        Left = 151
+        Height = 17
+        Top = 73
+        Width = 28
+        Alignment = taRightJustify
+        Anchors = [akTop, akRight]
+        BorderSpacing.Right = 5
+        Caption = 'Lon:'
+        ParentColor = False
+      end
+      object cbLon: TEdit
+        AnchorSideTop.Control = cbLat
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = pnlSel
+        AnchorSideRight.Side = asrBottom
+        Left = 184
+        Height = 26
+        Top = 68
+        Width = 127
+        Anchors = [akTop, akRight]
+        BorderSpacing.Bottom = 5
+        BorderSpacing.Around = 3
+        OnEditingDone = cbLatLonEditingDone
+        OnEnter = cbLonEnter
+        OnExit = cbLatLonExit
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 2
+      end
     end
-    object cbSelectedLayer: TEdit
-      AnchorSideTop.Control = cbSelectedPt
-      AnchorSideTop.Side = asrBottom
-      AnchorSideRight.Control = pnlFrame
-      AnchorSideRight.Side = asrBottom
-      Left = 88
-      Height = 22
-      Top = 62
-      Width = 201
-      Anchors = [akTop, akRight]
-      AutoSize = False
-      BorderSpacing.Around = 3
-      BorderStyle = bsNone
-      ParentColor = True
-      ParentShowHint = False
-      ReadOnly = True
-      ShowHint = True
-      TabOrder = 2
-    end
+  end
+  object pnlInfo: TPanel
+    Left = 0
+    Height = 26
+    Top = 179
+    Width = 324
+    Align = alBottom
+    TabOrder = 1
   end
   object alEditActions: TActionList
     Images = ilImages
-    Left = 120
-    Top = 40
+    Left = 256
+    Top = 16
     object actZoomIn: TAction
       Caption = 'Zoom In'
       Hint = 'Zoom In'
@@ -263,21 +368,24 @@ object MapViewerPathEditForm: TMapViewerPathEditForm
     object actNewPOI: TAction
       AutoCheck = True
       Caption = 'New POI'
-      Hint = 'New POI from current point'
+      GroupIndex = 999
+      Hint = 'New POI'
       ImageIndex = 5
       OnExecute = actNewPOIExecute
     end
     object actNewTrack: TAction
       AutoCheck = True
       Caption = 'New Track'
-      Hint = 'New Track from selected'
+      GroupIndex = 999
+      Hint = 'New Track'
       ImageIndex = 3
       OnExecute = actNewTrackExecute
     end
     object actNewArea: TAction
       AutoCheck = True
       Caption = 'New Area'
-      Hint = 'New Area from selected'
+      GroupIndex = 999
+      Hint = 'New Area'
       ImageIndex = 6
       OnExecute = actNewAreaExecute
     end
@@ -297,14 +405,15 @@ object MapViewerPathEditForm: TMapViewerPathEditForm
       AutoCheck = True
       Caption = 'Select'
       Checked = True
+      GroupIndex = 999
       Hint = 'Select tool'
       ImageIndex = 0
       OnExecute = actSelectExecute
     end
   end
   object ilImages: TImageList
-    Left = 192
-    Top = 40
+    Left = 256
+    Top = 72
     Bitmap = {
       4C7A090000001000000010000000E60700000000000078DAED580D6C13F7154F
       0BEA87A05D3F0085323588064A23489DB1585BE9A4691B5369629385B8B4DBD4

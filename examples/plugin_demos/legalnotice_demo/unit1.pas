@@ -61,7 +61,7 @@ begin
   FMapView1 := TMapView.Create(self);
   FMapView1.Align := alClient;
   FMapView1.Parent := LeftPanel;
-  FMapView1.MapProvider := 'OpenStreetMap Mapnik';
+  FMapView1.MapProvider := 'OpenStreetMap Standard';
   FMapView1.UseThreads := true;
   FMapView1.Zoom := 9;
   FMapView1.MapCenter.Longitude := 11;

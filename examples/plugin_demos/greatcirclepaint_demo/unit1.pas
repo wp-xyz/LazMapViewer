@@ -110,6 +110,8 @@ procedure TForm1.FormCreate(Sender: TObject);
   end;
 
 begin
+  MapView1.Active := true;
+
   FGreatCirclePainterPlugin := TGreatCirclePainterPlugin.Create(MvPluginManager1);
   MvPluginManager1.PluginList.Add(FGreatCirclePainterPlugin);
   FGreatCirclePainterPlugin.ZOrder := gcpzCanvas;

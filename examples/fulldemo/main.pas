@@ -361,6 +361,8 @@ procedure TMainForm.FormCreate(Sender: TObject);
 var
   I: Integer;
 begin
+  MapView.Active := true;
+
   CfgFrame := {$IFDEF WITH_ADDONS}TCfgFrame_with_Addons{$ELSE}TCfgFrame{$ENDIF}.Create(self);
   CfgFrame.Parent := pgConfig;
   CfgFrame.Align := alClient;

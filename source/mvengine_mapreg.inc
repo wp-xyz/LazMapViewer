@@ -23,7 +23,7 @@ Some providers submitted by
 }
 
   // OpenStreetMap section
-  MapWin.MapProvider := AddMapProvider('OpenStreetMap Mapnik', ptEPSG3857, 'http://%serv%.tile.openstreetmap.org/%z%/%x%/%y%.png', 0, 19, 3, @GetSvrLetter);
+  MapWin.MapProvider := AddMapProvider('OpenStreetMap Standard', ptEPSG3857, 'http://%serv%.tile.openstreetmap.org/%z%/%x%/%y%.png', 0, 19, 3, @GetSvrLetter);
   // OSM Wikipedia no longer available for services outside Wikimedia projects.
   //   AddMapProvider('OpenStreetMap Wikipedia', ptEPSG3857, 'https://maps.wikimedia.org/osm-intl/%z%/%x%/%y%.png', 0, 19, 3, @GetSvrLetter);
   // OSM Sputnik is no longer available. Keeping it here for reference only...

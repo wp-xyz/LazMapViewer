@@ -171,6 +171,7 @@ type
       function ScreenToLatLon(aPt: TPoint): TRealPoint;
       function ScreenToLonLat(aPt: TPoint): TRealPoint; deprecated 'Use ScreenToLatLon';
       procedure SetSize(aWidth, aHeight: integer);
+      function ValidProvider(const AProvider: String): Boolean;
       function WorldScreenToLatLon(aPt: TPoint): TRealPoint;
       function WorldScreenToLonLat(aPt: TPoint): TRealPoint; deprecated 'Use WorldScreenToLatLon';
       procedure WriteProvidersToXML(AFileName: String);
@@ -1495,6 +1496,11 @@ begin
          tmpImg.Free;
      end;
   end;
+end;
+
+function TMapViewerEngine.ValidProvider(const AProvider: String): Boolean;
+begin
+  Result := lstProvider.IndexOf(AProvider) > -1;
 end;
 
 function TMapViewerEngine.WorldScreenToLatLon(aPt: TPoint): TRealPoint;

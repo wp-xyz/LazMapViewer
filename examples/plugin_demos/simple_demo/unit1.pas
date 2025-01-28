@@ -55,7 +55,7 @@ begin
   FMapView := TMapView.Create(self);
   FMapView.Align := alClient;
   FMapView.Parent := Self;
-  FMapView.mapProvider := 'OpenStreetMap Mapnik';
+  FMapView.mapProvider := 'OpenStreetMap Standard';
   FMapView.Active := true;
   FMapView.OnMouseDown := @MouseDownHandler;
   FMapView.PluginManager := FPluginManager;

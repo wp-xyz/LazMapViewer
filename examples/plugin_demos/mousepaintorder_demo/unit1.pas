@@ -40,6 +40,7 @@ var
   lDragColoredItemPlugin : TDragColoredItemPlugin;
   i: Integer;
 begin
+  MapView1.Active := true;
   for i := 0 to High(PluginColors) do
   begin
     lDragColoredItemPlugin := TDragColoredItemPlugin.Create(Self);
