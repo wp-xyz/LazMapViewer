@@ -69,6 +69,19 @@ begin
     Result := round(IntPower(2, AZoomLevel));
 end;
 
+{ Protected version of arcin which does not crash when the argument is outside
+  domain due to round-off error. }
+function SafeArcsin(x: Double): Double;
+begin
+  if x >= +1.0 then
+    Result := pi * 0.5
+  else
+  if x <= -1.0 then
+    Result := -pi * 0.5
+  else
+    Result := arcsin(x);
+end;
+
 { Calculation of distance on a sphere
    https://stackoverflow.com/questions/73608975/pascal-delphi-11-formula-for-distance-in-meters-between-two-decimal-gps-point
 }
@@ -76,24 +89,24 @@ end;
 function HaversineAngle(Lat1, Lon1, Lat2, Lon2: Double): Double;
 var
   latFrom, latTo, lonDiff: Double;
-  dx, dy, dz, arg: Double;
+  sinLatFrom, cosLatFrom: Double;
+  sinLatTo, cosLatTo: Double;
+  sinLonDiff, cosLonDiff: Double;
+  dx, dy, dz: Double;
 begin
   lonDiff := Lon1 - Lon2;
   latFrom := Lat1;
   latTo := Lat2;
 
-  dz := sin(latFrom) - sin(latTo);
-  dx := cos(lonDiff) * cos(latFrom) - cos(latTo);
-  dy := sin(lonDiff) * cos(latFrom);
+  SinCos(latFrom, sinLatFrom, cosLatFrom);
+  SinCos(latTo, sinLatTo, cosLatTo);
+  SinCos(lonDiff, sinLonDiff, cosLonDiff);
 
-  arg := sqrt(sqr(dx) + sqr(dy) + sqr(dz)) / 2.0;
-  if arg >= 1.0 then
-    Result := pi
-  else
-  if arg <= -1.0 then
-    Result := -pi
-  else
-    Result := arcsin(arg) * 2.0;
+  dz := sinlatFrom - sinlatTo;
+  dx := coslonDiff * coslatFrom - coslatTo;
+  dy := sinlonDiff * coslatFrom;
+
+  Result := SafeArcsin(sqrt(sqr(dx) + sqr(dy) + sqr(dz)) / 2.0) * 2.0;
 end;
 
 // Angles in degrees
@@ -167,12 +180,20 @@ end;
 function CalcBearing(Lat1, Lon1, Lat2, Lon2: Double): Double;
 var
   latFrom, latTo, lonDiff: Double;
+  sin_LatFrom, cos_LatFrom: Double;
+  sin_LatTo, cos_LatTo: Double;
+  sin_LonDiff, cos_LonDiff: Double;
 begin
   lonDiff := DegToRad(Lon2 - Lon1);
   latFrom := DegToRad(Lat1);
   latTo := DegToRad(Lat2);
-  Result := ArcTan2(Sin(lonDiff) * Cos(latTo),
-    Cos(latFrom) * Sin(latTo) - Sin(latFrom) * Cos(latTo) * Cos(lonDiff));
+
+  SinCos(lonDiff, sin_LonDiff, cos_LonDiff);
+  SinCos(latFrom, sin_LatFrom, cos_LatFrom);
+  SinCos(latTo, sin_LatTo, cos_LatTo);
+
+  Result := ArcTan2(sin_LonDiff * cos_LatTo,
+    cos_LatFrom * sin_LatTo - sin_LatFrom * cos_LatTo * cos_LonDiff);
   Result := RadToDeg(Result);
   if Result < 0.0 then
     Result := Result + 360.0;
@@ -186,16 +207,25 @@ procedure CalcLatLon(const Lat1, Lon1, ADist, ABearing: Double; out Lat2,
   Lon2: Double);
 var
   latFrom, lonFrom, brng, aD: Double;
+  sin_LatFrom, cos_LatFrom: Double;
+  sin_LonFrom, cos_LonFrom: Double;
+  sin_brng, cos_brng: Double;
+  sin_aD, cos_aD: Double;
 begin
   latFrom := DegToRad(Lat1);
   lonFrom := DegToRad(Lon1);
   brng := DegToRad(ABearing);
   aD := ADist / EARTH_EQUATORIAL_RADIUS;
-  Lat2 := ArcSin(Sin(latFrom) * Cos(aD) + Cos(latFrom) * Sin(aD) * Cos(brng));
-  Lon2 := lonFrom + ArcTan2(Sin(brng) * Sin(aD) * Cos(latFrom),
-    Cos(aD) - Sin(latFrom) * Sin(Lat2));
+
+  SinCos(latFrom, sin_LatFrom, cos_LatFrom);
+  SinCos(lonFrom, sin_lonFrom, cos_lonFrom);
+  SinCos(brng, sin_brng, cos_brng);
+  SinCos(aD, sin_aD, cos_aD);
+
+  Lat2 := SafeArcSin(sin_LatFrom * cos_aD + cos_LatFrom * sin_aD * cos_brng);
+  Lon2 := lonFrom + ArcTan2(sin_brng * sin_aD * cos_latFrom, cos_aD - sin_latFrom * Sin(Lat2));
   Lat2 := RadToDeg(Lat2);
-  Lon2 := NormalizeLon(RadToDeg(Lon2));
+  Lon2 := {%H-}NormalizeLon(RadToDeg(Lon2));
 end;
 
 { Calculate midpoint Lat,Lon by given start point Lat1,Lon1 and end point
@@ -205,6 +235,7 @@ procedure CalcMidpoint(const Lat1, Lon1, Lat2, Lon2: Double; out Lat,
   Lon: Double);
 var
   latFrom, lonDiff, latTo, lonTo, Bx, By: Double;
+  sin_latFrom, cos_latFrom: Double;
 begin
   lonDiff := DegToRad(Lon2 - Lon1);
   latFrom := DegToRad(Lat1);
@@ -212,10 +243,13 @@ begin
   lonTo := DegToRad(Lon2);
   Bx := Cos(latTo) * Cos(lonDiff);
   By := Cos(latTo) * Sin(lonDiff);
-  Lat := ArcTan2(Sin(latFrom) + Sin(latTo), Sqrt(Sqr(Cos(latFrom) + Bx) + Sqr(By)));
-  Lon := lonTo + ArcTan2(By, Cos(latFrom) + By);
+
+  SinCos(latFrom, sin_latFrom, cos_latFrom);
+
+  Lat := ArcTan2(sin_latFrom + Sin(latTo), Sqrt(Sqr(cos_latFrom + Bx) + Sqr(By)));
+  Lon := lonTo + ArcTan2(By, cos_latFrom + By);
   Lat := RadToDeg(Lat);
-  Lon := NormalizeLon(RadToDeg(Lon));
+  Lon := {%H-}NormalizeLon(RadToDeg(Lon));
 end;
 
 { Calculate intermediate point Lat,Lon by given start point Lat1,Lon1, end point
@@ -227,6 +261,9 @@ procedure CalcIntermedPoint(const Lat1, Lon1, Lat2, Lon2, AFrac: Double; out
 var
   latFrom, lonFrom, latTo, lonTo: Double;
   A, B, aD, X, Y, Z: Double;
+  sin_latFrom, cos_latFrom: Double;
+  sin_lonFrom, cos_lonFrom: Double;
+  sin_latTo, cos_latTo: Double;
 begin
   if (Lat1 = Lat2) and (Lon1 = Lon2) or (AFrac < 0.001) then
   begin
@@ -245,15 +282,20 @@ begin
   lonFrom := DegToRad(Lon1);
   latTo := DegToRad(Lat2);
   lonTo := DegToRad(Lon2);
+
+  SinCos(latFrom, sin_LatFrom, cos_LatFrom);
+  SinCos(lonFrom, sin_LonFrom, cos_lonFrom);
+  SinCos(latTo, sin_latTo, cos_latTo);
+
   A := Sin((1.0 - AFrac) * aD) / Sin(aD);
   B := Sin(AFrac * aD) / Sin(aD);
-  X := A * Cos(latFrom) * Cos(lonFrom) + B * Cos(latTo) * Cos(lonTo);
-  Y := A * Cos(latFrom) * Sin(lonFrom) + B * Cos(latTo) * Sin(lonTo);
-  Z := A * Sin(latFrom) + B * Sin(latTo);
+  X := A * cos_latFrom * cos_lonFrom + B * cos_latTo * Cos(lonTo);
+  Y := A * cos_latFrom * sin_lonFrom + B * cos_latTo * Sin(lonTo);
+  Z := A * sin_latFrom + B * sin_latTo;
   Lat := ArcTan2(Z, Sqrt(Sqr(X) + Sqr(Y)));
   Lon := ArcTan2(Y, X);
   Lat := RadToDeg(Lat);
-  Lon := NormalizeLon(RadToDeg(Lon));
+  Lon := {%H-}NormalizeLon(RadToDeg(Lon));
 end;
 
 function NormalizeLon(const Lon: Double): Double;

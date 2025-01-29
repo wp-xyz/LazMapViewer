@@ -5,34 +5,43 @@
  See the file COPYING.modifiedLGPL.txt, included in the Lazarus distribution,
  for details about the license.
 
- This unit implement an MapViewer-Plugin to display a great circle on the map.
+ This unit implements an MapViewer-Plugin to display a great circle on the map.
  For details about great circles please see:
-  https://en.wikipedia.org/wiki/Great_circle
+
+   https://en.wikipedia.org/wiki/Great_circle
 
  The great circle is defined by a Start and a Destination coordinate.
-  If Start and Destination are equal, no greatcircle is displayed.
- If Start and Destination are 0 or 180 degrees separated, the circle around
-  the two poles are displayed.
+
+ If Start and Destination are equal, no greatcircle is displayed.
+
+ If Start and Destination are 0 or separated by 180 degrees, the circle around
+ the two poles are displayed.
+
  The part containing the shortest distance between Start and Destination is
-  called Orthodrome.
- The display Pen for the Great Circle and the Orthodrome could be independently
-  choosen.
- The great circle on the map are approximated by short straight lines. The
-  length of those segments could be set. In general, the segments should be
-  smaller on larger scales (smaller zoom) and could be longer on smaller scales
-  (bigger zoom), since the distortions are bigger on large scales, especially
-  in polar regions.
- The Z-Order could be selected in three steps:
-  On the native map behind or before the markers (this allows to save the
-  great circle together with the map in a file) and on the Canvas.
- The calculated points are accessible. The contain the location, the distance
-  (in meter) from Start and the kind of the point (wether it is start or destination,
-  is part of the Orthodrome or none of the above). The distance starts at 0 at
-  Start, increases in direction of the Destination an continues increasing until
-  Start is reached again.
- The points are only available for the Longitudes visible in the map!
+ called Orthodrome.
+
+ The pens for drawing the Great Circle and the Orthodrome can be chosen
+ independently.
+
+ A great circle on the map is approximated by drawing short straight lines
+ segments. The length of those segments can be set.
+ In general, the segments should be smaller on larger scales (smaller zoom)
+ and could be longer on smaller scales (bigger zoom), since the deviations from
+ linearity are bigger on large scales, especially in polar regions.
+
+ The Z-Order can be selected in three steps:
+ On the native map behind or before the markers (this allows to save the
+ great circle together with the map in a file) or on the Canvas.
+
+ The calculated points are accessible. They contain the location, the distance
+ (in meters) from Start and the kind of the point (wether it is start or destination,
+ is part of the Orthodrome or none of the above). The distance starts at 0 at
+ Start, increases in direction of the Destination and continues increasing until
+ Start is reached again.
+ The points are only available for the longitudes visible in the map!
 }
-unit uGreatCirclePainterPlugin;
+
+unit mvGreatCirclePainterPlugin;
 
 {$mode ObjFPC}{$H+}
 
@@ -43,8 +52,8 @@ uses
   mvPluginCommon, mvPlugins, mvMapViewer, mvTypes, mvGeoMath, mvDrawingEngine;
 
 const
-  DefaultTruncLength = 10; // 10 pixels for one trunc = line segment on screen
-  MaxTruncLength     = 200; // maximum 200 pixels
+  DefaultSegmentLength = 10;  // 10 pixels for one line segment on screen
+  MaxSegmentLength     = 200; // maximum 200 pixels
 
 type
   TGreatCirclePointKind = (gcpkStandard, gcpkOrthodrome, gcpkStart, gcpkCenter, gcpkDestination);
@@ -58,13 +67,13 @@ type
     FPointKind : TGreatCirclePointKind;
   protected
   public
-    property RealPoint : TRealPoint read FRealPoint;
-    property PointKind : TGreatCirclePointKind read FPointKind;
-    property Distance : Double read FDistance;
     constructor Create(const ARealPoint : TRealPoint; const ADistance : Double;
                        const APointKind : TGreatCirclePointKind = gcpkStandard);
     constructor Create(const ARealPointLat, ARealPointLon : Double; const ADistance : Double;
                        const APointKind : TGreatCirclePointKind = gcpkStandard);
+    property RealPoint : TRealPoint read FRealPoint;
+    property PointKind : TGreatCirclePointKind read FPointKind;
+    property Distance : Double read FDistance;
   end;
 
   TGreatCirclePainterZOrder = (gcpzCanvas,gcpzInFrontOfMarkers,gcpzBehindMarkers);
@@ -72,6 +81,7 @@ type
   TGreatCirclePainterOptions = set of TGreatCirclePainterOption;
 
   { TGreatCirclePainterPlugin }
+
   TGreatCirclePainterPlugin = class;
   TGreatCirclePainterGetCoordsEvent = procedure (Sender : TGreatCirclePainterPlugin;
                                                  var FStart, FDestination : TRealPoint) of Object;
@@ -83,7 +93,7 @@ type
     FStart : TRealPoint;
     FDestination : TRealPoint;
     FCenterPoint : TRealPoint;
-    FTruncLength : Integer;
+    FSegmentLength : Integer;
     FOrthodromeDistance : Double;
     FInitialBearing : Double;
     FGetStartAndDestinationCoordsEvent : TGreatCirclePainterGetCoordsEvent;
@@ -100,7 +110,7 @@ type
     function GetGreatCirclePointsCount : Integer;
     function GetGreatCirclePoints(AIndex : Integer) : TGreatCirclePoint;
     procedure SetOptions(Value : TGreatCirclePainterOptions);
-    procedure SetTruncLength(Value : Integer);
+    procedure SetSegmentLength(Value : Integer);
     procedure PaintGreatCircleWithCanvas;
     procedure PaintGreatCircleWithDrawingEngine;
     procedure OrthodromePenChanged(Sender : TObject);
@@ -110,37 +120,35 @@ type
     procedure AfterDrawObjects(AMapView: TMapView; var Handled: Boolean); override;
     procedure AfterPaint(AMapView: TMapView; var Handled: Boolean); override;
     procedure BeforeDrawObjects(AMapView: TMapView; var Handled: Boolean); override;
-
     procedure CenterMove(AMapView: TMapView; var Handled: Boolean); override;
     procedure Resize(AMapView: TMapView; var Handled: Boolean); override;
-    procedure ZoomChange(AMapView: TMapView; var Handled: Boolean); override;
-
     procedure Update; override;
-  published
-    property ZOrder : TGreatCirclePainterZOrder read FZOrder write FZOrder default gcpzCanvas;
-    property StartLat : Double read FStart.Lat write SetStartLat;
-    property StartLon : Double read FStart.Lon write SetStartLon;
-    property DestinationLat : Double read FDestination.Lat write SetDestinationLat;
-    property DestinationLon : Double read FDestination.Lon write SetDestinationLon;
-    property GreatCirclePen : TPen read GetGreatCirclePen write SetGreatCirclePen;
-    property OrthodromePen: TPen read FOrthodromePen write SetOrthodromePen;
-    property TruncLength : Integer read FTruncLength write SetTruncLength default DefaultTruncLength;
-    property OnGetStartAndDestinationCoords : TGreatCirclePainterGetCoordsEvent read FGetStartAndDestinationCoordsEvent write FGetStartAndDestinationCoordsEvent;
-    property OnChange : TNotifyEvent read FOnChange write FOnChange;
-    property Options : TGreatCirclePainterOptions read FOptions write SetOptions;
-
+    procedure ZoomChange(AMapView: TMapView; var Handled: Boolean); override;
   public
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy;override;
+    procedure CalculateGreatCircle;
+    procedure SetStartAndDestination(const AStartLat, AStartLon, ADestinationLat, ADestinationLon : Double);
+    procedure SetStartAndDestination(const AStart, ADestination : TRealPoint);
+
     property OrthodromeDistance : Double read FOrthodromeDistance;
     property InitialBearing : Double read FInitialBearing;
     property CenterPoint : TRealPoint read FCenterPoint;
 
     property GreatCirclePointsCount : Integer read GetGreatCirclePointsCount;
     property GreatCirclePoints[AIndex : Integer] : TGreatCirclePoint read GetGreatCirclePoints;
-    procedure CalculateGreatCircle;
-    procedure SetStartAndDestination(const AStartLat, AStartLon, ADestinationLat, ADestinationLon : Double);
-    procedure SetStartAndDestination(const AStart, ADestination : TRealPoint);
-    constructor Create(AOwner: TComponent); override;
-    destructor Destroy;override;
+  published
+    property DestinationLat : Double read FDestination.Lat write SetDestinationLat;
+    property DestinationLon : Double read FDestination.Lon write SetDestinationLon;
+    property GreatCirclePen : TPen read GetGreatCirclePen write SetGreatCirclePen;
+    property Options : TGreatCirclePainterOptions read FOptions write SetOptions;
+    property OrthodromePen: TPen read FOrthodromePen write SetOrthodromePen;
+    property SegmentLength : Integer read FSegmentLength write SetSegmentLength default DefaultSegmentLength;
+    property StartLat : Double read FStart.Lat write SetStartLat;
+    property StartLon : Double read FStart.Lon write SetStartLon;
+    property ZOrder : TGreatCirclePainterZOrder read FZOrder write FZOrder default gcpzCanvas;
+    property OnChange : TNotifyEvent read FOnChange write FOnChange;
+    property OnGetStartAndDestinationCoords : TGreatCirclePainterGetCoordsEvent read FGetStartAndDestinationCoordsEvent write FGetStartAndDestinationCoordsEvent;
   end;
 
 procedure VertexOfGreatCircle(const AStartLat, AStartLon, ADestinationLat, ADestinationLon : Double;
@@ -150,13 +158,6 @@ procedure LatFromLonAtGreatCircle(const AStartLat, AStartLon, ADestinationLat, A
 
 
 implementation
-function NormalizeLon(const Lon: Double): Double;
-begin
-  if InRange(Lon, -180.0, 180.0) then
-    Result := Lon
-  else
-    Result := FMod(Lon + 540.0, 360.0) - 180.0;
-end;
 
 procedure VertexOfGreatCircle(const AStartLat, AStartLon, ADestinationLat,
   ADestinationLon: Double; out AVertexLat, AVertexLon: Double);
@@ -172,19 +173,19 @@ begin
   lStartLon := AStartLon;
   lDestinationLat := ADestinationLat;
   lDestinationLon := ADestinationLon;
-  // Problem: If the Latitude is 0.0 than the computation faild, we try than the opposite direction
+  // Problem: If the Latitude is 0.0 then the computation fails, we try then the opposite direction
   repeat
     lDestLatRad := DegToRad(lDestinationLat);
     lDestBearing := CalcBearing(lDestinationLat,lDestinationLon,lStartLat,lStartLon);
     if lDestBearing > 180.0 then
       lDestBearing := lDestBearing - 360.0;
     lDestBearingRad := DegToRad(lDestBearing);
-    // Vertex Latidtude
+    // Vertex Latitude
     // Latitude of Vertex: cos phiS = sin alpha * cos phiA
     // cos φS = sin α · cos φPoS = sin 46,87° · cos 10,6722° = 0,7172; φS = 44,1762°
     d := ArcCos(Sin(lDestBearingRad) * Cos(lDestLatRad));
     AVertexLat := RadToDeg(d);
-    // The latitude has a sign problem if the signs of DestinationLat and Bearing are differ
+    // The latitude has a sign problem if the signs of DestinationLat and Bearing are different
     if ((lDestinationLat > 0.0) and (lDestBearing < 0.0)) or
        ((lDestinationLat < 0.0) and (lDestBearing > 0.0)) then
       AVertexLat := -AVertexLat;
@@ -201,7 +202,7 @@ begin
       Break;
     end;
     if SecondLoop then Break;
-    // If lDestLatRad is 0.0, than try the opposite way
+    // If lDestLatRad is 0.0, then try the opposite way
     SecondLoop := True;
     lStartLat := ADestinationLat;
     lStartLon := ADestinationLon;
@@ -221,35 +222,6 @@ begin
 // λWP = Lon of sdearched point
   VertexOfGreatCircle(AStartLat, AStartLon, ADestinationLat, ADestinationLon,lVertexLat, lVertexLon);
   AFoundLat := RadToDeg(ArcTan(Tan(DegToRad(lVertexLat)) * Cos(DegToRad(lVertexLon-ASearchLon))));
-end;
-
-// Catches an nasty caclulation error
-function SafeArcSin(x : Double) : Double;
-var
-  d : Double;
-begin
-  d := (1.0-x)*(1.0+x);
-  if d < 0.0 then
-    d := 0.0;
-  Result := arctan2(x,sqrt(d));
-end;
-
-// Is a copy of the CalcLatLon procedure from the unit GeoMath, which fails sometimes
-// due to a problem with ArcSin
-procedure SafeCalcLatLon(const Lat1, Lon1, ADist, ABearing: Double; out Lat2,
-  Lon2: Double);
-var
-  latFrom, lonFrom, brng, aD: Double;
-begin
-  latFrom := DegToRad(Lat1);
-  lonFrom := DegToRad(Lon1);
-  brng := DegToRad(ABearing);
-  aD := ADist / EARTH_EQUATORIAL_RADIUS;
-  Lat2 := SafeArcSin(Sin(latFrom) * Cos(aD) + Cos(latFrom) * Sin(aD) * Cos(brng));
-  Lon2 := lonFrom + ArcTan2(Sin(brng) * Sin(aD) * Cos(latFrom),
-    Cos(aD) - Sin(latFrom) * Sin(Lat2));
-  Lat2 := RadToDeg(Lat2);
-  Lon2 := NormalizeLon(RadToDeg(Lon2));
 end;
 
 
@@ -280,7 +252,7 @@ end;
 
 
 { TGreatCirclePainterPlugin }
-// Default SortCompare sortes the points along the Longitude and on same
+// Default SortCompare sortes the points along the longitude and on same
 // longitudes shorter distance from start first.
 function GreatCircleLinePointsListSortCompare(Item1, Item2: Pointer): Integer;
 var
@@ -324,19 +296,21 @@ procedure TGreatCirclePainterPlugin.CalculateGreatCircle;
     // First the absolute distance
     d := CalcGeoDistance(AStartLat, AStartLon, ALat, ALon, duMeters);
     // Now calculate the point in the given distance
-    SafeCalcLatLon(AStartLat, AStartLon, d, AInitialBearing, refPt.Lat, refPt.Lon);
+    CalcLatLon(AStartLat, AStartLon, d, AInitialBearing, refPt.Lat, refPt.Lon);
     // now calculate the delta between the points
     d0 := CalcGeoDistance(refPt.Lat, refPt.Lon, ALat, ALon, duMeters);
     if Abs(d0) > 1.0 then // if not same
       d := EARTH_CIRCUMFERENCE-d; // the distance is on the other side
     Result := d;
   end;
+
   // Calculates the distance between start and the given point
   // including the direction, not the shorts way!
   function DistanceFromStart(const ALat, ALon : Double) : Double;
   begin
     Result := DistanceFromStartEx(ALat, ALon, FStart.Lat, FStart.Lon, FInitialBearing);
   end;
+
   // PointKindFromDist
   // return gcpkOrthodrome if between start and destination else gcpkStandard
   function PointKindFromDist(const ADistFromStart : Double) : TGreatCirclePointKind;
@@ -394,21 +368,21 @@ begin
          (FStart.Lon = FDestination.Lon) then Exit;
 
       lWorldSize := mvGeoMath.ZoomFactor(MapView.Zoom) * TileSize.CX;
-      lFullSpan := ((lMapViewWidth + 2*FTruncLength) >= lWorldSize);
-      // Set the ScreenArea (in Degree) from the visioble parts, include an area of TruncLen around.
+      lFullSpan := ((lMapViewWidth + 2*FSegmentLength) >= lWorldSize);
+      // Set the ScreenArea (in Degree) from the visible parts, include an area of SegmentLen around.
       // Take care to limit the area to the maximum width
       if lFullSpan then
       begin
-        lScreenArea.TopLeft := MapView.ScreenToLatLon(Point(0,0-FTruncLength));
+        lScreenArea.TopLeft := MapView.ScreenToLatLon(Point(0,0-FSegmentLength));
         lScreenArea.TopLeft.Lon := -180.0;
-        lScreenArea.BottomRight := MapView.ScreenToLatLon(Point(lMapViewWidth,lMapViewHeight+FTruncLength));
+        lScreenArea.BottomRight := MapView.ScreenToLatLon(Point(lMapViewWidth,lMapViewHeight+FSegmentLength));
         lScreenArea.BottomRight.Lon := 180.0;
         lMapViewWidth := lWorldSize;
       end
       else
       begin
-        lScreenArea.TopLeft := MapView.ScreenToLatLon(Point(0-FTruncLength,0-FTruncLength));
-        lScreenArea.BottomRight := MapView.ScreenToLatLon(Point(lMapViewWidth+FTruncLength,lMapViewHeight+FTruncLength));
+        lScreenArea.TopLeft := MapView.ScreenToLatLon(Point(0-FSegmentLength,0-FSegmentLength));
+        lScreenArea.BottomRight := MapView.ScreenToLatLon(Point(lMapViewWidth+FSegmentLength,lMapViewHeight+FSegmentLength));
       end;
       lMapCenter.InitLatLon((lScreenArea.TopLeft.Lat+lScreenArea.BottomRight.Lat) / 2.0,
                             (lScreenArea.TopLeft.Lon+lScreenArea.BottomRight.Lon) / 2.0);
@@ -419,13 +393,13 @@ begin
         d := lon1-lon0
       else  // crossing date border
         d := lon1-lon0+360.0;
-      lStepLon := d / lMapViewWidth * FTruncLength;
+      lStepLon := d / lMapViewWidth * FSegmentLength;
       lStopLon := lon0+d;
       // Now sort out two special cases vertical and horizontal
       FInitialBearing := CalcBearing(FStart.Lat, FStart.Lon, FDestination.Lat, FDestination.Lon);
       FOrthodromeDistance := CalcGeoDistance(FStart.Lat, FStart.Lon, FDestination.Lat, FDestination.Lon,duMeters);
       // Calculate CenterPoint
-      SafeCalcLatLon(FStart.Lat, FStart.Lon, FOrthodromeDistance / 2.0, FInitialBearing,
+      CalcLatLon(FStart.Lat, FStart.Lon, FOrthodromeDistance / 2.0, FInitialBearing,
                  FCenterPoint.Lat,FCenterPoint.Lon);
 
       // Special processing of all Polar-Routes.
@@ -755,18 +729,18 @@ begin
   inherited Update; // Points could be reused, no position changed
 end;
 
-procedure TGreatCirclePainterPlugin.SetTruncLength(Value: Integer);
+procedure TGreatCirclePainterPlugin.SetSegmentLength(Value: Integer);
 var
   v : Integer;
 begin
   if Value <= 0 then
     v := 1
-  else if Value > MaxTruncLength then
-    v := MaxTruncLength
+  else if Value > MaxSegmentLength then
+    v := MaxSegmentLength
   else
     v := Value;
-  if FTruncLength = v then Exit;
-  FTruncLength := v;
+  if FSegmentLength = v then Exit;
+  FSegmentLength := v;
   Update;
 end;
 
@@ -826,6 +800,7 @@ begin
 
     // No Brush, we draw only lines
     MapView.Canvas.Brush.Style:= bsClear;
+
     // Now loop through al points, but since we draw segmens, we start with the
     // second point (= index 1).
     ptGC0 := TGreatCirclePoint(FGreatCircleLinePoints.Items[0]);
@@ -888,6 +863,7 @@ begin
     end;
   end;
 end;
+
 // Nearly the same for drawing with the drawing engine on the map.
 procedure TGreatCirclePainterPlugin.PaintGreatCircleWithDrawingEngine;
 var
@@ -1115,7 +1091,7 @@ constructor TGreatCirclePainterPlugin.Create(AOwner: TComponent);
 begin
   inherited;
   FGreatCircleLinePoints := TObjectList.Create(True);
-  FTruncLength := DefaultTruncLength;
+  FSegmentLength := DefaultSegmentLength;
   FOrthodromePen := TPen.Create;
   FOrthodromePen.OnChange := @OrthodromePenChanged;
 end;
@@ -1130,5 +1106,6 @@ end;
 
 initialization
   RegisterPluginClass(TGreatCirclePainterPlugin, 'Great Circle Painter');
+
 end.
 

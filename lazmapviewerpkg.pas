@@ -15,7 +15,7 @@ uses
   mvMapViewerPathEditForm, mvMapViewerPathEditDsgForm, mvDLECache, 
   mvPluginEditors, mvClassRegistration, mvPluginCommon, mvPlugins, 
   mvspreadmarker_plugin, uInactivityAlarmTimer, mvMapGridPlugin, 
-  mvMapScalePlugin, LazarusPackageIntf;
+  mvMapScalePlugin, mvGreatCirclePainterPlugin, LazarusPackageIntf;
 
 implementation
 
