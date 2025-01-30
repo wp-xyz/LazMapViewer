@@ -592,7 +592,7 @@ begin
           if not lDateBorderOnMap then
           begin
             pt := MapView.LatLonToScreen(lScreenArea.TopLeft.Lat,-180.0);
-            if pt.X <= MapView.Engine.MapLeft then Continue;
+            if pt.X < MapView.Engine.MapLeft then Continue;
           end;
         end
         else
@@ -601,7 +601,7 @@ begin
           if not lDateBorderOnMap then
           begin
             pt := MapView.LatLonToScreen(lScreenArea.TopLeft.Lat,180.0);
-            if pt.X >= MapView.Engine.MapLeft+lWorldSize then Continue;
+            if pt.X > MapView.Engine.MapLeft+lWorldSize then Continue;
           end;
         end;
         LatFromLonAtGreatCircle(lStart.Lat, lStart.Lon, lDest.Lat, lDest.Lon,
