@@ -342,12 +342,11 @@ var
   i : Integer;
   lStart, lDest : TRealPoint;
   lWorldSize : Int64;
-  lGCP : TGreatCirclePoint;
+  lGCP0, lGCP1 : TGreatCirclePoint;
   ptKind : TGreatCirclePointKind;
   lon0, lon1 : Double;
   lLastRPt : TrealPoint;
   cnt : Integer;
-  lSuppressSort : Boolean = False;
   lFullSpan : Boolean;
   pt : TPoint;
   lDateBorderOnMap : Boolean;
@@ -513,9 +512,8 @@ begin
         // Sort all points along their distances from Start
         FGreatCircleLinePoints.Sort(@GreatCircleLinePolarPointsListSortCompare);
         // move the last point from the end to the beginning to draw a line from this pole prior to start
-        lGCP := TGreatCirclePoint(FGreatCircleLinePoints.Extract(FGreatCircleLinePoints.Items[FGreatCircleLinePoints.Count-1]));
-        FGreatCircleLinePoints.Insert(0,lGCP);
-        lSuppressSort := True; // Points have been sorted here
+        lGCP0 := TGreatCirclePoint(FGreatCircleLinePoints.Extract(FGreatCircleLinePoints.Items[FGreatCircleLinePoints.Count-1]));
+        FGreatCircleLinePoints.Insert(0,lGCP0);
         // The North-South straight line has been processed
         Exit;
       end;
@@ -610,14 +608,29 @@ begin
         ptKind := PointKindFromDist(d);
         FGreatCircleLinePoints.Add(TGreatCirclePoint.Create(rPt,d,ptKind));
       end;
-
+      // Finally the found points must be sorted, if not processed in a different way.
+      FGreatCircleLinePoints.Sort(@GreatCircleLinePointsListSortCompare);
+      // Check for duplicate items, if found remove them
+      cnt := FGreatCircleLinePoints.Count;
+      if cnt > 1 then
+      begin
+        for i := cnt-1 downto 1 do
+        begin
+          lGCP0 := TGreatCirclePoint(FGreatCircleLinePoints.Items[i]);
+          lGCP1 := TGreatCirclePoint(FGreatCircleLinePoints.Items[i-1]);
+          if (lGCP1.Distance = lGCP0.Distance) and
+             (lGCP1.FRealPoint.Lon = lGCP0.FRealPoint.Lon) and
+             (lGCP1.FRealPoint.Lat = lGCP0.FRealPoint.Lat) then
+          begin
+            FGreatCircleLinePoints.Extract(lGCP0);
+            FreeAndNil(lGCP0);
+          end;
+        end;
+      end;
     except
       // Keep silence on any computation errors
     end;
   finally
-    // Finally the found points must be sorted, if not processed in a different way.
-    if not lSuppressSort then
-      FGreatCircleLinePoints.Sort(@GreatCircleLinePointsListSortCompare);
     // Give the user a message, to update the information about the current great circle
     if Assigned(FOnChange) then
       FOnChange(Self);
