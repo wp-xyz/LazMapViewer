@@ -151,78 +151,8 @@ type
     property OnGetStartAndDestinationCoords : TGreatCirclePainterGetCoordsEvent read FGetStartAndDestinationCoordsEvent write FGetStartAndDestinationCoordsEvent;
   end;
 
-procedure VertexOfGreatCircle(const AStartLat, AStartLon, ADestinationLat, ADestinationLon : Double;
-                              out AVertexLat, AVertexLon : Double);
-procedure LatFromLonAtGreatCircle(const AStartLat, AStartLon, ADestinationLat, ADestinationLon : Double;
-                                  const ASearchLon: Double; out AFoundLat: Double);
-
 
 implementation
-
-procedure VertexOfGreatCircle(const AStartLat, AStartLon, ADestinationLat,
-  ADestinationLon: Double; out AVertexLat, AVertexLon: Double);
-var
-  lStartLat, lStartLon, lDestinationLat, lDestinationLon : Double;
-  lDestBearing, lDestBearingRad : Double;
-  d : Double;
-  lDestLatRad : Double;
-  SecondLoop : Boolean = False;
-begin
-  AVertexLon := 0.0;
-  lStartLat := AStartLat;
-  lStartLon := AStartLon;
-  lDestinationLat := ADestinationLat;
-  lDestinationLon := ADestinationLon;
-  // Problem: If the Latitude is 0.0 then the computation fails, we try then the opposite direction
-  repeat
-    lDestLatRad := DegToRad(lDestinationLat);
-    lDestBearing := CalcBearing(lDestinationLat,lDestinationLon,lStartLat,lStartLon);
-    if lDestBearing > 180.0 then
-      lDestBearing := lDestBearing - 360.0;
-    lDestBearingRad := DegToRad(lDestBearing);
-    // Vertex Latitude
-    // Latitude of Vertex: cos phiS = sin alpha * cos phiA
-    // cos φS = sin α · cos φPoS = sin 46,87° · cos 10,6722° = 0,7172; φS = 44,1762°
-    d := ArcCos(Sin(lDestBearingRad) * Cos(lDestLatRad));
-    AVertexLat := RadToDeg(d);
-    // The latitude has a sign problem if the signs of DestinationLat and Bearing are different
-    if ((lDestinationLat > 0.0) and (lDestBearing < 0.0)) or
-       ((lDestinationLat < 0.0) and (lDestBearing > 0.0)) then
-      AVertexLat := -AVertexLat;
-    // Vertex Longitude
-    // Longitude of Vertex: tan(lamda A - lambda S) = 1 / (sin phi A * tan alpha)
-    // tan (λS - λPoS) = cot α ⁄ sin φPoS =
-    // = cot 46,87° ⁄ sin 10,6722° = 0,937 ⁄ 0,185 = 5,065;
-    // ⇒ λS - λPoS = 78,83°, und daraus
-    // λS = 78,83° + (-61,53°) = 17,3°
-    if (lDestLatRad <> 0.0) and (lDestBearingRad <> 0.0) then
-    begin
-      d := RadToDeg(ArcTan(Cot(lDestBearingRad) / Sin(lDestLatRad)));
-      AVertexLon := NormalizeLon(d + lDestinationLon);
-      Break;
-    end;
-    if SecondLoop then Break;
-    // If lDestLatRad is 0.0, then try the opposite way
-    SecondLoop := True;
-    lStartLat := ADestinationLat;
-    lStartLon := ADestinationLon;
-    lDestinationLat := AStartLat;
-    lDestinationLon := AStartLon;
-  until False;
-end;
-
-procedure LatFromLonAtGreatCircle(const AStartLat, AStartLon, ADestinationLat, ADestinationLon : Double;
-                                  const ASearchLon: Double; out AFoundLat: Double);
-var
-  lVertexLat, lVertexLon : Double;
-begin
-// tan φWP = tan φS · cos(λS - λWP)
-// φS = Lat of Vertex
-// λS = Lon of Vertex
-// λWP = Lon of sdearched point
-  VertexOfGreatCircle(AStartLat, AStartLon, ADestinationLat, ADestinationLon,lVertexLat, lVertexLon);
-  AFoundLat := RadToDeg(ArcTan(Tan(DegToRad(lVertexLat)) * Cos(DegToRad(lVertexLon-ASearchLon))));
-end;
 
 
 { TGreatCirclePoint }
@@ -252,6 +182,7 @@ end;
 
 
 { TGreatCirclePainterPlugin }
+
 // Default SortCompare sortes the points along the longitude and on same
 // longitudes shorter distance from start first.
 function GreatCircleLinePointsListSortCompare(Item1, Item2: Pointer): Integer;
