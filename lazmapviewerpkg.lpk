@@ -8,7 +8,7 @@
       <Version Value="11"/>
       <SearchPaths>
         <IncludeFiles Value="source"/>
-        <OtherUnitFiles Value="source;source/addons/plugins;source/addons/plugins/spreadmarkers;source/addons/plugins/grids;source/addons/plugins/scale;source/addons/plugins/greatcircle"/>
+        <OtherUnitFiles Value="source;source/addons/plugins;source/addons/plugins/spreadmarkers;source/addons/plugins/grids;source/addons/plugins/scale;source/addons/plugins/greatcircle;source/addons/plugins/areaselection"/>
         <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
       </SearchPaths>
       <Other>
@@ -23,7 +23,7 @@
 FPC 3.2.0 or newer required."/>
     <License Value="Modified LGPL with linking exception, like FreePascal RTL/FCL and Lazarus LCL"/>
     <Version Minor="2" Release="7"/>
-    <Files Count="34">
+    <Files Count="35">
       <Item1>
         <Filename Value="source/mvcache.pas"/>
         <UnitName Value="mvCache"/>
@@ -161,6 +161,10 @@ FPC 3.2.0 or newer required."/>
         <Filename Value="source/addons/plugins/greatcircle/mvgreatcirclepainterplugin.pas"/>
         <UnitName Value="mvGreatCirclePainterPlugin"/>
       </Item34>
+      <Item35>
+        <Filename Value="source/addons/plugins/areaselection/mvareaselectionplugin.pas"/>
+        <UnitName Value="mvAreaSelectionPlugin"/>
+      </Item35>
     </Files>
     <CompatibilityMode Value="True"/>
     <RequiredPkgs Count="2">

@@ -1,5 +1,5 @@
 {
- uAreaSelectionPlugin
+ mvAreaSelectionPlugin
 
  Copyright (C) 2025 Ekkehard Domning (www.domis.de)
 
@@ -8,37 +8,43 @@
  See the file COPYING.modifiedLGPL.txt, included in the Lazarus distribution,
  for details about the license.
 
- This plugin allows the use to select an area on the map.
+ This plugin allows the user to select an area on the map.
+ 
  The Plugin can be used only on *one* MapView, so it is mandatory to assign a
  MapView to the MapView property.
+ 
  The plugin is able to deal with the Cyclic property of the MapView. This allows
- the selection of "WrapAround"-Areas, which are changing the Date-border.
- Those areas have the property that the
- BottomRight.Lon is *smaller* than the TopLeft.Lon!
+ the selection of "WrapAround"-Areas, which are changing the date border.
+ Those areas have the property that the BottomRight.Lon is *smaller* than the 
+ TopLeft.Lon!
+ 
  Example:
  The Area
    TopLeft.Lon     = 13.4 (Berlin)
    BottomRight.Lon = 0.0 (London)
- wraps around the Date-Border, while
- the Area
+ wraps around the Date-Border, while the Area
     TopLeft.Lon     = 0.0 (London)
     BottomRight.Lon = 13.4 (Berlin)
  does not!
+ 
  Two events are implemented. One is called if the selection of a new area is in
  progress, the other when the selection is finished.
+ 
  The user can change the rectangle by dragging some anchors with the mouse.
- Those anchors are the 4 lines, the 4 corners and an small area around the top line.
+ 
+ Those anchors are the 4 lines, the 4 corners and a small area around the top line.
  The method of changing is indicated by the mouse pointer.
+ 
  Assigning a new SelectedArea while changing is not supported
 }
-unit uAreaSelectionPlugin;
+unit mvAreaSelectionPlugin;
 
 {$mode ObjFPC}{$H+}
 
 interface
 
 uses
-  Classes, SysUtils, Controls, Graphics,Contnrs,
+  Classes, SysUtils, Controls, Types, Math, Graphics, Contnrs,
   mvPluginCommon, mvPlugins, mvMapViewer, mvTypes, mvGeoMath, mvDrawingEngine;
 
 type
@@ -58,6 +64,17 @@ type
     FMouseDownX, FMouseDownY : Integer;
     FMouseDeltaX, FMouseDeltaY : Integer;
   public
+    constructor Create;
+    constructor Create(const AActiveRect : TRect;
+                       const AOrgX : Integer;
+                       const AOrgY : Integer;
+                       const AZOrder : Integer = 0;
+                       const ACursor : TCursor = crSize;
+                       const ATag : Integer = 0);
+    procedure OnMouseDown(Shift: TShiftState; X, Y: Integer);
+    procedure OnMouseMove(Shift: TShiftState; X, Y: Integer);
+    procedure OnMouseUp(Shift: TShiftState; X, Y: Integer);
+
     property Tag : Integer read FTag write FTag;
     property ZOrder : Integer read FZOrder write FZOrder;
     property ActiveRect : TRect read FActiveRect write FActiveRect;
@@ -70,30 +87,19 @@ type
     property MouseDownY : Integer read FMouseDownY;
     property MouseDeltaX : Integer read FMouseDeltaX;
     property MouseDeltaY : Integer read FMouseDeltaY;
-    procedure OnMouseDown(Shift: TShiftState; X, Y: Integer);
-    procedure OnMouseMove(Shift: TShiftState; X,
-      Y: Integer);
-    procedure OnMouseUp(Shift: TShiftState; X, Y: Integer);
-    constructor Create;
-    constructor Create(const AActiveRect : TRect;
-                       const AOrgX : Integer;
-                       const AOrgY : Integer;
-                       const AZOrder : Integer = 0;
-                       const ACursor : TCursor = crSize;
-                       const ATag : Integer = 0);
-
   end;
-const
-  DefaultAreaSelectionPluginPenColor = clNavy;
-  DefaultAreaSelectionPluginPenStyle = psSolid;
-  DefaultAreaSelectionPluginPenWidth = 3;
-  DefaultAreaSelectionPluginSensitiveAreaInflation = 2; // this increases the pixels of the sensitive items
-
 
 type
   TSelectedAreaChangingEvent = procedure (Sender : TObject; ANewArea : TRealArea; var Allow : Boolean) of Object;
+
   { TAreaSelectionPlugin }
-  TAreaSelectionPlugin = class(TMvPlugin)
+  TAreaSelectionPlugin = class(TMvDrawPlugin)
+  private
+    const
+      DEFAULT_PEN_COLOR = clNavy;
+      DEFAULT_PEN_STYLE = psSolid;
+      DEFAULT_PEN_WIDTH = 3;
+      DEFAULT_SENSITIVE_AREA_INFLATION = 2; // this increases the pixels of the sensitive items
   private
     FMouseHitItems : TObjectList; // The list with the clickable items
     FMouseButton : TMouseButton;
@@ -118,47 +124,46 @@ type
     procedure SetSensitiveAreaInflation(Value : Integer);
     procedure SetSelectedArea(Value : TRealArea);
   protected
+    procedure AddSelectionArea(const ARect: TRect; const AInflate: Integer);
+    procedure AddSelectionAreaEx(const ARect: TRect; const ARectParts: array of Integer;
+      const AInflate: Integer);
+    procedure AfterPaint(AMapView: TMapView; var Handled: Boolean); override;
+    procedure MouseMove(AMapView: TMapView; AShift: TShiftState; X,Y: Integer;
+      var Handled: Boolean); override;
+    procedure MouseUp(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
+      X,Y: Integer; var Handled: Boolean); override;
+    procedure MouseDown(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
+      X,Y: Integer; var Handled: Boolean); override;
+    procedure CenterMove(AMapView: TMapView; var Handled: Boolean); override;
+    procedure ZoomChange(AMapView: TMapView; var Handled: Boolean); override;
+    procedure Resize(AMapView: TMapView; var Handled: Boolean); override;
+
     property ItemsCount : Integer read GetItemsCount;
     property Items[AIndex : Integer] : TMouseHitItem read GetItems;
     { property CurrentItem returns either the Item where the Mouse is down or the one where the mouse is hovering above }
     property CurrentItem : TMouseHitItem read GetCurrentItem;
 
-    procedure AddSelectionArea(const ARect : TRect;
-                           const AInflate : Integer);
-    procedure AddSelectionAreaEx(const ARect : TRect;
-                           const ARectParts : array of Integer;
-                           const AInflate : Integer);
-    procedure AfterPaint(AMapView: TMapView; var Handled: Boolean); override;
-    procedure MouseMove(AMapView: TMapView; AShift: TShiftState; X,Y: Integer;
-          var Handled: Boolean); override;
-    procedure MouseUp(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
-          X,Y: Integer; var Handled: Boolean); override;
-    procedure MouseDown(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
-          X,Y: Integer; var Handled: Boolean); override;
-    procedure CenterMove(AMapView: TMapView; var Handled: Boolean); override;
-    procedure ZoomChange(AMapView: TMapView; var Handled: Boolean); override;
-    procedure Resize(AMapView: TMapView; var Handled: Boolean); override;
-  published
-    property MouseButton : TMouseButton read FMouseButton write SetMouseButton;
-    property PenColor : TColor read FPenColor write SetPenColor default DefaultAreaSelectionPluginPenColor;
-    property PenWidth : Integer read FPenWidth write SetPenWidth default DefaultAreaSelectionPluginPenWidth;
-    property PenStyle : TPenStyle read FPenStyle write SetPenStyle default DefaultAreaSelectionPluginPenStyle;
-    property SensitiveAreaInflation : Integer read FAreaInflation write SetSensitiveAreaInflation default DefaultAreaSelectionPluginSensitiveAreaInflation;
-    property OnSelectedAreaChanged : TNotifyEvent read FSelectedAreaChangedEvent write FSelectedAreaChangedEvent;
-    property OnSelectedAreaChanging : TSelectedAreaChangingEvent read FSelectedAreaChangingEvent write FSelectedAreaChangingEvent;
   public
-    { property SelectedArea the selected area }
-    property SelectedArea : TRealArea read FSelectedArea write SetSelectedArea;
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy;override;
     { procedure Clear the list of all items. Usually called in MouseUp and prior the rebuilding of a new setup }
     procedure Clear;
     { procedure SetupRectShifter creates the mouse shifting items, must be called if the display changes
       needed e.g.if the size of the MapView is altered}
     procedure SetupRectShifter;
-    constructor Create(AOwner: TComponent); override;
-    destructor Destroy;override;
+
+    property SelectedArea : TRealArea read FSelectedArea write SetSelectedArea;
+  published
+    property MouseButton: TMouseButton read FMouseButton write SetMouseButton default mbLeft;
+    property SensitiveAreaInflation: Integer read FAreaInflation write SetSensitiveAreaInflation default DEFAULT_SENSITIVE_AREA_INFLATION;
+    property OnSelectedAreaChanged: TNotifyEvent read FSelectedAreaChangedEvent write FSelectedAreaChangedEvent;
+    property OnSelectedAreaChanging: TSelectedAreaChangingEvent read FSelectedAreaChangingEvent write FSelectedAreaChangingEvent;
+
+    property Pen;
   end;
 
 implementation
+
 const
   tagRectArea        = 1;
   tagRectLeft        = 2;
@@ -182,6 +187,11 @@ end;
 
 procedure RealAreaNormed(var ARealArea : TRealArea);
 begin
+  ARealArea.TopLeft.Lat := EnsureRange(ARealArea.TopLeft.Lat, -90, 90);
+  ARealArea.TopLeft.Lon := EnsureRange(ARealArea.TopLeft.Lon, -180, 180);
+  ARealArea.BottomRight.Lat := EnsureRange(ARealArea.BottomRight.Lat, -90, 90);
+  ARealArea.BottomRight.Lon := EnsureRange(ArealArea.BottomRight.Lon, -180, 180);
+  {
   if ARealArea.TopLeft.Lat > 90.0 then
     ARealArea.TopLeft.Lat := 90.0
   else if ARealArea.TopLeft.Lat < -90.0 then
@@ -198,6 +208,7 @@ begin
     ARealArea.BottomRight.Lon := -180.0
   else if ARealArea.BottomRight.Lon > 180.0 then
     ARealArea.BottomRight.Lon := 180.0;
+    }
 end;
 
 { function IsInRectangle returns true, if the passed X and Y coords are inside the rectangle
@@ -212,13 +223,12 @@ end;
 }
 function IsInRectangle(const ARect : TRect; const AX, AY : Integer; const AInflate : Integer = 0): Boolean;
 var
-  r : TRect;
+  R: TRect;
 begin
-  r := ARect;
+  R := ARect;
   if AInflate > 0 then
-    r.Inflate(AInflate,AInflate);
-  Result := (AX >= r.Left) and (AX <= r.Right) and
-            (AY >= r.Top) and (AY <= r.Bottom);
+    InflateRect(R, AInflate, AInflate);
+  Result := PtInRect(R, Point(AX, AY));
 end;
 
 { TMouseHitItem }
@@ -291,6 +301,24 @@ end;
 
 
 { TAreaSelectionPlugin }
+
+constructor TAreaSelectionPlugin.Create(AOwner: TComponent);
+begin
+  inherited;
+  FMouseHitItems := TObjectList.Create(True);
+  FSelectedArea.Init(-100,50,100,-50);
+//  FSelectedArea.Init(0,0,0,0);
+  Pen.Color := DEFAULT_PEN_COLOR;
+  Pen.Width := DEFAULT_PEN_WIDTH;
+  Pen.Style := DEFAULT_PEN_STYLE;
+  FAreaInflation := DEFAULT_SENSITIVE_AREA_INFLATION;
+end;
+
+destructor TAreaSelectionPlugin.Destroy;
+begin
+  FreeAndNil(FMouseHitItems);
+  inherited;
+end;
 
 function TAreaSelectionPlugin.GetCurrentItem: TMouseHitItem;
 var
@@ -381,7 +409,7 @@ procedure TAreaSelectionPlugin.SetSelectedArea(Value: TRealArea);
 begin
   if not FSelectedArea.Equal(Value) then
   begin
-    FSelectedArea.Init(Value.TopLeft,Value.BottomRight);
+    FSelectedArea.Init(Value.TopLeft, Value.BottomRight);
     MapView.Invalidate;
     SetupRectShifter;
   end;
@@ -396,16 +424,13 @@ procedure TAreaSelectionPlugin.AddSelectionArea(const ARect: TRect;
   const AInflate: Integer);
 begin
   AddSelectionAreaEx(ARect,
-                 [tagRectArea,tagRectLeft, tagRectTop, tagRectRight, tagRectBottom,
+                 [tagRectArea, tagRectLeft, tagRectTop, tagRectRight, tagRectBottom,
                   tagRectTopLeft, tagRectTopRight, tagRectBottomRight, tagRectBottomLeft],
                  AInflate);
 end;
 
 procedure TAreaSelectionPlugin.AddSelectionAreaEx(const ARect: TRect;
   const ARectParts: array of Integer; const AInflate: Integer);
-
-
-
 var
   lMaxExtentRect : TRect;
   lRect : TRect;
@@ -579,13 +604,14 @@ begin
 end;
 
 procedure TAreaSelectionPlugin.AfterPaint(AMapView: TMapView; var Handled: Boolean);
-procedure IncRecToMinSize(var ARect : TRect);
-begin
-  if Abs(ARect.Left-ARect.Right) < FPenWidth then
-    Inc(ARect.Right,FPenWidth);
-  if Abs(ARect.Top-ARect.Bottom) < FPenWidth then
-    Inc(ARect.Bottom,FPenWidth);
-end;
+
+  procedure IncRecToMinSize(var ARect : TRect);
+  begin
+    if Abs(ARect.Left-ARect.Right) < FPenWidth then
+      Inc(ARect.Right,FPenWidth);
+    if Abs(ARect.Top-ARect.Bottom) < FPenWidth then
+      Inc(ARect.Bottom,FPenWidth);
+  end;
 
 var
   r0 : TRect;
@@ -610,9 +636,8 @@ begin
   rectW := lRect.Right-lRect.Left;
 
   MapView.Canvas.Brush.Style := bsClear;
-  MapView.Canvas.Pen.Style := FPenStyle;
-  MapView.Canvas.Pen.Color := FPenColor;
-  MapView.Canvas.Pen.Width := FPenWidth;
+  MapView.Canvas.Pen.Assign(Pen);
+
   // Duplicate the rectangles to the dimmed doubled picture areas
   ptArr := MapView.CyclicPointsOf(topLeftPt);
   for pt in ptArr do
@@ -628,6 +653,7 @@ begin
     IncRecToMinSize(r0);
     MapView.Canvas.Rectangle(r0);
   end;
+
   // Catch the case of the missing left rectangle (draw some rectangles again)
   ptArr := MapView.CyclicPointsOf(bottomRightPt);
   for pt in ptArr do
@@ -651,7 +677,8 @@ end;
 
 procedure TAreaSelectionPlugin.MouseMove(AMapView: TMapView; AShift: TShiftState;
   X, Y: Integer; var Handled: Boolean);
-  // The following "PerformXXX" procedures, do the actial adjusting of the
+
+  // The following "PerformXXX" procedures, do the actual adjusting of the
   // side of the active rectangle.
   procedure PerformRightSide(const ANewX : Double; var ARect : TRealArea);
   begin
@@ -675,6 +702,7 @@ procedure TAreaSelectionPlugin.MouseMove(AMapView: TMapView; AShift: TShiftState
     else
       ARect.BottomRight.Lon := ANewX;
   end;
+
   procedure PerformLeftSide(const ANewX : Double; var ARect : TRealArea);
   begin
     if AMapView.Cyclic then
@@ -697,6 +725,7 @@ procedure TAreaSelectionPlugin.MouseMove(AMapView: TMapView; AShift: TShiftState
     else
       ARect.TopLeft.Lon := ANewX;
   end;
+
   procedure PerformTopSide(const ANewY : Double; var ARect : TRealArea);
   begin
     if FShifterYInverseMode then
@@ -714,6 +743,7 @@ procedure TAreaSelectionPlugin.MouseMove(AMapView: TMapView; AShift: TShiftState
     else
       ARect.TopLeft.Lat := ANewY;
   end;
+
   procedure PerformBottomSide(const ANewY : Double; var ARect : TRealArea);
   begin
     if FShifterYInverseMode then
@@ -731,6 +761,7 @@ procedure TAreaSelectionPlugin.MouseMove(AMapView: TMapView; AShift: TShiftState
     else
       ARect.BottomRight.Lat := ANewY;
   end;
+
 var
   w, h : Double;
   lx,ly: Double;
@@ -842,13 +873,14 @@ begin
     RealAreaNormed(lRect0);
     chgAllowed := True;
     if Assigned(FSelectedAreaChangingEvent) then
-      FSelectedAreaChangingEvent(Self,lRect0,chgAllowed);
+      FSelectedAreaChangingEvent(Self, lRect0, chgAllowed);
     if chgAllowed then
-      FSelectedArea.Init(lRect0.TopLeft,lRect0.BottomRight);
+      FSelectedArea.Init(lRect0.TopLeft, lRect0.BottomRight);
+    if Assigned(FSelectedAreaChangedEvent) then
+      FSelectedAreaChangedEvent(Self);
     MapView.Invalidate; // redraw the map
   end;
 end;
-
 
 procedure TAreaSelectionPlugin.MouseUp(AMapView: TMapView; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer; var Handled: Boolean);
@@ -925,6 +957,7 @@ end;
 
 procedure TAreaSelectionPlugin.Resize(AMapView: TMapView; var Handled: Boolean);
 begin
+  Unused(AMapView, Handled);
   SetupRectShifter;
 end;
 
@@ -995,24 +1028,8 @@ begin
   end;
 end;
 
-constructor TAreaSelectionPlugin.Create(AOwner: TComponent);
-begin
-  inherited;
-  FMouseHitItems := TObjectList.Create(True);
-  FSelectedArea.Init(-100,50,100,-50);
-//  FSelectedArea.Init(0,0,0,0);
-  FPenColor := DefaultAreaSelectionPluginPenColor;
-  FPenWidth := DefaultAreaSelectionPluginPenWidth;
-  FPenStyle := DefaultAreaSelectionPluginPenStyle;
-  FAreaInflation := DefaultAreaSelectionPluginSensitiveAreaInflation;
-end;
-
-destructor TAreaSelectionPlugin.Destroy;
-begin
-  FreeAndNil(FMouseHitItems);
-  inherited;
-end;
 initialization
   RegisterPluginClass(TAreaSelectionPlugin, 'Area selection');
+
 end.
 

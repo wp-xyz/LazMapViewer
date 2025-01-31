@@ -5,66 +5,73 @@ unit Main;
 interface
 
 uses
-  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ExtCtrls, StdCtrls,
-  mvMapViewer, mvPluginCommon, uAreaSelectionPlugin, mvTypes;
+  Classes, SysUtils,
+  Forms, Controls, Graphics, StdCtrls, ExtCtrls, Dialogs,
+  mvMapViewer, mvTypes, mvGeoMath, mvPluginCommon, mvAreaSelectionPlugin;
 
 type
 
-  { TForm1 }
+  { TMainForm }
 
-  TForm1 = class(TForm)
-    Label1: TLabel;
-    lblSelArea: TLabel;
-    MapView1: TMapView;
-    MvPluginManager1: TMvPluginManager;
-    Panel1: TPanel;
+  TMainForm = class(TForm)
+    lblHeader: TStaticText;
+    MapView: TMapView;
+    Memo: TMemo;
+    PluginManager: TMvPluginManager;
+    Splitter1: TSplitter;
     procedure FormCreate(Sender: TObject);
+
   private
-    FAreaSelectionPlugin : TAreaSelectionPlugin;
-    procedure OnSelectedAreaChanged(Sender : TObject);
-    procedure OnSelectedAreaChanging(Sender : TObject; ANewArea : TRealArea; var Allow : Boolean);
+    FAreaSelectionPlugin: TAreaSelectionPlugin;
+    procedure OnSelectedAreaChanged(Sender: TObject);
+    procedure OnSelectedAreaChanging(Sender: TObject; ANewArea: TRealArea; var Allow: Boolean);
 
   public
 
   end;
 
 var
-  Form1: TForm1;
+  MainForm: TMainForm;
 
 implementation
 
 {$R *.lfm}
 
-{ TForm1 }
-procedure TForm1.FormCreate(Sender: TObject);
-begin
-  MapView1.Active := true;
+{ TMainForm }
 
-  FAreaSelectionPlugin := TAreaSelectionPlugin.Create(MvPluginManager1);
-  FAreaSelectionPlugin.MapView := MapView1;
-  FAreaSelectionPlugin.OnSelectedAreaChanged:= @OnSelectedAreaChanged;
-  FAreaSelectionPlugin.OnSelectedAreaChanging:= @OnSelectedAreaChanging;
+procedure TMainForm.FormCreate(Sender: TObject);
+begin
+  MapView.Active := true;
+  FAreaSelectionPlugin := TAreaSelectionPlugin.Create(PluginManager);
+  FAreaSelectionPlugin.MapView := MapView;
+  FAreaSelectionPlugin.OnSelectedAreaChanged := @OnSelectedAreaChanged;
+  FAreaSelectionPlugin.OnSelectedAreaChanging := @OnSelectedAreaChanging;
+  lblHeader.Caption := '                            Left     Top   Right  Bottom';
 end;
 
-procedure TForm1.OnSelectedAreaChanged(Sender: TObject);
+procedure TMainForm.OnSelectedAreaChanged(Sender: TObject);
 begin
-  lblSelArea.Caption := Format('Left %1.2f, Top %1.2f, Right %1.2f, Bottom %1.2f',[
-                            FAreaSelectionPlugin.SelectedArea.TopLeft.Lon,
-                            FAreaSelectionPlugin.SelectedArea.TopLeft.Lat,
-                            FAreaSelectionPlugin.SelectedArea.BottomRight.Lon,
-                            FAreaSelectionPlugin.SelectedArea.BottomRight.Lat
-                            ]);
+  with FAreaSelectionPlugin.SelectedArea do
+   Memo.Lines.Add('[%s]  Selected: %6.1f° %6.1f° %6.1f° %6.1f°',[
+      FormatDateTime('hh:nn:ss.zzz', Now()),
+      TopLeft.Lon,
+      TopLeft.Lat,
+      BottomRight.Lon,
+      BottomRight.Lat
+    ]);
 end;
 
-procedure TForm1.OnSelectedAreaChanging(Sender: TObject; ANewArea: TRealArea;
+procedure TMainForm.OnSelectedAreaChanging(Sender: TObject; ANewArea: TRealArea;
   var Allow: Boolean);
 begin
-  lblSelArea.Caption := Format('Left %1.2f, Top %1.2f, Right %1.2f, Bottom %1.2f',[
-                            ANewArea.TopLeft.Lon,
-                            ANewArea.TopLeft.Lat,
-                            ANewArea.BottomRight.Lon,
-                            ANewArea.BottomRight.Lat
-                            ]);
+  with ANewArea do
+    Memo.Lines.Add('[%s] Selecting: %6.1f° %6.1f° %6.1f° %6.1f°',[
+      FormatDateTime('hh:nn:ss.zzz', Now()),
+      TopLeft.Lon,
+      TopLeft.Lat,
+      BottomRight.Lon,
+      BottomRight.Lat
+    ]);
 end;
 
 end.

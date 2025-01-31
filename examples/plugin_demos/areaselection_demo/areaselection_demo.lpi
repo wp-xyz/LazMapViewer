@@ -12,7 +12,6 @@
       <XPManifest>
         <DpiAware Value="True"/>
       </XPManifest>
-      <Icon Value="0"/>
     </General>
     <BuildModes>
       <Item Name="Default" Default="True"/>
@@ -40,15 +39,10 @@
       <Unit>
         <Filename Value="main.pas"/>
         <IsPartOfProject Value="True"/>
-        <ComponentName Value="Form1"/>
+        <ComponentName Value="MainForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <UnitName Value="main"/>
-      </Unit>
-      <Unit>
-        <Filename Value="uareaselectionplugin.pas"/>
-        <IsPartOfProject Value="True"/>
-        <UnitName Value="uAreaSelectionPlugin"/>
+        <UnitName Value="Main"/>
       </Unit>
     </Units>
   </ProjectOptions>

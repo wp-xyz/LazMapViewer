@@ -1,52 +1,65 @@
-object Form1: TForm1
+object MainForm: TMainForm
   Left = 324
-  Height = 323
+  Height = 497
   Top = 119
-  Width = 429
-  Caption = 'Form1'
-  ClientHeight = 323
-  ClientWidth = 429
+  Width = 579
+  Caption = 'Area Selection Plugin Demo'
+  ClientHeight = 497
+  ClientWidth = 579
+  Color = clWindow
   LCLVersion = '4.99.0.0'
   OnCreate = FormCreate
-  object MapView1: TMapView
+  object MapView: TMapView
     Left = 0
-    Height = 288
+    Height = 346
     Top = 0
-    Width = 429
+    Width = 579
     Align = alClient
     Cyclic = True
-    DownloadEngine = MapView1.BuiltInDLE
-    DrawingEngine = MapView1.BuiltInDE
+    DownloadEngine = MapView.BuiltInDLE
+    DrawingEngine = MapView.BuiltInDE
     Layers = <>
     Font.Color = clBlack
     MapProvider = 'OpenStreetMap Standard'
-    PluginManager = MvPluginManager1
+    PluginManager = PluginManager
   end
-  object Panel1: TPanel
+  object Memo: TMemo
     Left = 0
-    Height = 35
-    Top = 288
-    Width = 429
+    Height = 134
+    Top = 363
+    Width = 579
     Align = alBottom
-    ClientHeight = 35
-    ClientWidth = 429
+    BorderSpacing.InnerBorder = 2
+    Font.Height = -11
+    Font.Name = 'Liberation Mono'
+    ParentFont = False
+    ReadOnly = True
+    ScrollBars = ssAutoBoth
     TabOrder = 1
-    object lblSelArea: TLabel
-      Left = 88
-      Height = 15
-      Top = 8
-      Width = 18
-      Caption = 'n/a'
-    end
-    object Label1: TLabel
-      Left = 8
-      Height = 15
-      Top = 8
-      Width = 74
-      Caption = 'Selected Area '
-    end
   end
-  object MvPluginManager1: TMvPluginManager
+  object Splitter1: TSplitter
+    Cursor = crVSplit
+    Left = 0
+    Height = 5
+    Top = 346
+    Width = 579
+    Align = alBottom
+    ResizeAnchor = akBottom
+  end
+  object lblHeader: TStaticText
+    Left = 0
+    Height = 12
+    Top = 351
+    Width = 579
+    Align = alBottom
+    Color = clDefault
+    Font.Height = -11
+    Font.Name = 'Liberation Mono'
+    ParentFont = False
+    ParentColor = False
+    TabOrder = 3
+  end
+  object PluginManager: TMvPluginManager
     Left = 320
     Top = 24
   end
