@@ -876,8 +876,6 @@ begin
       FSelectedAreaChangingEvent(Self, lRect0, chgAllowed);
     if chgAllowed then
       FSelectedArea.Init(lRect0.TopLeft, lRect0.BottomRight);
-    if Assigned(FSelectedAreaChangedEvent) then
-      FSelectedAreaChangedEvent(Self);
     MapView.Invalidate; // redraw the map
   end;
 end;
@@ -899,6 +897,8 @@ begin
   end;
   SetupRectShifter;  // Setup the HelperClass for the current setting
   Handled := True;
+  if Assigned(FSelectedAreaChangedEvent) then
+    FSelectedAreaChangedEvent(Self);
 end;
 
 procedure TAreaSelectionPlugin.MouseDown(AMapView: TMapView;
