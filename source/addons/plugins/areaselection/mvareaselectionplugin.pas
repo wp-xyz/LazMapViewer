@@ -891,13 +891,14 @@ var
   lMouseWasDown : Boolean;
 begin
   Unused(AMapView);
-  if Button <> FMouseButton then Exit;
-  lMouseWasDown := Assigned(CurrentItem) and CurrentItem.FMouseDownFlag;
+  // Caution the order of the following statemens are crucial
+  if Button <> FMouseButton then Exit;  // Exit if not the defined button
+  lMouseWasDown := Assigned(CurrentItem) and CurrentItem.FMouseDownFlag; // Save the information if we hold the button
   FGlobalMouseDownFlag := False; // Track the global mouse button
-  SetupRectShifter;  // Setup the HelperClass for the current setting (all cases)
-  if Handled then Exit; // if already handled then exit
-  Handled := lMouseWasDown;
-  if lMouseWasDown and Assigned(FSelectedAreaChangedEvent) then
+  SetupRectShifter;  // Setup the HelperClass for the current setting
+  if Handled then Exit; // if already handled by an other plugin  then exit
+  Handled := lMouseWasDown; // set handled to true, if we holded the button
+  if lMouseWasDown and Assigned(FSelectedAreaChangedEvent) then // notify if we holded the button
     FSelectedAreaChangedEvent(Self);
 end;
 
@@ -912,10 +913,6 @@ begin
   if Button <> FMouseButton then Exit;
   FGlobalMouseDownFlag := True;
   if Handled then Exit;
-
-  if Assigned(CurrentItem) and
-     CurrentItem.FMouseDownFlag then Exit;
-//  if OtherPluginMouseDown then Exit;
 
   // Forward the MouseDown-Event to all Items
   for i := 0 to ItemsCount-1 do
