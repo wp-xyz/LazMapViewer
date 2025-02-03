@@ -107,6 +107,7 @@ type
     FShifterYInverseMode : Boolean;
     FSelectedArea : TRealArea;
     FLastMouseMoveHandled : Boolean;
+    FGlobalMouseDownFlag : Boolean;
     FPenColor : TColor;
     FPenStyle : TPenStyle;
     FPenWidth : Integer;
@@ -123,7 +124,6 @@ type
     procedure SetPenStyle(Value : TPenStyle);
     procedure SetSensitiveAreaInflation(Value : Integer);
     procedure SetSelectedArea(Value : TRealArea);
-    function OtherPluginMouseDown : Boolean;
   protected
     procedure AddSelectionArea(const ARect: TRect; const AInflate: Integer);
     procedure AddSelectionAreaEx(const ARect: TRect; const ARectParts: array of Integer;
@@ -413,27 +413,6 @@ begin
     if not Assigned(MapView) then Exit;
     MapView.Invalidate;
     SetupRectShifter;
-  end;
-end;
-
-function TAreaSelectionPlugin.OtherPluginMouseDown: Boolean;
-var
-  otherItem : TMvCustomPlugin;
-  cnt : Integer;
-  i : Integer;
-begin
-  Result := False;
-  cnt := PluginManager.Count;
-  for i := 0 to cnt-1 do
-  begin
-    if PluginManager.Items[i] = Self then Continue;
-    otherItem := PluginManager.Items[i];
-    if otherItem is TAreaSelectionPlugin then
-    begin
-      Result := Assigned(TAreaSelectionPlugin(otherItem).CurrentItem) and
-                         TAreaSelectionPlugin(otherItem).CurrentItem.MouseDownFlag;
-      if Result then Exit;
-    end;
   end;
 end;
 
@@ -791,12 +770,15 @@ var
   lHitItem : TMouseHitItem;
   ptR : TRealPoint;
   chgAllowed : Boolean;
-var
   i : Integer;
   lItem : TMouseHitItem;
 begin
   if Handled then Exit;
-  if OtherPluginMouseDown then Exit;
+  // Check if the GlobalMouseDown Flag is down, but the current item not.
+  // This means, that some other plugin catched the MouseDown, but no this one
+  if FGlobalMouseDownFlag and
+     Assigned(CurrentItem) and
+     (not CurrentItem.FMouseDownFlag) then Exit;
   for i := 0 to ItemsCount-1 do
   begin
     lItem := TMouseHitItem(FMouseHitItems[i]);
@@ -905,16 +887,17 @@ end;
 
 procedure TAreaSelectionPlugin.MouseUp(AMapView: TMapView; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer; var Handled: Boolean);
+var
+  lMouseWasDown : Boolean;
 begin
   Unused(AMapView);
-
-  if Handled then Exit;
   if Button <> FMouseButton then Exit;
-  if OtherPluginMouseDown then Exit;
-
-  SetupRectShifter;  // Setup the HelperClass for the current setting
-  Handled := True;
-  if Assigned(FSelectedAreaChangedEvent) then
+  lMouseWasDown := Assigned(CurrentItem) and CurrentItem.FMouseDownFlag;
+  FGlobalMouseDownFlag := False; // Track the global mouse button
+  SetupRectShifter;  // Setup the HelperClass for the current setting (all cases)
+  if Handled then Exit; // if already handled then exit
+  Handled := lMouseWasDown;
+  if lMouseWasDown and Assigned(FSelectedAreaChangedEvent) then
     FSelectedAreaChangedEvent(Self);
 end;
 
@@ -926,10 +909,13 @@ var
   lItem, lCurrItem : TMouseHitItem;
 begin
   Unused(AMapView);
-
-  if Handled then Exit;
   if Button <> FMouseButton then Exit;
-  if OtherPluginMouseDown then Exit;
+  FGlobalMouseDownFlag := True;
+  if Handled then Exit;
+
+  if Assigned(CurrentItem) and
+     CurrentItem.FMouseDownFlag then Exit;
+//  if OtherPluginMouseDown then Exit;
 
   // Forward the MouseDown-Event to all Items
   for i := 0 to ItemsCount-1 do
