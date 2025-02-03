@@ -123,6 +123,7 @@ type
     procedure SetPenStyle(Value : TPenStyle);
     procedure SetSensitiveAreaInflation(Value : Integer);
     procedure SetSelectedArea(Value : TRealArea);
+    function OtherPluginMouseDown : Boolean;
   protected
     procedure AddSelectionArea(const ARect: TRect; const AInflate: Integer);
     procedure AddSelectionAreaEx(const ARect: TRect; const ARectParts: array of Integer;
@@ -151,7 +152,6 @@ type
     { procedure SetupRectShifter creates the mouse shifting items, must be called if the display changes
       needed e.g.if the size of the MapView is altered}
     procedure SetupRectShifter;
-
     property SelectedArea : TRealArea read FSelectedArea write SetSelectedArea;
   published
     property MouseButton: TMouseButton read FMouseButton write SetMouseButton default mbLeft;
@@ -410,8 +410,30 @@ begin
   if not FSelectedArea.Equal(Value) then
   begin
     FSelectedArea.Init(Value.TopLeft, Value.BottomRight);
+    if not Assigned(MapView) then Exit;
     MapView.Invalidate;
     SetupRectShifter;
+  end;
+end;
+
+function TAreaSelectionPlugin.OtherPluginMouseDown: Boolean;
+var
+  otherItem : TMvCustomPlugin;
+  cnt : Integer;
+  i : Integer;
+begin
+  Result := False;
+  cnt := PluginManager.Count;
+  for i := 0 to cnt-1 do
+  begin
+    if PluginManager.Items[i] = Self then Continue;
+    otherItem := PluginManager.Items[i];
+    if otherItem is TAreaSelectionPlugin then
+    begin
+      Result := Assigned(TAreaSelectionPlugin(otherItem).CurrentItem) and
+                         TAreaSelectionPlugin(otherItem).CurrentItem.MouseDownFlag;
+      if Result then Exit;
+    end;
   end;
 end;
 
@@ -774,6 +796,7 @@ var
   lItem : TMouseHitItem;
 begin
   if Handled then Exit;
+  if OtherPluginMouseDown then Exit;
   for i := 0 to ItemsCount-1 do
   begin
     lItem := TMouseHitItem(FMouseHitItems[i]);
@@ -882,19 +905,13 @@ end;
 
 procedure TAreaSelectionPlugin.MouseUp(AMapView: TMapView; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer; var Handled: Boolean);
-var
-  i : Integer;
-  lItem : TMouseHitItem;
 begin
   Unused(AMapView);
 
   if Handled then Exit;
   if Button <> FMouseButton then Exit;
-  for i := 0 to ItemsCount-1 do
-  begin
-    lItem := TMouseHitItem(FMouseHitItems[i]);
-    lItem.OnMouseUp(Shift,X,Y);
-  end;
+  if OtherPluginMouseDown then Exit;
+
   SetupRectShifter;  // Setup the HelperClass for the current setting
   Handled := True;
   if Assigned(FSelectedAreaChangedEvent) then
@@ -912,6 +929,8 @@ begin
 
   if Handled then Exit;
   if Button <> FMouseButton then Exit;
+  if OtherPluginMouseDown then Exit;
+
   // Forward the MouseDown-Event to all Items
   for i := 0 to ItemsCount-1 do
   begin
