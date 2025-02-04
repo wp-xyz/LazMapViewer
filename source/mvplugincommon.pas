@@ -246,12 +246,12 @@ type
   private
     FPluginList: TMvPluginList;
     FMapList: TFPList;
-    FMouseDownButtons : array[TMouseButton] of Boolean;
+    FMouseButtonDown: array[TMouseButton] of Boolean;
     function GetCount: Integer;
     function GetItems(AIndex: Integer): TMvCustomPlugin;
     function GetMapViewCount: Integer;
     function GetMapViews(AIndex: Integer): TMapView;
-    function GetMouseDownButtons(AIndex : TMouseButton) : Boolean;
+    function GetMouseButtonDown(AIndex: TMouseButton): Boolean;
   protected
     procedure AddMapView(AMapView: TMapView); override;
     function HandlePlugin(APlugin: TMvCustomPlugin; AMapView: TMapView): Boolean;
@@ -298,7 +298,7 @@ type
     property Items[AIndex: Integer]: TMvCustomPlugin read GetItems; default;
     property MapViews[AIndex: Integer]: TMapView read GetMapViews;
     property MapViewCount: Integer read GetMapViewCount;
-    property MouseDownButtons[AIndex : TMouseButton] : Boolean read GetMouseDownButtons;
+    property MouseButtonDown[AIndex: TMouseButton]: Boolean read GetMouseButtonDown;
   published
     property PluginList: TMvPluginList read FPluginList;
   end;
@@ -1177,9 +1177,9 @@ begin
   Result := TMapView(FMapList[AIndex]);
 end;
 
-function TMvPluginManager.GetMouseDownButtons(AIndex: TMouseButton): Boolean;
+function TMvPluginManager.GetMouseButtonDown(AIndex: TMouseButton): Boolean;
 begin
-  Result := FMouseDownButtons[AIndex];
+  Result := FMouseButtonDown[AIndex];
 end;
 
 function TMvPluginManager.GPSItemsModified(AMapView: TMapView;
@@ -1217,7 +1217,7 @@ var
   i: Integer;
   plugin: TMvCustomPlugin;
 begin
-  FMouseDownButtons[AButton] := True;
+  FMouseButtonDown[AButton] := True;
   Result := false;
   for i := FPluginList.Count-1 downto 0 do
   begin
@@ -1276,8 +1276,8 @@ var
   i: Integer;
   plugin: TMvCustomPlugin;
 begin
-  FMouseDownButtons[AButton] := False;
   Result := false;
+  FMouseButtonDown[AButton] := false;
   for i := FPluginList.Count-1 downto 0 do
   begin
     plugin := Items[i];
