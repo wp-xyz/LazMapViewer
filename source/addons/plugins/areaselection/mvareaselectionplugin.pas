@@ -107,7 +107,6 @@ type
     FShifterYInverseMode : Boolean;
     FSelectedArea : TRealArea;
     FLastMouseMoveHandled : Boolean;
-    FGlobalMouseDownFlag : Boolean;
     FPenColor : TColor;
     FPenStyle : TPenStyle;
     FPenWidth : Integer;
@@ -775,8 +774,8 @@ var
 begin
   if Handled then Exit;
   // Check if the GlobalMouseDown Flag is down, but the current item not.
-  // This means, that some other plugin catched the MouseDown, but no this one
-  if FGlobalMouseDownFlag and
+  // This means, that some other plugin catched the MouseDown, but not this one
+  if PluginManager.MouseDownButtons[FMouseButton] and
      Assigned(CurrentItem) and
      (not CurrentItem.FMouseDownFlag) then Exit;
   for i := 0 to ItemsCount-1 do
@@ -894,7 +893,6 @@ begin
   // Caution the order of the following statemens are crucial
   if Button <> FMouseButton then Exit;  // Exit if not the defined button
   lMouseWasDown := Assigned(CurrentItem) and CurrentItem.FMouseDownFlag; // Save the information if we hold the button
-  FGlobalMouseDownFlag := False; // Track the global mouse button
   SetupRectShifter;  // Setup the HelperClass for the current setting
   if Handled then Exit; // if already handled by an other plugin  then exit
   Handled := lMouseWasDown; // set handled to true, if we holded the button
@@ -911,7 +909,6 @@ var
 begin
   Unused(AMapView);
   if Button <> FMouseButton then Exit;
-  FGlobalMouseDownFlag := True;
   if Handled then Exit;
 
   // Forward the MouseDown-Event to all Items

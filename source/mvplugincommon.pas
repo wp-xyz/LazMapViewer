@@ -246,10 +246,12 @@ type
   private
     FPluginList: TMvPluginList;
     FMapList: TFPList;
+    FMouseDownButtons : array[TMouseButton] of Boolean;
     function GetCount: Integer;
     function GetItems(AIndex: Integer): TMvCustomPlugin;
     function GetMapViewCount: Integer;
     function GetMapViews(AIndex: Integer): TMapView;
+    function GetMouseDownButtons(AIndex : TMouseButton) : Boolean;
   protected
     procedure AddMapView(AMapView: TMapView); override;
     function HandlePlugin(APlugin: TMvCustomPlugin; AMapView: TMapView): Boolean;
@@ -285,7 +287,6 @@ type
     function Resize(AMapView: TMapView): Boolean; override;
     function ZoomChange(AMapView: TMapView): Boolean; override;
     function ZoomChanging(AMapView: TMapView; NewZoom: Integer; var Allow: Boolean): Boolean; override;
-
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -297,6 +298,7 @@ type
     property Items[AIndex: Integer]: TMvCustomPlugin read GetItems; default;
     property MapViews[AIndex: Integer]: TMapView read GetMapViews;
     property MapViewCount: Integer read GetMapViewCount;
+    property MouseDownButtons[AIndex : TMouseButton] : Boolean read GetMouseDownButtons;
   published
     property PluginList: TMvPluginList read FPluginList;
   end;
@@ -1175,6 +1177,11 @@ begin
   Result := TMapView(FMapList[AIndex]);
 end;
 
+function TMvPluginManager.GetMouseDownButtons(AIndex: TMouseButton): Boolean;
+begin
+  Result := FMouseDownButtons[AIndex];
+end;
+
 function TMvPluginManager.GPSItemsModified(AMapView: TMapView;
   ModifiedList: TGPSObjectList; ActualObjs: TGPSObjList; Adding: Boolean): Boolean;
 var
@@ -1210,6 +1217,7 @@ var
   i: Integer;
   plugin: TMvCustomPlugin;
 begin
+  FMouseDownButtons[AButton] := True;
   Result := false;
   for i := FPluginList.Count-1 downto 0 do
   begin
@@ -1268,6 +1276,7 @@ var
   i: Integer;
   plugin: TMvCustomPlugin;
 begin
+  FMouseDownButtons[AButton] := False;
   Result := false;
   for i := FPluginList.Count-1 downto 0 do
   begin
