@@ -52,7 +52,7 @@ end;
 procedure TMainForm.OnSelectedAreaChanged(Sender: TObject);
 begin
   with FAreaSelectionPlugin.SelectedArea do
-   Memo.Lines.Add('[%s]  Selected: %6.1f° %6.1f° %6.1f° %6.1f°',[
+    Memo.Lines.Add('[%s]  Selected: %6.1f° %6.1f° %6.1f° %6.1f°',[
       FormatDateTime('hh:nn:ss.zzz', Now()),
       TopLeft.Lon,
       TopLeft.Lat,

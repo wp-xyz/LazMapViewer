@@ -775,7 +775,7 @@ begin
   if Handled then Exit;
   // Check if the GlobalMouseDown Flag is down, but the current item not.
   // This means, that some other plugin catched the MouseDown, but not this one
-  if PluginManager.MouseDownButtons[FMouseButton] and
+  if PluginManager.MouseButtonDown[FMouseButton] and
      Assigned(CurrentItem) and
      (not CurrentItem.FMouseDownFlag) then Exit;
   for i := 0 to ItemsCount-1 do
