@@ -216,28 +216,60 @@ type
     procedure FixOrder(APrevIndex, AIndex: Integer); override;
   end;
 
-  { TMapCenter }
+  { TMapLatLonElement }
 
-  TMapCenter = class(TPersistent)
+  TMapLatLonElement = class(TPersistent)
+  private
+    FView: TMapView;
+    function GetLatLonInDMS: Boolean;
+  protected
+    function GetOwner: TPersistent; override;
+    procedure Update; virtual;
+  public
+    constructor Create(AView: TMapView);
+    property LatLonInDMS: Boolean read GetLatLonInDMS;
+  end;
+
+  { TMapRealPoint }
+
+  TMapRealPoint = class(TMapLatLonElement)
   private
     FLatitude: Double;
     FLongitude: Double;
-    FView: TMapView;
-    function GetLatLonInDMS: Boolean;
     function GetRealPt: TRealPoint;
     procedure SetLatitude(AValue: Double);
     procedure SetLongitude(AValue: Double);
     procedure SetRealPt(AValue: TRealPoint);
-    procedure SetViewCenter;
-  protected
-    function GetOwner: TPersistent; override;
   public
-    constructor Create(AView: TMapView);
-    property LatLonInDMS: Boolean read GetLatLonInDMS;
     property RealPt: TRealPoint read GetRealPt write SetRealPt;
   published
     property Longitude: Double read FLongitude write SetLongitude;
     property Latitude: Double read FLatitude write SetLatitude;
+  end;
+
+  { TMapRealArea }
+
+  TMapRealArea = class(TMapLatLonElement)
+  private
+    FArea: TRealArea;
+    function GetCoord(AIndex: Integer): Double;
+    procedure SetCoord(AIndex: Integer; AValue: Double);
+    procedure SetArea(AValue: TRealArea);
+  public
+    property Area: TRealArea read FArea write SetArea;
+  published
+    property East: Double index 2 read GetCoord write SetCoord;
+    property North: Double index 1 read GetCoord write SetCoord;
+    property South: Double index 3 read GetCoord write SetCoord;
+    property West: Double index 0 read GetCoord write SetCoord;
+  end;
+
+
+  { TMapCenter }
+
+  TMapCenter = class(TMapRealPoint)
+  protected
+    procedure Update; override;
   end;
 
   { TMapPoint }
@@ -1835,57 +1867,118 @@ begin
   end;
 end;
 
-{ TMapCenter }
 
-procedure TMapCenter.SetLongitude(AValue: Double);
+{ TMapLatLonElement }
+
+constructor TMapLatLonElement.Create(AView: TMapView);
 begin
-  if FLongitude = AValue then Exit;
-  FLongitude := AValue;
-  SetViewCenter;
+  FView := AView;
 end;
 
-procedure TMapCenter.SetLatitude(AValue: Double);
-begin
-  if FLatitude = AValue then Exit;
-  FLatitude := AValue;
-  SetViewCenter;
-end;
-
-procedure TMapCenter.SetRealPt(AValue: TRealPoint);
-begin
-  if (FLatitude = AValue.Lat) and (FLongitude = AValue.Lon) then Exit;
-  FLatitude := AValue.Lat;
-  FLongitude := AValue.Lon;
-  SetViewCenter;
-end;
-
-function TMapCenter.GetLatLonInDMS: Boolean;
+function TMapLatLonElement.GetLatLonInDMS: Boolean;
 begin
   Result := Assigned(FView) and (mvoLatLonInDMS in FView.Options);
 end;
 
-function TMapCenter.GetRealPt: TRealPoint;
+function TMapLatLonElement.GetOwner: TPersistent;
+begin
+  Result := FView;
+end;
+
+procedure TMapLatLonElement.Update;
+begin
+end;
+
+
+{ TMapRealPoint}
+
+function TMapRealPoint.GetRealPt: TRealPoint;
 begin
   Result.Lon := FLongitude;
   Result.Lat := FLatitude;
 end;
 
-procedure TMapCenter.SetViewCenter;
+procedure TMapRealPoint.SetLatitude(AValue: Double);
+begin
+  if FLatitude = AValue then Exit;
+  if (AValue < -90) or (AValue > 90) then
+    raise EMapViewerLatLonException.Create('Latitudes allowed only between +/-90°.');
+  FLatitude := AValue;
+  Update;
+end;
+
+procedure TMapRealPoint.SetLongitude(AValue: Double);
+begin
+  if FLongitude = AValue then Exit;
+  if (AValue <-180) or (AValue > 180) then
+    raise EMapViewerLatLonException.Create('Longitudes allowed only between +/-180°');
+  FLongitude := AValue;
+  Update;
+end;
+
+procedure TMapRealPoint.SetRealPt(AValue: TRealPoint);
+begin
+  if (FLatitude = AValue.Lat) and (FLongitude = AValue.Lon) then Exit;
+  if (AValue.Lat < -90) or (AValue.Lat > 90) then
+    raise EMapViewerLatLonException.Create('Latitudes allowed only between +/-90°.');
+  if (AValue.Lon <-180) or (AValue.Lon > 180) then
+    raise EMapViewerLatLonException.Create('Longitudes allowed only between +/-180°');
+  FLatitude := AValue.Lat;
+  FLongitude := AValue.Lon;
+  Update;
+end;
+
+
+{ TMapRealArea }
+
+function TMapRealArea.GetCoord(AIndex: Integer): Double;
+begin
+  case AIndex of
+    0: Result := FArea.TopLeft.Lon;
+    1: Result := FArea.TopLeft.Lat;
+    2: Result := FArea.BottomRight.Lon;
+    3: Result := FArea.BottomRight.Lat;
+  end;
+end;
+
+procedure TMapRealArea.SetArea(AValue: TRealArea);
+begin
+  if FArea.Equal(AValue) then
+    exit;
+  if not AValue.LatInRange then
+    raise EMapViewerLatLonException.Create('Latitudes allowed only between +/-90°.');
+  if not AValue.LonInRange then
+    raise EMapViewerLatLonException.Create('Longitudes allowed only between +/-180°');
+  FArea := AValue;
+  Update;
+end;
+
+procedure TMapRealArea.SetCoord(AIndex: Integer; AValue: Double);
+begin
+  if GetCoord(AIndex) = AValue then Exit;
+  if (AIndex in [0, 2]) and not Math.InRange(AValue, -180.0, +180.0) then
+    raise EMapViewerLatLonException.Create('Longitudes allowed only between +/-180°.');
+  if (AIndex in [1, 3]) and not Math.InRange(AValue, -90.0, +90.0) then
+    raise EMapViewerLatLonException.Create('Latitudes allowed only between +/-90°.');
+
+  case AIndex of
+    0: FArea.TopLeft.Lon := AValue;
+    1: FArea.TopLeft.Lat := AValue;
+    2: FArea.BottomRight.Lon := AValue;
+    3: FArea.BottomRight.Lat := AValue;
+  end;
+  Update;
+end;
+
+
+{ TMapCenter }
+
+procedure TMapCenter.Update;
 var
   R: TRealPoint;
 begin
   R.InitLatLon(FLatitude, FLongitude);
   FView.SetCenter(R);
-end;
-
-function TMapCenter.GetOwner: TPersistent;
-begin
-  Result := FView;
-end;
-
-constructor TMapCenter.Create(AView: TMapView);
-begin
-  FView := AView;
 end;
 
 { TMapLayer }

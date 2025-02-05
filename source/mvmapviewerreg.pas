@@ -47,13 +47,13 @@ begin
     TMapPoint, 'Elevation', TPointElevationPropertyEditor);
 
   RegisterPropertyEditor(TypeInfo(Double),
-    TMapPoint,'Latitude', TLatLonDMSPropertyEditor);
+    TMapPoint,'Latitude', TLatDMSPropertyEditor);
   RegisterPropertyEditor(TypeInfo(Double),
-    TMapPoint,'Longitude', TLatLonDMSPropertyEditor);
+    TMapPoint,'Longitude', TLonDMSPropertyEditor);
   RegisterPropertyEditor(TypeInfo(Double),
-    TMapCenter,'Latitude', TLatLonDMSPropertyEditor);
+    TMapCenter,'Latitude', TLatDMSPropertyEditor);
   RegisterPropertyEditor(TypeInfo(Double),
-    TMapCenter,'Longitude', TLatLonDMSPropertyEditor);
+    TMapCenter,'Longitude', TLonDMSPropertyEditor);
 
   RegisterComponentEditor(TMvPluginManager, TMvPluginManagerComponentEditor);
   RegisterPropertyEditor(TypeInfo(TMvPluginList),

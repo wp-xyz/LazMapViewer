@@ -95,9 +95,29 @@ type
   TLatLonDMSPropertyEditor = class(TFloatPropertyEditor)
   private
     function UseDMS: Boolean;
+  protected
+    procedure EnsureRange(var AValue: Double); virtual;
+    procedure GetRange(out AMin, AMax: Double); virtual; abstract;
+  public
+    procedure SetValue(const NewValue: AnsiString); override;
+  end;
+
+  { TLatDMSPropertyEditor }
+
+  TLatDMSPropertyEditor = class(TLatLonDMSPropertyEditor)
+  protected
+    procedure GetRange(out AMin, AMax: Double); override;
   public
     function GetValue: string; override;
-    procedure SetValue(const NewValue: AnsiString); override;
+  end;
+
+  { TLonDMSPropertyEditor }
+
+  TLonDMSPropertyEditor = class(TLatLonDMSPropertyEditor)
+  protected
+    procedure GetRange(out AMin, AMax: Double); override;
+  public
+    function GetValue: string; override;
   end;
 
 implementation
@@ -289,6 +309,34 @@ end;
 
 { TLatLonDMSPropertyEditor }
 
+procedure TLatLonDMSPropertyEditor.EnsureRange(var AValue: Double);
+var
+  min, max: Double;
+begin
+  GetRange(min, max);
+  if AValue < min then
+    AValue := min
+  else if AValue > max then
+    AValue := max;
+end;
+
+procedure TLatLonDMSPropertyEditor.SetValue(const NewValue: AnsiString);
+var
+  Deg: Double;
+  FS: TFormatSettings;
+begin
+  if not (UseDMS and TryStrDMSToDeg(NewValue, Deg)) then
+  begin
+    FS := DefaultFormatSettings;
+    FS.DecimalSeparator := '.'; //after all, this is Pascal, so we expect a period
+    if not TryStrToFloat(NewValue, Deg, FS) then
+      //if this failed, assume the user entered DS from his current locale
+      Deg := StrToFloat(NewValue, DefaultFormatSettings);
+  end;
+  EnsureRange(Deg);
+  SetFloatValue(Deg);
+end;
+
 function TLatLonDMSPropertyEditor.UseDMS: Boolean;
 var
   Inst: TPersistent;
@@ -298,22 +346,37 @@ begin
     or (Inst is TMapCenter) and TMapCenter(Inst).LatLonInDMS;
 end;
 
-function TLatLonDMSPropertyEditor.GetValue: string;
+
+{ TLatDMSPropertyEditor }
+
+procedure TLatDMSPropertyEditor.GetRange(out AMin, AMax: Double);
 begin
-  if not UseDMS
-    then Result := inherited GetValue
-    else if StartsText('Lat', GetName)
-      then Result := LatToStr(GetFloatValue, True)
-      else Result := LonToStr(GetFloatValue, True);
+  AMin := -90.0;
+  AMax := +90.0;
 end;
 
-procedure TLatLonDMSPropertyEditor.SetValue(const NewValue: AnsiString);
-var
-  Deg: Double;
+function TLatDMSPropertyEditor.GetValue: string;
 begin
-  if UseDMS and TryStrDMSToDeg(NewValue, Deg)
-    then SetFloatValue(Deg)
-    else inherited SetValue(NewValue);
+  if not UseDMS then
+    Result := inherited GetValue
+  else
+    Result := LatToStr(GetFloatValue, True);
+end;
+
+{ TLonDMSPropertyEditor }
+
+procedure TLonDMSPropertyEditor.GetRange(out AMin, AMax: Double);
+begin
+  AMin := -180.0;
+  AMax := +180.0;
+end;
+
+function TLonDMSPropertyEditor.GetValue: string;
+begin
+  if not UseDMS then
+    Result := inherited GetValue
+  else
+    Result := LonToStr(GetFloatValue, True);
 end;
 
 { TPointDateTimePropertyEditor }

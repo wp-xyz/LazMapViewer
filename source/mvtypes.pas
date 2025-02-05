@@ -26,6 +26,7 @@ var
 
 Type
   EMapViewerException = class(Exception);
+  EMapViewerLatLonException = class(EMapViewerException);
 
   { TArea }
   TArea = record
@@ -46,6 +47,7 @@ Type
       procedure Init(ALon, ALat: Double); deprecated 'Use InitXY or InitLatLon';
       procedure InitXY(ALon, ALat: Double);
       procedure InitLatLon(ALat, ALon: Double);
+      function InRange: Boolean;
       property LonRad: Extended read GetLonRad write SetLonRad;
       property LatRad: Extended read GetLatRad write SetLatRad;
   end;
@@ -64,6 +66,8 @@ Type
     function Equal(Area: TRealArea): Boolean;
     function Intersection(const Area: TRealArea): TRealArea;
     function Intersects(const Area: TRealArea): boolean;
+    function LatInRange: Boolean;
+    function LonInRange: Boolean;
     procedure MakeAreaPoint(var APoint: TRealPoint);
     function Union(const Area: TRealArea): TRealArea;
   end;
@@ -298,6 +302,11 @@ begin
   Lon := ALon;
 end;
 
+function TRealPoint.InRange: Boolean;
+begin
+  Result := Math.InRange(Lat, -90.0, +90.0) and Math.InRange(Lon, -180.0, +180.0);
+end;
+
 function TRealPoint.GetLonRad: Extended;
 begin
   Result := DegToRad(Self.Lon);
@@ -343,6 +352,18 @@ procedure TRealArea.Init(ATopLeft, ABottomRight: TRealPoint);
 begin
   TopLeft := ATopLeft;
   BottomRight := ABottomRight;
+end;
+
+function TRealArea.LatInRange: Boolean;
+begin
+  Result := Math.InRange(TopLeft.Lat, -90, +90.0) and
+            Math.InRange(BottomRight.Lat, -90.0, +90.0);
+end;
+
+function TRealArea.LonInRange: Boolean;
+begin
+  Result := Math.InRange(TopLeft.Lon, -180, +180.0) and
+            Math.InRange(BottomRight.Lon, -180.0, +180.0);
 end;
 
 { Checks whether the given point is inside the area (including borders). }
