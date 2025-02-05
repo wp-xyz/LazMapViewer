@@ -91,7 +91,8 @@ type
 
 type
   TSelectedAreaChangingEvent = procedure (Sender : TObject; ANewArea : TRealArea; var Allow : Boolean) of Object;
-
+  TAreaSelectionCaptionPosition = (ascpLeftTop, ascpCenterTop, ascpRightTop, ascpCenter, ascpLeftBottom,
+                                   ascpCenterBottom, ascpRightBottom);
   { TAreaSelectionPlugin }
   TAreaSelectionPlugin = class(TMvDrawPlugin)
   private
@@ -107,21 +108,26 @@ type
     FShifterYInverseMode : Boolean;
     FSelectedArea : TRealArea;
     FLastMouseMoveHandled : Boolean;
-    FPenColor : TColor;
-    FPenStyle : TPenStyle;
-    FPenWidth : Integer;
     FAreaInflation : Integer;
     FMouseMapCoords : TRealPoint;
     FSelectedAreaChangedEvent : TNotifyEvent;
     FSelectedAreaChangingEvent : TSelectedAreaChangingEvent;
+    FCaption : String;
+    FCaptionPosition : TAreaSelectionCaptionPosition;
     function GetCurrentItem : TMouseHitItem;
     function GetItemsCount: Integer;
     function GetItems(AIndex : Integer) : TMouseHitItem;
+    procedure SetWest(Value: Double);
+    function GetWest : Double;
+    procedure SetNorth(Value : Double);
+    function GetNorth : Double;
     procedure SetEast(AValue: Double);
+    function GetEast : Double;
+    procedure SetSouth(Value : Double);
+    function GetSouth : Double;
+    procedure SetCaption(Value : String);
+    procedure SetCaptionPosition(Value : TAreaSelectionCaptionPosition);
     procedure SetMouseButton(AValue: TMouseButton);
-    procedure SetPenColor(Value : TColor);
-    procedure SetPenWidth(Value : Integer);
-    procedure SetPenStyle(Value : TPenStyle);
     procedure SetSensitiveAreaInflation(Value : Integer);
     procedure SetSelectedArea(Value : TRealArea);
   protected
@@ -143,13 +149,6 @@ type
     property Items[AIndex : Integer] : TMouseHitItem read GetItems;
     { property CurrentItem returns either the Item where the Mouse is down or the one where the mouse is hovering above }
     property CurrentItem : TMouseHitItem read GetCurrentItem;
-    function GetWest : Double;
-    procedure SetWest(Value: Double);
-    function GetNorth : Double;
-    procedure SetNorth(Value : Double);
-    function GetEast : Double;
-    procedure SetSouth(Value : Double);
-    function GetSouth : Double;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy;override;
@@ -168,6 +167,8 @@ type
     property North : Double read GetNorth write SetNorth;
     property East : Double read GetEast write SetEast;
     property South : Double read GetSouth write SetSouth;
+    property Caption : String read FCaption write SetCaption;
+    property CaptionPosition : TAreaSelectionCaptionPosition read FCaptionPosition write SetCaptionPosition;
     property Pen;
   end;
 
@@ -368,45 +369,85 @@ begin
   Result := TMouseHitItem(FMouseHitItems[AIndex]);
 end;
 
+procedure TAreaSelectionPlugin.SetWest(Value: Double);
+begin
+  if FSelectedArea.TopLeft.Lon <> Value then
+  begin
+    FSelectedArea.TopLeft.Lon := Value;
+    Update;
+  end;
+end;
+function TAreaSelectionPlugin.GetWest: Double;
+begin
+  Result := FSelectedArea.TopLeft.Lon;
+end;
+
+
+function TAreaSelectionPlugin.GetNorth: Double;
+begin
+  Result := FSelectedArea.TopLeft.Lat;
+end;
+
+procedure TAreaSelectionPlugin.SetNorth(Value: Double);
+begin
+  if FSelectedArea.TopLeft.Lat <> Value then
+  begin
+    FSelectedArea.TopLeft.Lat := Value;
+    Update;
+  end;
+end;
+
+function TAreaSelectionPlugin.GetEast: Double;
+begin
+  Result := FSelectedArea.BottomRight.Lon;
+end;
+
 procedure TAreaSelectionPlugin.SetEast(AValue: Double);
 begin
-  FSelectedArea.BottomRight.Lon := AValue;
+  if FSelectedArea.BottomRight.Lon <> AValue then
+  begin
+    FSelectedArea.BottomRight.Lon := AValue;
+    Update;
+  end;
+end;
+
+procedure TAreaSelectionPlugin.SetSouth(Value: Double);
+begin
+  if FSelectedArea.BottomRight.Lat <> Value then
+  begin
+    FSelectedArea.BottomRight.Lat := Value;
+    Update;
+  end;
+end;
+
+function TAreaSelectionPlugin.GetSouth: Double;
+begin
+  Result := FSelectedArea.BottomRight.Lat;
+end;
+
+procedure TAreaSelectionPlugin.SetCaption(Value: String);
+begin
+  if FCaption <> Value then
+  begin
+    FCaption := Value;
+    Update;
+  end;
+end;
+
+procedure TAreaSelectionPlugin.SetCaptionPosition(
+  Value: TAreaSelectionCaptionPosition);
+begin
+  if FCaptionPosition <> Value then
+  begin
+    FCaptionPosition := Value;
+    Update;
+  end;
 end;
 
 procedure TAreaSelectionPlugin.SetMouseButton(AValue: TMouseButton);
 begin
   if FMouseButton=AValue then Exit;
   FMouseButton:=AValue;
-end;
-
-procedure TAreaSelectionPlugin.SetPenColor(Value: TColor);
-begin
-  if FPenColor <> Value then
-  begin
-    FPenColor := Value;
-    if Assigned(MapView) then
-      MapView.Invalidate;
-  end;
-end;
-
-procedure TAreaSelectionPlugin.SetPenWidth(Value: Integer);
-begin
-  if FPenWidth <> Value then
-  begin
-    FPenWidth := Value;
-    if Assigned(MapView) then
-      MapView.Invalidate;
-  end;
-end;
-
-procedure TAreaSelectionPlugin.SetPenStyle(Value: TPenStyle);
-begin
-  if FPenStyle <> Value then
-  begin
-    FPenStyle := Value;
-    if Assigned(MapView) then
-      MapView.Invalidate;
-  end;
 end;
 
 procedure TAreaSelectionPlugin.SetSensitiveAreaInflation(Value: Integer);
@@ -622,16 +663,10 @@ procedure TAreaSelectionPlugin.AfterPaint(AMapView: TMapView; var Handled: Boole
 
   procedure DrawRectangle(ARect : TRect);
   begin
-{
-    if ARect.Left = ARect.Right then
-      Inc(ARect.Right);
-    if ARect.Top = ARect.Bottom then
-      Inc(ARect.Bottom);
-}
-    if Abs(ARect.Left-ARect.Right) < FPenWidth then
-      Inc(ARect.Right,FPenWidth);
-    if Abs(ARect.Top-ARect.Bottom) < FPenWidth then
-      Inc(ARect.Bottom,FPenWidth);
+    if Abs(ARect.Left-ARect.Right) < Pen.Width then
+      Inc(ARect.Right,Pen.Width);
+    if Abs(ARect.Top-ARect.Bottom) < Pen.Width then
+      Inc(ARect.Bottom,Pen.Width);
 
     if ARect.Top > 0 then
       MapView.Canvas.Line(ARect.Left,ARect.Top,ARect.Right,ARect.Top);
@@ -643,6 +678,47 @@ procedure TAreaSelectionPlugin.AfterPaint(AMapView: TMapView; var Handled: Boole
       MapView.Canvas.Line(ARect.Right,ARect.Top,ARect.Right,ARect.Bottom);
   end;
 
+  procedure PaintCaption(ARect : TRect);
+  var
+    oldFont : TFont;
+    sz : TSize;
+    dx,dy : Integer;
+    w, h : Integer;
+    pw : Integer;
+  begin
+    pw := Pen.Width;
+    oldFont := TFont.Create;
+    try
+      oldFont.Assign(MapView.Font);
+      MapView.Font.Assign(Font);
+      sz := MapView.Canvas.TextExtent(FCaption);
+      w := ARect.Right-ARect.Left;
+      h := ARect.Bottom-ARect.Top;
+
+      // Calculate left/top corner of total text
+      dx := ARect.Left;
+      case FCaptionPosition of
+        ascpLeftTop, ascpLeftBottom :
+          dx := dx + pw;
+        ascpCenterTop, ascpCenter, ascpCenterBottom :
+          dx := dx + (w - sz.cx) div 2;
+        ascpRightTop, ascpRightBottom:
+          dx := dx + w - sz.cx;
+      end;
+      dy := ARect.Top;
+      case FCaptionPosition of
+        ascpLeftTop, ascpCenterTop, ascpRightTop :;
+        ascpCenter :
+          dy := dy + (h - sz.cy) div 2;
+        ascpLeftBottom, ascpCenterBottom, ascpRightBottom:
+          dy := dy + h - sz.cy;
+      end;
+      AMapView.Canvas.TextOut(dx,dy,FCaption)
+    finally
+      oldFont.Free;
+    end;
+  end;
+
 var
   r0 : TRect;
   mapw : Int64;
@@ -651,6 +727,8 @@ var
   lRect : TRect;
   ptArr : TPointArray;
   pt : TPoint;
+  sl : TStringList;
+  s : String;
 begin
   Unused(AMapView, Handled);
 
@@ -668,26 +746,49 @@ begin
   MapView.Canvas.Brush.Style := bsClear;
   MapView.Canvas.Pen.Assign(Pen);
 
-  // Duplicate the rectangles to the dimmed doubled picture areas
-  ptArr := MapView.CyclicPointsOf(topLeftPt);
-  for pt in ptArr do
-  begin
-    r0.Left := pt.X;
-    r0.Top := lRect.Top;
-    r0.Right := pt.X+rectW;
-    r0.Bottom := lRect.Bottom;
-    DrawRectangle(r0);
-  end;
+  sl := TStringList.Create;
+  try
+    sl.Sorted := True;
+    sl.Duplicates := dupIgnore;
 
-  // Catch the case of the missing left rectangle (draw some rectangles again)
-  ptArr := MapView.CyclicPointsOf(bottomRightPt);
-  for pt in ptArr do
-  begin
-    r0.Left := pt.X-rectW;
-    r0.Top := lRect.Top;
-    r0.Right := pt.X;
-    r0.Bottom := lRect.Bottom;
-    DrawRectangle(r0);
+    // Paint rectangle and caption, in the cyclic world multiple times
+    ptArr := MapView.CyclicPointsOf(topLeftPt);
+    for pt in ptArr do
+    begin
+      r0.Left := pt.X;
+      // Avoid painting duplicate rectangles and captions
+      s := IntToStr(r0.Left);
+      if sl.IndexOf(s) >= 0 then Continue;
+      sl.Add(s);
+
+      r0.Top := lRect.Top;
+      r0.Right := pt.X+rectW;
+      r0.Bottom := lRect.Bottom;
+      DrawRectangle(r0);
+      if Length(FCaption) > 0 then
+        PaintCaption(r0);
+    end;
+
+    // Catch the case of the missing left rectangle and caption,
+    // but ignore the rectangle and captions already painted
+    ptArr := MapView.CyclicPointsOf(bottomRightPt);
+    for pt in ptArr do
+    begin
+      r0.Left := pt.X-rectW;
+      // Avoid painting duplicate rectangles and captions
+      s := IntToStr(r0.Left);
+      if sl.IndexOf(s) >= 0 then Continue;
+      sl.Add(s);
+
+      r0.Top := lRect.Top;
+      r0.Right := pt.X;
+      r0.Bottom := lRect.Bottom;
+      DrawRectangle(r0);
+      if Length(FCaption) > 0 then
+        PaintCaption(r0);
+    end;
+  finally
+    sl.Free;
   end;
 end;
 
@@ -974,41 +1075,6 @@ procedure TAreaSelectionPlugin.Resize(AMapView: TMapView; var Handled: Boolean);
 begin
   Unused(AMapView, Handled);
   SetupRectShifter;
-end;
-
-function TAreaSelectionPlugin.GetWest: Double;
-begin
-  Result := FSelectedArea.TopLeft.Lon;
-end;
-
-procedure TAreaSelectionPlugin.SetWest(Value: Double);
-begin
-  FSelectedArea.TopLeft.Lon := Value;
-end;
-
-function TAreaSelectionPlugin.GetNorth: Double;
-begin
-  Result := FSelectedArea.TopLeft.Lat;
-end;
-
-procedure TAreaSelectionPlugin.SetNorth(Value: Double);
-begin
-  FSelectedArea.TopLeft.Lat := Value;
-end;
-
-function TAreaSelectionPlugin.GetEast: Double;
-begin
-  Result := FSelectedArea.BottomRight.Lon;
-end;
-
-procedure TAreaSelectionPlugin.SetSouth(Value: Double);
-begin
-  FSelectedArea.BottomRight.Lat := Value;
-end;
-
-function TAreaSelectionPlugin.GetSouth: Double;
-begin
-  Result := FSelectedArea.BottomRight.Lat;
 end;
 
 { SetupRectShifter will fill the Helper Class for the mouse movement with the
