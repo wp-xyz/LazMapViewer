@@ -117,6 +117,7 @@ type
     function GetCurrentItem : TMouseHitItem;
     function GetItemsCount: Integer;
     function GetItems(AIndex : Integer) : TMouseHitItem;
+    procedure SetEast(AValue: Double);
     procedure SetMouseButton(AValue: TMouseButton);
     procedure SetPenColor(Value : TColor);
     procedure SetPenWidth(Value : Integer);
@@ -142,7 +143,13 @@ type
     property Items[AIndex : Integer] : TMouseHitItem read GetItems;
     { property CurrentItem returns either the Item where the Mouse is down or the one where the mouse is hovering above }
     property CurrentItem : TMouseHitItem read GetCurrentItem;
-
+    function GetWest : Double;
+    procedure SetWest(Value: Double);
+    function GetNorth : Double;
+    procedure SetNorth(Value : Double);
+    function GetEast : Double;
+    procedure SetSouth(Value : Double);
+    function GetSouth : Double;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy;override;
@@ -157,7 +164,10 @@ type
     property SensitiveAreaInflation: Integer read FAreaInflation write SetSensitiveAreaInflation default DEFAULT_SENSITIVE_AREA_INFLATION;
     property OnSelectedAreaChanged: TNotifyEvent read FSelectedAreaChangedEvent write FSelectedAreaChangedEvent;
     property OnSelectedAreaChanging: TSelectedAreaChangingEvent read FSelectedAreaChangingEvent write FSelectedAreaChangingEvent;
-
+    property West : Double read GetWest write SetWest;
+    property North : Double read GetNorth write SetNorth;
+    property East : Double read GetEast write SetEast;
+    property South : Double read GetSouth write SetSouth;
     property Pen;
   end;
 
@@ -356,6 +366,11 @@ end;
 function TAreaSelectionPlugin.GetItems(AIndex: Integer): TMouseHitItem;
 begin
   Result := TMouseHitItem(FMouseHitItems[AIndex]);
+end;
+
+procedure TAreaSelectionPlugin.SetEast(AValue: Double);
+begin
+  FSelectedArea.BottomRight.Lon := AValue;
 end;
 
 procedure TAreaSelectionPlugin.SetMouseButton(AValue: TMouseButton);
@@ -605,12 +620,27 @@ end;
 
 procedure TAreaSelectionPlugin.AfterPaint(AMapView: TMapView; var Handled: Boolean);
 
-  procedure IncRecToMinSize(var ARect : TRect);
+  procedure DrawRectangle(ARect : TRect);
   begin
+{
+    if ARect.Left = ARect.Right then
+      Inc(ARect.Right);
+    if ARect.Top = ARect.Bottom then
+      Inc(ARect.Bottom);
+}
     if Abs(ARect.Left-ARect.Right) < FPenWidth then
       Inc(ARect.Right,FPenWidth);
     if Abs(ARect.Top-ARect.Bottom) < FPenWidth then
       Inc(ARect.Bottom,FPenWidth);
+
+    if ARect.Top > 0 then
+      MapView.Canvas.Line(ARect.Left,ARect.Top,ARect.Right,ARect.Top);
+    if ARect.Bottom < MapView.Height then
+      MapView.Canvas.Line(ARect.Left,ARect.Bottom,ARect.Right,ARect.Bottom);
+    if ARect.Left > 0 then
+      MapView.Canvas.Line(ARect.Left,ARect.Top,ARect.Left,ARect.Bottom);
+    if ARect.Right < MapView.Width then
+      MapView.Canvas.Line(ARect.Right,ARect.Top,ARect.Right,ARect.Bottom);
   end;
 
 var
@@ -645,13 +675,8 @@ begin
     r0.Left := pt.X;
     r0.Top := lRect.Top;
     r0.Right := pt.X+rectW;
-    if r0.Right > MapView.Width+FPenWidth then
-      r0.Right := MapView.Width+FPenWidth;
     r0.Bottom := lRect.Bottom;
-    if r0.Bottom > MapView.Height+FPenWidth then
-      r0.Bottom := MapView.Height+FPenWidth;
-    IncRecToMinSize(r0);
-    MapView.Canvas.Rectangle(r0);
+    DrawRectangle(r0);
   end;
 
   // Catch the case of the missing left rectangle (draw some rectangles again)
@@ -659,19 +684,10 @@ begin
   for pt in ptArr do
   begin
     r0.Left := pt.X-rectW;
-    if r0.Left < -FPenWidth then
-      r0.Left := -FPenWidth;
     r0.Top := lRect.Top;
-    if r0.Top < -FPenWidth then
-      r0.Top := -FPenWidth;
     r0.Right := pt.X;
     r0.Bottom := lRect.Bottom;
-    if r0.Left = r0.Right then
-      Inc(r0.Right);
-    if r0.Top = r0.Bottom then
-      Inc(r0.Bottom);
-    IncRecToMinSize(r0);
-    MapView.Canvas.Rectangle(r0);
+    DrawRectangle(r0);
   end;
 end;
 
@@ -958,6 +974,41 @@ procedure TAreaSelectionPlugin.Resize(AMapView: TMapView; var Handled: Boolean);
 begin
   Unused(AMapView, Handled);
   SetupRectShifter;
+end;
+
+function TAreaSelectionPlugin.GetWest: Double;
+begin
+  Result := FSelectedArea.TopLeft.Lon;
+end;
+
+procedure TAreaSelectionPlugin.SetWest(Value: Double);
+begin
+  FSelectedArea.TopLeft.Lon := Value;
+end;
+
+function TAreaSelectionPlugin.GetNorth: Double;
+begin
+  Result := FSelectedArea.TopLeft.Lat;
+end;
+
+procedure TAreaSelectionPlugin.SetNorth(Value: Double);
+begin
+  FSelectedArea.TopLeft.Lat := Value;
+end;
+
+function TAreaSelectionPlugin.GetEast: Double;
+begin
+  Result := FSelectedArea.BottomRight.Lon;
+end;
+
+procedure TAreaSelectionPlugin.SetSouth(Value: Double);
+begin
+  FSelectedArea.BottomRight.Lat := Value;
+end;
+
+function TAreaSelectionPlugin.GetSouth: Double;
+begin
+  Result := FSelectedArea.BottomRight.Lat;
 end;
 
 { SetupRectShifter will fill the Helper Class for the mouse movement with the
