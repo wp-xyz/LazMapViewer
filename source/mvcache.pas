@@ -61,7 +61,6 @@ Type
      function GetCacheMemMaxItemCountDefault: Integer;
    protected
      procedure AddItem(const Item: TPictureCacheItem; const AIDString: String);
-//     procedure ClearCache;
      procedure DeleteItem(const AItemIndex : Integer);
      function DiskCached(const aFileName: String): Boolean;
      function GetFileName(MapProvider: TMapProvider; const TileId: TTileId): String;
