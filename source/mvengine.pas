@@ -155,6 +155,7 @@ type
         GetXStr: TGetValStr = nil; GetYStr: TGetValStr = nil;
         GetZStr: TGetValStr = nil): TMapProvider;
       procedure CancelCurrentDrawing;
+      procedure ClearCache;
       procedure ClearMapProviders;
       function CrossesDateline: Boolean;
       procedure GetMapProviders(AList: TStrings);
@@ -416,6 +417,11 @@ var
 begin
   Jobs := Queue.CancelAllJob(self);
   Queue.WaitForTerminate(Jobs);
+end;
+
+procedure TMapViewerEngine.ClearCache;
+begin
+  Cache.ClearCache;
 end;
 
 procedure TMapViewerEngine.ClearMapProviders;

@@ -221,13 +221,15 @@ type
   TMapLatLonElement = class(TPersistent)
   private
     FView: TMapView;
+    FOnChange: TNotifyEvent;
     function GetLatLonInDMS: Boolean;
   protected
-    function GetOwner: TPersistent; override;
+//    function GetOwner: TPersistent; override;
     procedure Update; virtual;
   public
-    constructor Create(AView: TMapView);
+    constructor Create(AOwner: TComponent);
     property LatLonInDMS: Boolean read GetLatLonInDMS;
+    property OnChange: TNotifyEvent read FOnChange write FOnChange;
   end;
 
   { TMapRealPoint }
@@ -1870,23 +1872,25 @@ end;
 
 { TMapLatLonElement }
 
-constructor TMapLatLonElement.Create(AView: TMapView);
+constructor TMapLatLonElement.Create(AOwner: TComponent);
 begin
-  FView := AView;
+  if AOwner is TMapView then
+    FView := TMapView(AOwner);
 end;
 
 function TMapLatLonElement.GetLatLonInDMS: Boolean;
 begin
   Result := Assigned(FView) and (mvoLatLonInDMS in FView.Options);
 end;
-
+                (*
 function TMapLatLonElement.GetOwner: TPersistent;
 begin
   Result := FView;
-end;
+end;              *)
 
 procedure TMapLatLonElement.Update;
 begin
+  if Assigned(FOnChange) then FOnChange(self);
 end;
 
 
@@ -1977,8 +1981,11 @@ procedure TMapCenter.Update;
 var
   R: TRealPoint;
 begin
-  R.InitLatLon(FLatitude, FLongitude);
-  FView.SetCenter(R);
+  if Assigned(FView) then
+  begin
+    R.InitLatLon(FLatitude, FLongitude);
+    FView.SetCenter(R);
+  end;
 end;
 
 { TMapLayer }
