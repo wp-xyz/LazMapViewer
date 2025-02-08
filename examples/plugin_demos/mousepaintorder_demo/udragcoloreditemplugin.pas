@@ -135,7 +135,7 @@ begin
     MapView.Invalidate; // init the new painting
   end
   else if (not Handled) and
-          (not PluginManager.MouseButtonDown[mbRight]) then
+          (PluginManager.MouseButtonDown[MapView] = []) then
   begin // the mouse is not down (any other operation) and the moving is not consumed
     if IsAtMousePosition(X,Y) then
     begin // inside the rectangle

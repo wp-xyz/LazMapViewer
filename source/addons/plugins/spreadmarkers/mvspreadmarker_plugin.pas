@@ -39,7 +39,6 @@ type
   PSpreadMarkerData = ^TSpreadMarkerData;
   TSpreadMarkerData = record
     FLastMouseX, FLastMouseY : Integer;
-//    FMouseButtonIsDown : Boolean;
     FSpreadModeActive : Boolean;
     FSpreadMarkerArr : TSpreadMarkerArr;
   end;
@@ -139,12 +138,8 @@ type
     procedure SetLinePenWidth(Value : Integer);
 
   protected
-//    procedure MouseDown(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
-//      X, Y: Integer; var Handled: Boolean); override;
     procedure MouseMove(AMapView: TMapView; {%H-}AShift: TShiftState; X,Y: Integer;
       var {%H-}Handled: Boolean); override;
-//    procedure MouseUp(AMapView: TMapView; Button: TMouseButton; Shift: TShiftState;
-//      X, Y: Integer; var Handled: Boolean); override;
     procedure ZoomChange(AMapView: TMapView; var {%H-}Handled: Boolean); override;
     procedure AfterPaint(AMapView: TMapView; var Handled: Boolean); override;
     procedure AfterDrawObjects(AMapView: TMapView; var {%H-}Handled: Boolean); override;
@@ -375,11 +370,20 @@ procedure TSpreadMarkerPlugin.OnMouseInactive(Sender: TObject);
 var
   sd : TSpreadMarkerPluginData;
   pd : PSpreadMarkerData;
+  mb : TMouseButtons;
 begin
   if not (Sender is TInactivityAlarmTimer) then Exit;
   sd := GetPluginDataFromTimer(TInactivityAlarmTimer(Sender));
   if not Assigned(sd) then Exit;
   pd := PSpreadMarkerData(sd.GetDataPtr);
+
+  mb := PluginManager.MouseButtonDown[sd.MapView];
+  if mb <> [] then
+  begin
+    TInactivityAlarmTimer(Sender).QuitInactivityAlarm;
+    Exit;
+  end;
+
   if pd^.FSpreadModeActive then
     sd.LeaveSpreadMode
   else
@@ -401,38 +405,6 @@ begin
   FActiveLayersEx[8] := (smaLayer8 in Value);
   FActiveLayersEx[9] := (smaLayer9 in Value);
 end;
-{
-procedure TSpreadMarkerPlugin.MouseDown(AMapView: TMapView;
-  Button: TMouseButton; Shift: TShiftState; X, Y: Integer; var Handled: Boolean
-  );
-var
-  sd : TSpreadMarkerPluginData;
-  pd : PSpreadMarkerData;
-  ld : TSpreadMarkerData;
-begin
-  sd := TSpreadMarkerPluginData(MapViewDataItem[AMapView]);
-  if not Assigned(sd) then
-  begin
-    FillChar(ld,SizeOf(ld),0);
-    SetMapViewData(AMapView,ld,SizeOf(ld));
-  end;
-  sd := TSpreadMarkerPluginData(MapViewDataItem[AMapView]);
-  if not Assigned(sd) then Exit;
-
-  pd := PSpreadMarkerData(sd.GetDataPtr);
-  // Store the last Mouse position for later use
-  pd^.FLastMouseX := X;
-  pd^.FLastMouseY := Y;
-(*
-  if pd^.FSpreadModeActive then
-  begin
-    sd.LeaveSpreadMode;
-    pd^.FMouseButtonIsDown := True;
-    Handled := True;
-  end;
-*)
-end;
-}
 procedure TSpreadMarkerPlugin.MouseMove(AMapView: TMapView;
   AShift: TShiftState; X, Y: Integer; var Handled: Boolean);
 var
@@ -454,36 +426,10 @@ begin
     sd.FMouseInactivity.AliveTrigger // Trigger
   else
     sd.FMouseInactivity.Active := True; // Activate (will set the timer)
-//  else if (not pd^.FMouseButtonIsDown) then
-//    sd.FMouseInactivity.Active := True; // Activate (will set the timer)
   // Store the last Mouse position for later use
   pd^.FLastMouseX := X;
   pd^.FLastMouseY := Y;
 end;
-{
-procedure TSpreadMarkerPlugin.MouseUp(AMapView: TMapView; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer; var Handled: Boolean);
-var
-  sd : TSpreadMarkerPluginData;
-  pd : PSpreadMarkerData;
-  ld : TSpreadMarkerData;
-begin
-  sd := TSpreadMarkerPluginData(MapViewDataItem[AMapView]);
-  if not Assigned(sd) then
-  begin
-    FillChar(ld,SizeOf(ld),0);
-    SetMapViewData(AMapView,ld,SizeOf(ld));
-  end;
-  sd := TSpreadMarkerPluginData(MapViewDataItem[AMapView]);
-  if not Assigned(sd) then Exit;
-  pd := PSpreadMarkerData(sd.GetDataPtr);
-  // Store the last Mouse position for later use
-  pd^.FLastMouseX := X;
-  pd^.FLastMouseY := Y;
-//  pd^.FMouseButtonIsDown := False;
-  Handled := True;
-end;
-}
 procedure TSpreadMarkerPlugin.ZoomChange(AMapView: TMapView;
   var Handled: Boolean);
 var

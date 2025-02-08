@@ -240,18 +240,26 @@ type
   end;
 
 
+  TMouseButtons = set of TMouseButton;
+  TMapViewMouseButtons = record
+    MapView : TMapView;
+    MouseButtons : TMouseButtons;
+  end;
+
   { TMvPluginManager }
 
   TMvPluginManager = class(TMvCustomPluginManager)
   private
     FPluginList: TMvPluginList;
     FMapList: TFPList;
-    FMouseButtonDown: array[TMouseButton] of Boolean;
+    FMouseButtonDown: array of TMapViewMouseButtons;
     function GetCount: Integer;
     function GetItems(AIndex: Integer): TMvCustomPlugin;
     function GetMapViewCount: Integer;
     function GetMapViews(AIndex: Integer): TMapView;
-    function GetMouseButtonDown(AIndex: TMouseButton): Boolean;
+    function GetMouseButtonDown(AMapView: TMapView): TMouseButtons;
+    procedure AddUpdateMouseButton(const AMapView: TMapView; const AMouseButton: TMouseButton; const APressed : Boolean);
+    procedure RemoveMouseButton(const AMapView: TMapView);
   protected
     procedure AddMapView(AMapView: TMapView); override;
     function HandlePlugin(APlugin: TMvCustomPlugin; AMapView: TMapView): Boolean;
@@ -298,7 +306,7 @@ type
     property Items[AIndex: Integer]: TMvCustomPlugin read GetItems; default;
     property MapViews[AIndex: Integer]: TMapView read GetMapViews;
     property MapViewCount: Integer read GetMapViewCount;
-    property MouseButtonDown[AIndex: TMouseButton]: Boolean read GetMouseButtonDown;
+    property MouseButtonDown[AMapView: TMapView]: TMouseButtons read GetMouseButtonDown;
   published
     property PluginList: TMvPluginList read FPluginList;
   end;
@@ -1177,9 +1185,60 @@ begin
   Result := TMapView(FMapList[AIndex]);
 end;
 
-function TMvPluginManager.GetMouseButtonDown(AIndex: TMouseButton): Boolean;
+function TMvPluginManager.GetMouseButtonDown(AMapView: TMapView): TMouseButtons;
+var
+  i : Integer;
 begin
-  Result := FMouseButtonDown[AIndex];
+  Result := [];
+  for i := 0 to High(FMouseButtonDown) do
+    if FMouseButtonDown[i].MapView = AMapView then
+      Exit(FMouseButtonDown[i].MouseButtons)
+end;
+
+procedure TMvPluginManager.AddUpdateMouseButton(const AMapView: TMapView;
+  const AMouseButton: TMouseButton; const APressed: Boolean);
+var
+  i : Integer;
+  ndx : Integer;
+begin
+  ndx := -1;
+  for i := 0 to High(FMouseButtonDown) do
+  begin
+    if FMouseButtonDown[i].MapView = AMapView then
+    begin
+      ndx := i;
+      Break;
+    end;
+  end;
+  if ndx < 0 then
+  begin
+    ndx := Length(FMouseButtonDown);
+    SetLength(FMouseButtonDown,ndx+1);
+    FMouseButtonDown[ndx].MapView := AMapView;
+  end;
+  if APressed then
+    Include(FMouseButtonDown[ndx].MouseButtons, AMouseButton)
+  else
+    Exclude(FMouseButtonDown[ndx].MouseButtons, AMouseButton);
+end;
+procedure TMvPluginManager.RemoveMouseButton(const AMapView: TMapView);
+var
+  i : Integer;
+  ndx : Integer;
+begin
+  ndx := -1;
+  for i := 0 to High(FMouseButtonDown) do
+  begin
+    if FMouseButtonDown[i].MapView = AMapView then
+    begin
+      ndx := i;
+      Break;
+    end;
+  end;
+  if ndx < 0 then Exit;
+  for i := ndx+1 to High(FMouseButtonDown) do
+    FMouseButtonDown[i-1] := FMouseButtonDown[i];
+  SetLength(FMouseButtonDown,High(FMouseButtonDown));
 end;
 
 function TMvPluginManager.GPSItemsModified(AMapView: TMapView;
@@ -1217,7 +1276,7 @@ var
   i: Integer;
   plugin: TMvCustomPlugin;
 begin
-  FMouseButtonDown[AButton] := True;
+  AddUpdateMouseButton(AMapView,AButton,True);
   Result := false;
   for i := FPluginList.Count-1 downto 0 do
   begin
@@ -1277,7 +1336,7 @@ var
   plugin: TMvCustomPlugin;
 begin
   Result := false;
-  FMouseButtonDown[AButton] := false;
+  AddUpdateMouseButton(AMapView,AButton,False);
   for i := FPluginList.Count-1 downto 0 do
   begin
     plugin := Items[i];
@@ -1328,6 +1387,7 @@ end;
 
 procedure TMvPluginManager.RemoveMapView(AMapView: TMapView);
 begin
+  RemoveMouseButton(AMapView);
   FMapList.Remove(AMapView);
 end;
 
