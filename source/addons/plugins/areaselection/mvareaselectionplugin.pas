@@ -110,6 +110,8 @@ type
     FLastMouseMoveHandled : Boolean;
     FAreaInflation : Integer;
     FMouseMapCoords : TRealPoint;
+    FSelectedAreaHitEvent : TNotifyEvent;
+    FSelectedAreaBeginChangeEvent : TNotifyEvent;
     FSelectedAreaChangedEvent : TNotifyEvent;
     FSelectedAreaChangingEvent : TSelectedAreaChangingEvent;
     FCaption : String;
@@ -155,6 +157,8 @@ type
     property MouseButton: TMouseButton read FMouseButton write SetMouseButton default mbLeft;
     property SelectedArea: TMapRealArea read FSelectedArea write SetSelectedArea;
     property SensitiveAreaInflation: Integer read FAreaInflation write SetSensitiveAreaInflation default DEFAULT_SENSITIVE_AREA_INFLATION;
+    property OnSelectedAreaHit : TNotifyEvent read FSelectedAreaHitEvent write FSelectedAreaHitEvent;
+    property OnSelectedAreaBeginChange : TNotifyEvent read FSelectedAreaBeginChangeEvent write FSelectedAreaBeginChangeEvent;
     property OnSelectedAreaChanged: TNotifyEvent read FSelectedAreaChangedEvent write FSelectedAreaChangedEvent;
     property OnSelectedAreaChanging: TSelectedAreaChangingEvent read FSelectedAreaChangingEvent write FSelectedAreaChangingEvent;
     property BackgroundColor default clNone;
@@ -843,6 +847,11 @@ begin
   // if we not had set him.
   if (not Handled) and FLastMouseMoveHandled then
     MapView.Cursor := crDefault;  // no hit, but hit previously, set the default cursor
+  // fire the hit event if not hit before and not mouse down
+  if Handled and (not FLastMouseMoveHandled) and
+    (PluginManager.MouseButtonDown[AMapView] = []) and
+    (not lHitItem.MouseDownFlag) and Assigned(FSelectedAreaHitEvent) then
+    FSelectedAreaHitEvent(Self);
   FLastMouseMoveHandled := Handled;
   if not Handled then Exit;
   // lHitItem will be assigned if one item is selected.
@@ -986,6 +995,9 @@ begin
       if lItem.MouseDownFlag then
         lItem.FMouseDownFlag := False;
     end;
+
+    if Assigned(FSelectedAreaBeginChangeEvent) then
+      FSelectedAreaBeginChangeEvent(Self);
   end;
   // Reset the inverters
   FShifterXInverseMode := False;
