@@ -2706,14 +2706,16 @@ procedure TMapView.SetPluginManager(AValue: TMvCustomPluginManager);
 begin
   if FPluginManager = AValue then
     exit;
+
   if FPluginManager <> nil then
+  begin
     RemoveFreeNotification(FPluginManager);
-  if AValue = nil then
-    FPlugInManager.RemoveMapView(Self);
+    if AValue = nil then
+      FPlugInManager.RemoveMapView(Self);
+  end;
 
   FPluginManager := AValue;
 
-  //FActiveToolIndex := -1;
   if FPluginManager <> nil then
   begin
     FreeNotification(FPluginManager);
