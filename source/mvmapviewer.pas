@@ -1882,12 +1882,12 @@ function TMapLatLonElement.GetLatLonInDMS: Boolean;
 begin
   Result := Assigned(FView) and (mvoLatLonInDMS in FView.Options);
 end;
-                (*
+{
 function TMapLatLonElement.GetOwner: TPersistent;
 begin
   Result := FView;
-end;              *)
-
+end;
+}
 procedure TMapLatLonElement.Update;
 begin
   if Assigned(FOnChange) then FOnChange(self);

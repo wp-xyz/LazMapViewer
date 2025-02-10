@@ -239,11 +239,10 @@ type
     property Items[AIndex: Integer]: TMvCustomPlugin read GetItem write SetItem; default;
   end;
 
-
   TMouseButtons = set of TMouseButton;
   TMapViewMouseButtons = record
-    MapView : TMapView;
-    MouseButtons : TMouseButtons;
+    MapView: TMapView;
+    MouseButtons: TMouseButtons;
   end;
 
   { TMvPluginManager }
@@ -1221,6 +1220,7 @@ begin
   else
     Exclude(FMouseButtonDown[ndx].MouseButtons, AMouseButton);
 end;
+
 procedure TMvPluginManager.RemoveMouseButton(const AMapView: TMapView);
 var
   i : Integer;
@@ -1336,7 +1336,7 @@ var
   plugin: TMvCustomPlugin;
 begin
   Result := false;
-  AddUpdateMouseButton(AMapView,AButton,False);
+  AddUpdateMouseButton(AMapView, AButton, False);
   for i := FPluginList.Count-1 downto 0 do
   begin
     plugin := Items[i];

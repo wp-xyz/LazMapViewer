@@ -405,6 +405,7 @@ begin
   FActiveLayersEx[8] := (smaLayer8 in Value);
   FActiveLayersEx[9] := (smaLayer9 in Value);
 end;
+
 procedure TSpreadMarkerPlugin.MouseMove(AMapView: TMapView;
   AShift: TShiftState; X, Y: Integer; var Handled: Boolean);
 var
@@ -430,6 +431,7 @@ begin
   pd^.FLastMouseX := X;
   pd^.FLastMouseY := Y;
 end;
+
 procedure TSpreadMarkerPlugin.ZoomChange(AMapView: TMapView;
   var Handled: Boolean);
 var

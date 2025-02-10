@@ -93,6 +93,7 @@ type
   TSelectedAreaChangingEvent = procedure (Sender : TObject; ANewArea : TRealArea; var Allow : Boolean) of Object;
   TAreaSelectionCaptionPosition = (ascpLeftTop, ascpCenterTop, ascpRightTop, ascpCenter, ascpLeftBottom,
                                    ascpCenterBottom, ascpRightBottom);
+                                   
   { TAreaSelectionPlugin }
   TAreaSelectionPlugin = class(TMvDrawPlugin)
   private
@@ -831,11 +832,13 @@ var
   lItem : TMouseHitItem;
 begin
   if Handled then Exit;
+  
   // Check if the GlobalMouseDown Flag is down, but the current item not.
   // This means, that some other plugin catched the MouseDown, but not this one
   if (PluginManager.MouseButtonDown[AMapView] <> []) and
      Assigned(CurrentItem) and
      (not CurrentItem.FMouseDownFlag) then Exit;
+     
   for i := 0 to ItemsCount-1 do
   begin
     lItem := TMouseHitItem(FMouseHitItems[i]);
@@ -843,15 +846,18 @@ begin
   end;
   lHitItem := CurrentItem;
   Handled := Assigned(lHitItem);
+  
   // Here we have to act carefully, since we should not change the Mouse Pointer
   // if we not had set him.
   if (not Handled) and FLastMouseMoveHandled then
     MapView.Cursor := crDefault;  // no hit, but hit previously, set the default cursor
+
   // fire the hit event if not hit before and not mouse down
   if Handled and (not FLastMouseMoveHandled) and
     (PluginManager.MouseButtonDown[AMapView] = []) and
     (not lHitItem.MouseDownFlag) and Assigned(FSelectedAreaHitEvent) then
     FSelectedAreaHitEvent(Self);
+    
   FLastMouseMoveHandled := Handled;
   if not Handled then Exit;
   // lHitItem will be assigned if one item is selected.
