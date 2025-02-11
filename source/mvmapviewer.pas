@@ -120,6 +120,8 @@ type
     property Tag: PtrInt read FTag write FTag default 0;
   end;
 
+  TMapItemClass = class of TMapItem;
+
   { TMapCollectionBase }
 
   TMapCollectionBase = class(TOwnedCollection)
@@ -191,6 +193,7 @@ type
   public
     constructor Create(ACollection: TCollection); override;
     destructor Destroy; override;
+    function GetObjectsInArea(const Area: TRealArea; AClass: TMapItemClass = Nil): TGPSObjList;
     function HitTest(constref Area: TRealArea): TMapObjectList; override;
     function AddPointOfInterest(APoint: TRealPoint; ACaption: String = ''): TMapPointOfInterest;
     procedure AssignFromGPSList(AList: TGPSObjectList);
@@ -2139,6 +2142,60 @@ begin
   if Assigned(FComboLayer) then
     View.GPSItems.Delete(FComboLayer);
   inherited Destroy;
+end;
+
+function TMapLayer.GetObjectsInArea(const Area: TRealArea;
+  AClass: TMapItemClass = nil): TGPSObjList;
+var
+  i, j: integer;
+  P: TMapPoint;
+  mapArea: TMapArea;
+  track: TMapTrack;
+  objArea: TRealArea;
+  obj: TGpsObj;
+begin
+  Result := TGPSObjList.Create(false);
+
+  if (AClass = nil) or (AClass = TMapPointOfInterest) then
+    for i := 0 to Pred(PointsOfInterest.Count) do
+    begin
+      P := PointsOfInterest[i];
+      obj := TMapPoint(P).GpsObj;
+      objArea := obj.BoundingBox;
+      if (not Assigned(AClass) or (P is AClass)) and HasIntersectArea(Area, objArea) then
+        Result.Add(obj);
+    end;
+
+  if (AClass = nil) or (AClass = TMapAreaPoint) then
+    for j := 0 to Pred(Areas.Count) do
+    begin
+      mapArea := Areas[j];
+      for i := 0 to Pred(mapArea.Points.Count) do
+      begin
+        P := mapArea.Points[i];
+        obj := P.GpsObj;
+        objArea := obj.BoundingBox;
+        if (not Assigned(AClass) or (P is AClass)) and HasIntersectArea(Area, objArea) then
+          Result.Add(obj);
+      end;
+    end;
+
+  if (AClass = nil) or (AClass = TMapTrackPoint) then
+    for j := 0 to Pred(Tracks.Count) do
+    begin
+      track := Tracks[j];
+      for i := 0 to Pred(track.Points.Count) do
+      begin
+        P := track.Points[i];
+        obj := P.GpsObj;
+        objArea := obj.BoundingBox;
+        if (not Assigned(AClass) or (P is AClass)) and HasIntersectArea(Area, objArea) then
+          Result.Add(obj);
+      end;
+    end;
+
+  if Result.Count = 0 then
+    FreeAndNil(Result);
 end;
 
 function TMapLayer.HitTest(constref Area: TRealArea): TMapObjectList;

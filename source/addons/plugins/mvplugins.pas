@@ -728,32 +728,58 @@ end;
 
 function TDraggableMarkerPlugin.GetFirstMarkerAtMousePos(const AMapView: TMapView;
   const AX, AY: Integer): TGPSPoint;
+
+  function FindInList(AGpsList: TGpsObjList): TGpsPoint;
+  var
+    i: Integer;
+  begin
+    if Assigned(AGpsList) then
+      for i := AGpsList.Count-1 downto 0 do
+      begin
+        if (AGpsList[i] is TGpsPoint) then
+        begin
+          Result := TGpsPoint(AGpsList[i]);
+          if (not Assigned(FDraggableMarkerCanMoveEvent)) or
+             DraggableMarkerCanMoveEvent(Self, Result)
+          then
+            exit;
+        end;
+      end;
+    Result := nil;
+  end;
+
 var
   aArea : TRealArea;
-  lGpsPt : TGpsPoint;
   gpsList: TGpsObjList;
+  layer: TMapLayer;
   i : Integer;
 begin
   Result := Nil;
   aArea.TopLeft := AMapView.ScreenToLatLon(Point(AX - FTolerance, AY - FTolerance));
   aArea.BottomRight := AMapView.ScreenToLatLon(Point(AX + FTolerance, AY + FTolerance));
+
+  // Search in GPSItems for all gps-type-of-points
   gpsList := AMapView.GPSItems.GetObjectsInArea(aArea);
   try
-    for i := gpsList.Count-1 downto 0 do
-    begin
-      if (gpsList[i] is TGpsPoint)  then
-      begin
-        lGpsPt := TGpsPoint(gpsList[i]);
-        if (not Assigned(FDraggableMarkerCanMoveEvent)) or
-           FDraggableMarkerCanMoveEvent(Self,lGpsPt) then
-        begin
-          Result := lGpsPt;
-          Exit;
-        end;
-      end;
-    end;
+    Result := FindInList(gpsList);
+    if Result <> nil then
+      exit;
   finally
     gpsList.Free;
+  end;
+
+  // Search in all layers for all map-type-of-points
+  for i := AMapView.Layers.Count-1 downto 0 do
+  begin
+    layer := AMapView.Layers[i];
+    gpsList := layer.GetObjectsInArea(aArea);
+    try
+      Result := FindInList(gpsList);
+      if Result <> nil then
+        exit;
+    finally
+      gpsList.Free;
+    end;
   end;
 end;
 
