@@ -1005,7 +1005,6 @@ end;
 
 destructor TMvPluginManager.Destroy;
 begin
-  RemoveFreeNotification;
   while FPluginList.Count > 0 do
     FPluginList[FPluginList.Count-1].Free;
   FPluginList.Free;
@@ -1389,7 +1388,8 @@ end;
 procedure TMvPluginManager.RemoveMapView(AMapView: TMapView);
 begin
   RemoveMouseButton(AMapView);
-  FMapList.Remove(AMapView);
+  if not (csDesigning in ComponentState) then
+    FMapList.Remove(AMapView);
 end;
 
 procedure TMvPluginManager.SetChildOrder(Child: TComponent; Order: Integer);
