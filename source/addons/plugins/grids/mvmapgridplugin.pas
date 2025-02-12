@@ -8,7 +8,7 @@ interface
 
 uses
   Classes, SysUtils, Math,
-  Graphics, Controls, LCLIntf, //LazLoggerBase,
+  Graphics, Controls, LCLIntf, // LazLoggerBase,
   mvMapViewer, mvDrawingEngine, mvPluginCommon,  mvGeoMath, mvTypes;
 
 type
@@ -147,7 +147,7 @@ var
   incr: TIncrement;
   incrementPx: Integer;
 begin
-  Result := 1E6;
+  Result := 90;
   fullRange := abs(Area.BottomRight.Lon - Area.TopLeft.Lon);
   deg2px := fullRange / AMapView.ClientWidth;
 
@@ -173,12 +173,20 @@ begin
   Result := AMapView.Engine.ScreenRectToRealArea(Rect(0, 0, AMapView.ClientWidth, AMapView.ClientHeight));
   if AMapView.Engine.CrossesDateline then
   begin
-    if Result.BottomRight.Lon < Result.TopLeft.Lon then
+    if Result.BottomRight.Lon <= Result.TopLeft.Lon then
       Result.BottomRight.Lon := Result.BottomRight.Lon + 360;
     worldWidth := mvGeoMath.ZoomFactor(AMapView.Zoom) * TileSize.CX;
     numWorlds := trunc(AMapView.ClientWidth / worldWidth);
     Result.BottomRight.Lon := Result.BottomRight.Lon + numWorlds * 360;
   end;
+
+  // Workaround for cyclic map at lowest zoom reaching across the date line:
+  // When its width is decreased slowly and the dateline is just crossed then
+  // there is only a small difference between left and right longitude numbers
+  // although the real difference is almost 180°.
+  // This causes a hang in the drawing routine. --> Add 360° to right longitude.
+  if (AMapView.Zoom < 2) and (Result.BottomRight.Lon - Result.TopLeft.Lon < 2) then
+    Result.BottomRight.Lon := Result.BottomRight.Lon + 360;
 end;
 
 procedure TMapGridPlugin.DrawGridLine(ADrawingEngine: TMvCustomDrawingEngine;
