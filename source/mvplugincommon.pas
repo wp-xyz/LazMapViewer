@@ -1381,14 +1381,15 @@ begin
   begin
     if AComponent is TMapView then
       RemoveMapView(TMapView(AComponent));
-    // Do no handle deleted plugins here -- will crash
+    // Do not handle deleted plugins here -- will crash
   end;
 end;
 
 procedure TMvPluginManager.RemoveMapView(AMapView: TMapView);
 begin
   RemoveMouseButton(AMapView);
-  FMapList.Remove(AMapView);
+  if not (csDestroying in ComponentState) then
+    FMapList.Remove(AMapView);
 end;
 
 procedure TMvPluginManager.SetChildOrder(Child: TComponent; Order: Integer);
