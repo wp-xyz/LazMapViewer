@@ -3,7 +3,7 @@
   The Items show different MouseCursors to identify the options
   It also allows the change of the size using the mouse wheel.
 }
-unit Unit1;
+unit Main;
 
 {$mode objfpc}{$H+}
 
@@ -15,12 +15,12 @@ uses
 
 type
 
-  { TForm1 }
+  { TMainForm }
 
-  TForm1 = class(TForm)
+  TMainForm = class(TForm)
     CheckBox1: TCheckBox;
-    MapView1: TMapView;
-    MvPluginManager1: TMvPluginManager;
+    MapView: TMapView;
+    MvPluginManager: TMvPluginManager;
     Panel1: TPanel;
     procedure CheckBox1Change(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -31,13 +31,13 @@ type
   end;
 
 var
-  Form1: TForm1;
+  MainForm: TMainForm;
 
 implementation
 
 {$R *.lfm}
 
-{ TForm1 }
+{ TMainForm }
 const
   PluginCount = 9;
   PluginColors : array[0..PluginCount-1] of TColor = (
@@ -48,33 +48,34 @@ const
     crVSplit, crMultiDrag, crSQLWait, crNo,
     crSize
   );
-procedure TForm1.FormCreate(Sender: TObject);
+
+procedure TMainForm.FormCreate(Sender: TObject);
 var
   lDragColoredItemPlugin : TDragColoredItemPlugin;
   i: Integer;
 begin
-  MapView1.Active := true;
+  MapView.Active := true;
   for i := 0 to High(PluginColors) do
   begin
     lDragColoredItemPlugin := TDragColoredItemPlugin.Create(Self);
     lDragColoredItemPlugin.Color := PluginColors[i];
     lDragColoredItemPlugin.MouseCursor := PlugInMouseCursors[i];
     lDragColoredItemPlugin.ShowCaption := CheckBox1.Checked;
-    lDragColoredItemPlugin.MapView := MapView1;
-    MvPluginManager1.AddPlugin(lDragColoredItemPlugin);
+    lDragColoredItemPlugin.MapView := MapView;
+    MvPluginManager.AddPlugin(lDragColoredItemPlugin);
   end;
 end;
 
-procedure TForm1.CheckBox1Change(Sender: TObject);
+procedure TMainForm.CheckBox1Change(Sender: TObject);
 var
   i : Integer;
 begin
-  for i := 0 to MvPluginManager1.Count-1 do
+  for i := 0 to MvPluginManager.Count-1 do
   begin
-    if MvPluginManager1.Items[i] is TDragColoredItemPlugin then
-      TDragColoredItemPlugin(MvPluginManager1.Items[i]).ShowCaption:= CheckBox1.Checked;
+    if MvPluginManager.Items[i] is TDragColoredItemPlugin then
+      TDragColoredItemPlugin(MvPluginManager.Items[i]).ShowCaption:= CheckBox1.Checked;
   end;
-  MapView1.Invalidate;
+  MapView.Invalidate;
 end;
 
 end.

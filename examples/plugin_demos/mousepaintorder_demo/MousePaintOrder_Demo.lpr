@@ -1,4 +1,4 @@
-program project1;
+program MousePaintOrder_Demo;
 
 {$mode objfpc}{$H+}
 
@@ -10,19 +10,16 @@ uses
   athreads,
   {$ENDIF}
   Interfaces, // this includes the LCL widgetset
-  Forms, Unit1
+  Forms, Main, uDragColoredItemPlugin
   { you can add units after this };
 
 {$R *.res}
 
 begin
-  RequireDerivedFormResource := True;
-  Application.Scaled := True;
-  {$PUSH}{$WARN 5044 OFF}
-  Application.MainFormOnTaskbar := True;
-  {$POP}
+  RequireDerivedFormResource:=True;
+  Application.Scaled:=True;
   Application.Initialize;
-  Application.CreateForm(TForm1, Form1);
+  Application.CreateForm(TMainForm, MainForm);
   Application.Run;
 end.
 

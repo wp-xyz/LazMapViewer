@@ -1,25 +1,25 @@
-object Form1: TForm1
+object MainForm: TMainForm
   Left = 324
   Height = 323
   Top = 119
   Width = 429
-  Caption = 'Form1'
+  Caption = 'MainForm'
   ClientHeight = 323
   ClientWidth = 429
+  LCLVersion = '4.99.0.0'
   OnCreate = FormCreate
-  LCLVersion = '3.6.0.0'
-  object MapView1: TMapView
+  object MapView: TMapView
     Left = 0
     Height = 297
     Top = 0
     Width = 429
     Align = alClient
-    DownloadEngine = MapView1.BuiltInDLE
-    DrawingEngine = MapView1.BuiltInDE
+    DownloadEngine = MapView.BuiltInDLE
+    DrawingEngine = MapView.BuiltInDE
     Layers = <>
     Font.Color = clBlack
     MapProvider = 'OpenStreetMap Standard'
-    PluginManager = MvPluginManager1
+    PluginManager = MvPluginManager
   end
   object Panel1: TPanel
     Left = 0
@@ -43,7 +43,7 @@ object Form1: TForm1
       OnChange = CheckBox1Change
     end
   end
-  object MvPluginManager1: TMvPluginManager
+  object MvPluginManager: TMvPluginManager
     Left = 320
     Top = 24
   end

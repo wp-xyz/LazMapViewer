@@ -286,8 +286,6 @@ procedure TMainForm.FormCreate(Sender: TObject);
 var
   I: Integer;
 begin
-  MapView.Active := True;
-
   sgTracks.RowCount := Length(Tracks) + 1;
   for I := Low(Tracks) to High(Tracks) do
   begin

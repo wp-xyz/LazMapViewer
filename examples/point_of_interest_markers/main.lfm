@@ -13,7 +13,6 @@ object MainForm: TMainForm
     Height = 400
     Top = 0
     Width = 865
-    Active = True
     Align = alClient
     Cyclic = True
     DownloadEngine = MapView.BuiltInDLE

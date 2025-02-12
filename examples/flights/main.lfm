@@ -15,6 +15,7 @@ object MainForm: TMainForm
     Height = 662
     Top = 0
     Width = 624
+    Active = True
     Align = alClient
     Cyclic = True
     DefaultTrackColor = clSkyBlue
@@ -38,23 +39,17 @@ object MainForm: TMainForm
             Caption = 'Chicago O''Hare Intl'
             Longitude = -87.9081497
             Latitude = 41.9769403
-            ImageAnchorX = 0.5
-            ImageAnchorY = 1
             ImageIndex = 1
           end        
           item
             Caption = 'Shanghai Pudong Int''l'
             Longitude = 121.792367
             Latitude = 31.142797
-            ImageAnchorX = 0.5
-            ImageAnchorY = 1
             ImageIndex = 0
           end        
           item
             Caption = 'CSN436'
             Visible = False
-            ImageAnchorX = 0.5
-            ImageAnchorY = 1
           end>
         Areas = <>
         Tracks = <        
@@ -5865,22 +5860,16 @@ object MainForm: TMainForm
             Visible = False
             Longitude = -87.9081497
             Latitude = 41.9769403
-            ImageAnchorX = 0.5
-            ImageAnchorY = 1
           end        
           item
             Caption = 'Minneapolis/St Paul Intl'
             Longitude = -93.2217778
             Latitude = 44.8819722
-            ImageAnchorX = 0.5
-            ImageAnchorY = 1
             ImageIndex = 0
           end        
           item
             Caption = 'UAL3755'
             Visible = False
-            ImageAnchorX = 0.5
-            ImageAnchorY = 1
           end>
         Areas = <>
         Tracks = <        
@@ -6894,8 +6883,6 @@ object MainForm: TMainForm
             Caption = 'John F Kennedy Intl'
             Longitude = -73.7786922
             Latitude = 40.6399281
-            ImageAnchorX = 0.5
-            ImageAnchorY = 1
             ImageIndex = 1
           end        
           item
@@ -6903,15 +6890,11 @@ object MainForm: TMainForm
             Visible = False
             Longitude = -118.4080486
             Latitude = 33.9424964
-            ImageAnchorX = 0.5
-            ImageAnchorY = 1
             ImageIndex = 0
           end        
           item
             Caption = 'DAL773'
             Visible = False
-            ImageAnchorX = 0.5
-            ImageAnchorY = 1
           end>
         Areas = <>
         Tracks = <        
@@ -11426,21 +11409,15 @@ object MainForm: TMainForm
             Visible = False
             Longitude = -73.7786922
             Latitude = 40.6399281
-            ImageAnchorX = 0.5
-            ImageAnchorY = 1
           end        
           item
             Caption = 'Orlando Intl'
             Longitude = -81.309
             Latitude = 28.4293889
-            ImageAnchorX = 0.5
-            ImageAnchorY = 1
             ImageIndex = 0
           end        
           item
             Caption = 'DAL2049'
-            ImageAnchorX = 0.5
-            ImageAnchorY = 1
           end>
         Areas = <>
         Tracks = <        
@@ -13672,22 +13649,16 @@ object MainForm: TMainForm
             Caption = 'Houston Bush Int''ctl'
             Longitude = -95.3414425
             Latitude = 29.9844353
-            ImageAnchorX = 0.5
-            ImageAnchorY = 1
             ImageIndex = 1
           end        
           item
             Caption = 'Frankfurt Int''l'
             Longitude = 8.543125
             Latitude = 50.026421
-            ImageAnchorX = 0.5
-            ImageAnchorY = 1
             ImageIndex = 0
           end        
           item
             Caption = 'DLH441'
-            ImageAnchorX = 0.5
-            ImageAnchorY = 1
           end>
         Areas = <>
         Tracks = <        
@@ -19167,22 +19138,16 @@ object MainForm: TMainForm
             Caption = 'Comodoro Arturo Merino Benitez Int'
             Longitude = -70.785803
             Latitude = -33.392975
-            ImageAnchorX = 0.5
-            ImageAnchorY = 1
             ImageIndex = 1
           end        
           item
             Caption = 'Sydney'
             Longitude = 151.177222
             Latitude = -33.946111
-            ImageAnchorX = 0.5
-            ImageAnchorY = 1
             ImageIndex = 0
           end        
           item
             Caption = 'QFA28'
-            ImageAnchorX = 0.5
-            ImageAnchorY = 1
           end>
         Areas = <>
         Tracks = <        
@@ -21653,22 +21618,16 @@ object MainForm: TMainForm
             Caption = 'Melbourne Tullamarine'
             Longitude = 144.843333
             Latitude = -37.673333
-            ImageAnchorX = 0.5
-            ImageAnchorY = 1
             ImageIndex = 1
           end        
           item
             Caption = 'Los Angeles Intl'
             Longitude = -118.4080486
             Latitude = 33.9424964
-            ImageAnchorX = 0.5
-            ImageAnchorY = 1
             ImageIndex = 0
           end        
           item
             Caption = 'QFA95'
-            ImageAnchorX = 0.5
-            ImageAnchorY = 1
           end>
         Areas = <>
         Tracks = <        

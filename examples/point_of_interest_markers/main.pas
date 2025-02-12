@@ -1,4 +1,4 @@
-unit Unit1;
+unit Main;
 
 {$mode objfpc}{$H+}
 
@@ -36,14 +36,15 @@ var
   L: TMapLayer;
   P: TMapPointOfInterest;
 begin
+  MapView.Active := true;
   L := MapView.Layers.Add as TMapLayer;
 
   P := L.PointsOfInterest.Add as TMapPointOfInterest;
   // or: P := TMapPointOfInterest.Create(L.PointsOfInterest);
   P.RealPoint := RealPoint(68, 111);
   P.ImageIndex := 0;
-  P.ImageAnchorX := 0.0;
-  P.ImageAnchorY := 1.0;
+  P.ImageAnchorX := 0;
+  P.ImageAnchorY := 100;
   P.TextPositionHor := tphLeft;
   P.Caption := 'Tilted Pin';
 
@@ -60,7 +61,7 @@ begin
   P := L.PointsOfInterest.Add as TMapPointOfInterest;
   P.RealPoint := RealPoint(0.0, -120.0);
   P.ImageIndex := 3;
-  P.ImageAnchorX := 0.27;
+  P.ImageAnchorX := 27;
   P.ImageAnchorY := 0;
   P.TextPositionHor := tphLeft;
   P.TextPositionVert := tpvAbove;

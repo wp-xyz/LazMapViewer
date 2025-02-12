@@ -1,4 +1,4 @@
-program project1;
+program PointOfInterestMarkers_Demo;
 
 {$mode objfpc}{$H+}
 
@@ -10,7 +10,7 @@ uses
   athreads,
   {$ENDIF}
   Interfaces, // this includes the LCL widgetset
-  Forms, Unit1
+  Forms, Main
   { you can add units after this };
 
 {$R *.res}
