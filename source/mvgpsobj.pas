@@ -20,8 +20,9 @@ uses
   mvTypes, mvGeoMath;
 
 const
-  NO_ELE  = -10000000;
-  NO_DATE = 0;
+  NO_ELEVATION = -10000000;
+  NO_ELE       = NO_ELEVATION;  // deprecated: use NO_ELEVATION
+  NO_DATE      = 0;
 
 type
   TIdArray = Array of integer;
@@ -99,9 +100,9 @@ type
     procedure SetLat(AValue: Double);
     procedure SetLon(AValue: Double);
   public
-    constructor Create(ALon,ALat: double; AElevation: double = NO_ELE;
+    constructor Create(ALon,ALat: double; AElevation: double = NO_ELEVATION;
       ADateTime: TDateTime = NO_DATE);
-    class function CreateFrom(aPt: TRealPoint; AElevation: Double = NO_ELE;
+    class function CreateFrom(aPt: TRealPoint; AElevation: Double = NO_ELEVATION;
       ADateTime: TDateTime = NO_DATE): TGPSPoint;
 
     procedure Assign(AObj: TGPSObj); override;
@@ -126,17 +127,17 @@ type
 
   TGPSPointOfInterest = class(TGPSPoint)
   private
-    FImageAnchorX: Single;
-    FImageAnchorY: Single;
+    FImageAnchorX: Integer;
+    FImageAnchorY: Integer;
     FImageIndex: Integer;
     FTextPositionHor: TTextPositionHor;
     FTextPositionVert: TTextPositionVert;
   public
-    constructor Create(ALon, ALat: Double; AElevation: Double = NO_ELE;
+    constructor Create(ALon, ALat: Double; AElevation: Double = NO_ELEVATION;
       ADateTime: TDateTime = NO_DATE);
     procedure Draw({%H-}AView: TObject; {%H-}Area: TRealArea); override;
-    property ImageAnchorX: Single read FImageAnchorX write FImageAnchorX;
-    property ImageAnchorY: Single read FImageAnchorY write FImageAnchorY;
+    property ImageAnchorX: Integer read FImageAnchorX write FImageAnchorX default 50;  // Percentage!
+    property ImageAnchorY: Integer read FImageAnchorY write FImageAnchorY default 100; // Percentage!
     property ImageIndex: Integer read FImageIndex write FImageIndex default -1;
     property TextPositionHor: TTextPositionHor read FTextPositionHor write FTextPositionHor default tphCenter;
     property TextPositionVert: TTextPositionVert read FTextPositionVert write FTextPositionVert default tpvBelow;
@@ -190,7 +191,6 @@ type
     FOpacity: Single;
   public
     constructor Create;
-
     procedure Draw({%H-}AView: TObject; {%H-}Area: TRealArea); override;
     property FillColor: TColor read FFillColor write FFillColor;
     property LineColor: TColor read FLineColor write FLineColor;
@@ -989,6 +989,19 @@ end;
 
 { TGPSPoint }
 
+constructor TGPSPoint.Create(ALon, ALat: double; AElevation: double;
+  ADateTime: TDateTime);
+begin
+  inherited Create;
+  MoveTo(ALon, ALat, AElevation, ADateTime);
+end;
+
+class function TGPSPoint.CreateFrom(aPt: TRealPoint;
+  AElevation: Double = NO_ELEVATION; ADateTime: TDateTime = NO_DATE): TGPSPoint;
+begin
+  Result := Create(aPt.Lon, aPt.Lat, AElevation, ADateTime);
+end;
+
 procedure TGPSPoint.Assign(AObj: TGPSObj);
 begin
   if (AObj is TGPSPoint) then
@@ -1033,7 +1046,7 @@ end;
 
 function TGPSPoint.HasElevation: boolean;
 begin
-  Result := FElevation <> NO_ELE;
+  Result := FElevation <> NO_ELEVATION;
 end;
 
 function TGPSPoint.HasDateTime: Boolean;
@@ -1091,7 +1104,7 @@ begin
 end;
 *)
 
-procedure TGPSPoint.MoveTo(ALon, ALat: Double; AElevation: double = NO_ELE;
+procedure TGPSPoint.MoveTo(ALon, ALat: Double; AElevation: double = NO_ELEVATION;
   ADateTime: TDateTime = NO_DATE);
 begin
   FRealPt.Lon := ALon;
@@ -1101,28 +1114,14 @@ begin
 end;
 
 
-constructor TGPSPoint.Create(ALon, ALat: double; AElevation: double;
-  ADateTime: TDateTime);
-begin
-  inherited Create;
-  MoveTo(ALon, ALat, AElevation, ADateTime);
-end;
-
-class function TGPSPoint.CreateFrom(aPt: TRealPoint; AElevation: Double = NO_ELE;
-  ADateTime: TDateTime = NO_DATE): TGPSPoint;
-begin
-  Result := Create(aPt.Lon, aPt.Lat, AElevation, ADateTime);
-end;
-
-
 { TGPSPointOfInterest }
 
 constructor TGPSPointOfInterest.Create(ALon, ALat: Double;
-  AElevation: Double = NO_ELE; ADateTime: TDateTime = NO_DATE);
+  AElevation: Double = NO_ELEVATION; ADateTime: TDateTime = NO_DATE);
 begin
   inherited;
-  FImageAnchorX := 0.5;
-  FImageAnchorY := 1.0;
+  FImageAnchorX := 50;    // These are percentages!
+  FImageAnchorY := 100;
   FImageIndex := -1;
   FTextPositionHor := tphCenter;
   FTextPositionVert := tpvBelow;

@@ -281,12 +281,12 @@ type
 
   TMapPoint = class(TMapItem)
   private
-    FDateTime: TDateTime;
-    FElevation: Double;
-    FLatitude: Double;
-    FLongitude: Double;
     FPoint: TGPSPoint;
+    function GetDateTime: TDateTime;
+    function GetElevation: Double;
+    function GetLatitude: Double;
     function GetLatLonInDMS: Boolean;
+    function GetLongitude: Double;
     function GetRealPoint: TRealPoint;
     function GetToScreen: TPoint;
     function IsDateTimeStored: Boolean;
@@ -310,10 +310,10 @@ type
     property RealPoint: TRealPoint read GetRealPoint write SetRealPoint;
     property ToScreen: TPoint read GetToScreen;
   published
-    property Longitude: Double read FLongitude write SetLongitude;
-    property Latitude: Double read FLatitude write SetLatitude;
-    property Elevation: Double read FElevation write SetElevation stored IsElevationStored;
-    property DateTime: TDateTime read FDateTime write SetDateTime stored IsDateTimeStored;
+    property Longitude: Double read GetLongitude write SetLongitude;
+    property Latitude: Double read GetLatitude write SetLatitude;
+    property Elevation: Double read GetElevation write SetElevation stored IsElevationStored;
+    property DateTime: TDateTime read GetDateTime write SetDateTime stored IsDateTimeStored;
   end;
 
   { TMapTrackPoint }
@@ -362,14 +362,14 @@ type
 
   TMapPointOfInterest = class(TMapPoint)
   private
-    FImageAnchor: Array[0..1] of Single;
-    FImageIndex: TImageIndex;
-    FTextPositionHor: TTextPositionHor;
-    FTextPositionVert: TTextPositionVert;
     FOnDrawPoint: TMapPointOfInterestDrawEvent;
-    function GetImageAnchor(AIndex: Integer): Single;
-    function IsImageAnchorStored(AIndex: Integer): Boolean;
-    procedure SetImageAnchor(AIndex: Integer; AValue: Single);
+    function GetImageAnchorX: Integer;
+    function GetImageAnchorY: Integer;
+    function GetImageIndex: Integer;
+    function GetTextPositionHor: TTextPositionHor;
+    function GetTextPositionVert: TTextPositionVert;
+    procedure SetImageAnchorX(AValue: Integer);
+    procedure SetImageAnchorY(AValue: Integer);
     procedure SetImageIndex(AValue: TImageIndex);
     procedure SetOnDrawPoint(AValue: TMapPointOfInterestDrawEvent);
     procedure SetTextPositionHor(AValue: TTextPositionHor);
@@ -383,11 +383,11 @@ type
     constructor Create(ACollection: TCollection); override;
     procedure AssignTo(Dest: TPersistent); override;
   published
-    property ImageAnchorX: Single index 0 read GetImageAnchor write SetImageAnchor stored IsImageAnchorStored;
-    property ImageAnchorY: Single index 1 read GetImageAnchor write SetImageAnchor stored IsImageAnchorStored;
-    property ImageIndex: TImageIndex read FImageIndex write SetImageIndex default -1;
-    property TextPositionHor: TTextPositionHor read FTextPositionHor write SetTextPositionHor default tphCenter;
-    property TextPositionVert: TTextPositionVert read FTextPositionVert write SetTextPositionVert default tpvBelow;
+    property ImageAnchorX: Integer read GetImageAnchorX write SetImageAnchorX default 50;
+    property ImageAnchorY: Integer read GetImageAnchorY write SetImageAnchorY default 100;
+    property ImageIndex: TImageIndex read GetImageIndex write SetImageIndex default -1;
+    property TextPositionHor: TTextPositionHor read GetTextPositionHor write SetTextPositionHor default tphCenter;
+    property TextPositionVert: TTextPositionVert read GetTextPositionVert write SetTextPositionVert default tpvBelow;
     property OnDrawPoint: TMapPointOfInterestDrawEvent read FOnDrawPoint write SetOnDrawPoint;
   end;
 
@@ -1632,38 +1632,58 @@ end;
 
 { TMapPoint }
 
+function TMapPoint.GetDateTime: TDateTime;
+begin
+  Result := FPoint.DateTime;
+end;
+
+function TMapPoint.GetElevation: Double;
+begin
+  Result := FPoint.Elevation;
+end;
+
+function TMapPoint.GetLatitude: Double;
+begin
+  Result := FPoint.Lat;
+end;
+
+function TMapPoint.GetLongitude: Double;
+begin
+  Result := FPoint.Lon;
+end;
+
+function TMapPoint.GetRealPoint: TRealPoint;
+begin
+  Result := FPoint.RealPoint;
+end;
+
 function TMapPoint.IsDateTimeStored: Boolean;
 begin
-  Result := not (FDateTime = NO_DATE);
+  Result := not (FPoint.DateTime = NO_DATE);
 end;
 
 function TMapPoint.IsElevationStored: Boolean;
 begin
-  Result := not (FElevation = NO_ELE);
+  Result := not (FPoint.Elevation = NO_ELEVATION);
 end;
 
 procedure TMapPoint.SetDateTime(AValue: TDateTime);
 begin
-  if FDateTime=AValue then Exit;
-  FDateTime:=AValue;
+  if FPoint.DateTime = AValue then Exit;
+  FPoint.DateTime := AValue;
   ItemChanged;
 end;
 
 procedure TMapPoint.SetElevation(AValue: Double);
 begin
-  if FElevation=AValue then Exit;
-  FElevation:=AValue;
+  if FPoint.Elevation = AValue then Exit;
+  FPoint.Elevation := AValue;
   ItemChanged;
 end;
 
 function TMapPoint.GetLatLonInDMS: Boolean;
 begin
   Result := Assigned(View) and (mvoLatLonInDMS in View.Options);
-end;
-
-function TMapPoint.GetRealPoint: TRealPoint;
-begin
-  Result := mvTypes.RealPoint(FLatitude, FLongitude);
 end;
 
 function TMapPoint.GetToScreen: TPoint;
@@ -1673,23 +1693,23 @@ end;
 
 procedure TMapPoint.SetLatitude(AValue: Double);
 begin
-  if FLatitude = AValue then Exit;
-  FLatitude := AValue;
+  if FPoint.Lat = AValue then Exit;
+  FPoint.Lat := AValue;
   ItemChanged;
 end;
 
 procedure TMapPoint.SetLongitude(AValue: Double);
 begin
-  if FLongitude = AValue then Exit;
-  FLongitude := AValue;
+  if FPoint.Lon = AValue then Exit;
+  FPoint.Lon := AValue;
   ItemChanged;
 end;
 
 procedure TMapPoint.SetRealPoint(AValue: TRealPoint);
 begin
-  if (FLatitude = AValue.Lat) and (FLongitude = AValue.Lon) then exit;
-  FLatitude := AValue.Lat;
-  FLongitude := AValue.Lon;
+  if (FPoint.Lat = AValue.Lat) and (FPoint.Lon = AValue.Lon) then exit;
+  FPoint.Lat := AValue.Lat;
+  FPoint.Lon := AValue.Lon;
   ItemChanged;
 end;
 
@@ -1700,12 +1720,8 @@ end;
 
 procedure TMapPoint.ItemChanged;
 begin
-  FPoint.Lon := Longitude;
-  FPoint.Lat := Latitude;
   FPoint.Name := Caption;
   FPoint.Visible := Visible;
-  FPoint.Elevation := Elevation;
-  FPoint.DateTime := DateTime;
   Changed(False);
 end;
 
@@ -1723,7 +1739,7 @@ end;
 
 function TMapPoint.CreatePoint: TGPSPoint;
 begin
-  Result := TGPSPoint.Create(FLongitude, FLatitude);
+  Result := TGPSPoint.Create(0,0);
 end;
 
 procedure TMapPoint.DestroyPoint;
@@ -1733,12 +1749,10 @@ end;
 constructor TMapPoint.Create(ACollection: TCollection);
 begin
   inherited Create(ACollection);
-  FLongitude := View.Center.Lon;
-  FLatitude := View.Center.Lat;
-  FVisible := True;
-  FElevation := NO_ELE;
-  FDateTime := NO_DATE;
   FPoint := CreatePoint;
+  FPoint.Lat := View.Center.Lat;
+  FPoint.Lon := View.Center.Lon;
+  FVisible := True;
 end;
 
 destructor TMapPoint.Destroy;
@@ -1755,38 +1769,58 @@ begin
       Latitude := Self.Latitude;
       Longitude := Self.Longitude;
       Elevation := Self.Elevation;
-      DateTime := Self.DateTime;
+      DateTime := Self.DateTime;   // Visible?, Caption?
     end
   else
     inherited AssignTo(Dest);
 end;
 
+
 { TMapPointOfInterest }
 
-function TMapPointOfInterest.GetImageAnchor(AIndex: Integer): Single;
+function TMapPointOfInterest.GetImageAnchorX: Integer;
 begin
-  Result := FImageAnchor[AIndex];
+  Result := TGPSPointOfInterest(FPoint).ImageAnchorX;
 end;
 
-function TMapPointOfInterest.IsImageAnchorStored(AIndex: Integer): Boolean;
+function TMapPointOfInterest.GetImageAnchorY: Integer;
 begin
-  case AIndex of
-    0: Result := FImageAnchor[0] = 0.5;
-    1: Result := FImageAnchor[1] = 1.0;
-  end;
+  Result := TGPSPointOfInterest(FPoint).ImageAnchorY;
 end;
 
-procedure TMapPointOfInterest.SetImageAnchor(AIndex: Integer; AValue: Single);
+function TMapPointOfInterest.GetImageIndex: Integer;
 begin
-  if FImageAnchor[AIndex] = AValue then exit;
-  FImageAnchor[AIndex] := AValue;
+  Result := TGPSPointOfInterest(FPoint).ImageIndex;
+end;
+
+function TMapPointOfInterest.GetTextPositionHor: TTextPositionHor;
+begin
+  Result := TGPSPointOfInterest(FPoint).TextPositionHor;
+end;
+
+function TMapPointOfInterest.GetTextPositionVert: TTextPositionVert;
+begin
+  Result := TGPSPointOfInterest(FPoint).TextPositionVert;
+end;
+
+procedure TMapPointOfInterest.SetImageAnchorX(AValue: Integer);
+begin
+  if TGPSPointOfInterest(FPoint).ImageAnchorX = AValue then exit;
+  TGPSPointOfInterest(FPoint).ImageAnchorX := AValue;
+  ItemChanged;
+end;
+
+procedure TMapPointOfInterest.SetImageAnchorY(AValue: Integer);
+begin
+  if TGPSPointOfInterest(FPoint).ImageAnchorY = AValue then exit;
+  TGPSPointOfInterest(FPoint).ImageAnchorY := AValue;
   ItemChanged;
 end;
 
 procedure TMapPointOfInterest.SetImageIndex(AValue: TImageIndex);
 begin
-  if FImageIndex = AValue then Exit;
-  FImageIndex := AValue;
+  if TGPSPointOfInterest(FPoint).ImageIndex = AValue then Exit;
+  TGPSPointOfInterest(FPoint).ImageIndex := AValue;
   ItemChanged;
 end;
 
@@ -1803,15 +1837,15 @@ end;
 
 procedure TMapPointOfInterest.SetTextPositionHor(AValue: TTextPositionHor);
 begin
-  if FTextPositionHor = AValue then Exit;
-  FTextPositionHor := AValue;
+  if TGPSPointOfInterest(FPoint).TextPositionHor = AValue then Exit;
+  TGPSPointOfInterest(FPoint).TextPositionHor := AValue;
   ItemChanged;
 end;
 
 procedure TMapPointOfInterest.SetTextPositionVert(AValue: TTextPositionVert);
 begin
-  if FTextPositionVert = AValue then Exit;
-  FTextPositionVert := AValue;
+  if TGPSPointOfInterest(FPoint).TextPositionVert = AValue then Exit;
+  TGPSPointOfInterest(FPoint).TextPositionVert := AValue;
   ItemChanged;
 end;
 
@@ -1824,22 +1858,14 @@ end;
 
 procedure TMapPointOfInterest.ItemChanged;
 begin
-  TGPSPointOfInterest(FPoint).ImageIndex := FImageIndex;
-  TGPSPointOfInterest(FPoint).ImageAnchorX := FImageAnchor[0];
-  TGPSPointOfInterest(FPoint).ImageAnchorY := FImageAnchor[1];
-  TGPSPointOfInterest(FPoint).TextPositionHor := FTextPositionHor;
-  TGPSPointOfInterest(FPoint).TextPositionVert := FTextPositionVert;
   inherited ItemChanged;
 end;
 
 function TMapPointOfInterest.CreatePoint: TGPSPoint;
 begin
-  Result := TGPSPointOfInterest.Create(FLongitude, FLatitude);
-  TGPSPointOfInterest(Result).ImageIndex := FImageIndex;
-  TGPSPointOfInterest(Result).ImageAnchorX := FImageAnchor[0];
-  TGPSPointOfInterest(Result).ImageAnchorY := FImageAnchor[1];
-  TGPSPointOfInterest(Result).TextPositionHor := FTextPositionHor;
-  TGPSPointOfInterest(Result).TextPositionVert := FTextPositionVert;
+  Result := TGPSPointOfInterest.Create(0, 0);
+  // By default the image anchor is at the bottom center of the icon, and
+  // text is centered below the point (inherited from TGPSPointOfInterest)
   Layer.ComboLayer.Add(Result, Pred(_TILELAYERS_ID_), Self.Index + BASE_Z_POI);
 end;
 
@@ -1852,11 +1878,6 @@ end;
 constructor TMapPointOfInterest.Create(ACollection: TCollection);
 begin
   inherited Create(ACollection);
-  FImageAnchor[0] := 0.5;     // Anchor is a bottom center of icon
-  FImageAnchor[1] := 1.0;
-  FImageIndex := -1;
-  FTextPositionHor := tphCenter;   // Text is centered below the point
-  FTextPositionVert := tpvBelow;
 end;
 
 procedure TMapPointOfInterest.AssignTo(Dest: TPersistent);
@@ -1885,12 +1906,7 @@ function TMapLatLonElement.GetLatLonInDMS: Boolean;
 begin
   Result := Assigned(FView) and (mvoLatLonInDMS in FView.Options);
 end;
-{
-function TMapLatLonElement.GetOwner: TPersistent;
-begin
-  Result := FView;
-end;
-}
+
 procedure TMapLatLonElement.Update;
 begin
   if Assigned(FOnChange) then FOnChange(self);
@@ -3436,8 +3452,8 @@ begin
   if (APt is TGpsPointOfInterest) then
   begin
     imgIndex := TGpsPointOfInterest(APt).ImageIndex;
-    imgAnchorX := TGpsPointOfInterest(APt).ImageAnchorX;
-    imgAnchorY := TGpsPointOfInterest(APt).ImageAnchorY;
+    imgAnchorX := TGpsPointOfInterest(APt).ImageAnchorX * 0.01;  // percentage --> fraction
+    imgAnchorY := TGpsPointOfInterest(APt).ImageAnchorY * 0.01;
     txtPosHor := TGpsPointOfInterest(APt).TextPositionHor;
     txtPosVert := TGpsPointOfInterest(APt).TextPositionVert;
   end;
