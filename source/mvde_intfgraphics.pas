@@ -780,7 +780,7 @@ begin
     bmp.Canvas.Font.Size := FFontSize;
     bmp.Canvas.Font.Style := FFontStyle;
     bmp.Canvas.Font.Color := FFontColor;
-    R := Rect(0, 0, MaxInt, 0);
+    R := Rect(0, 0, 10000, 10000);
     DrawText(bmp.Canvas.Handle, PChar(AText), Length(AText), R, DT_CALCRECT + DT_WORDBREAK);
     bmp.SetSize(R.Right - R.Left, R.Bottom - R.Top);
     if GetBrushStyle <> bsClear then begin
