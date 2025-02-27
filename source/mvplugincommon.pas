@@ -1388,7 +1388,7 @@ end;
 procedure TMvPluginManager.RemoveMapView(AMapView: TMapView);
 begin
   RemoveMouseButton(AMapView);
-  if not (csDesigning in ComponentState) then
+  if not (csDestroying in ComponentState) then
     FMapList.Remove(AMapView);
 end;
 
