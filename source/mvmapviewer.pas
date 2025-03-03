@@ -193,7 +193,7 @@ type
   public
     constructor Create(ACollection: TCollection); override;
     destructor Destroy; override;
-    function GetObjectsInArea(const Area: TRealArea; AClass: TMapItemClass = Nil): TGPSObjList;
+    function GetObjectsInArea(const Area: TRealArea; AClass: TMapItemClass = nil): TGPSObjList;
     function HitTest(constref Area: TRealArea): TMapObjectList; override;
     function AddPointOfInterest(APoint: TRealPoint; ACaption: String = ''): TMapPointOfInterest;
     procedure AssignFromGPSList(AList: TGPSObjectList);
@@ -662,7 +662,8 @@ type
       procedure DoOnResize; override;
       procedure DoZoomChange(Sender: TObject);
       procedure DoZoomChanging(Sender: TObject; NewZoom: Integer; var Allow: Boolean);
-      function FindObjsAtScreenPt(X, Y: Integer; ATolerance: Integer; AVisibleOnly: Boolean): TGPSObjArray;
+      function FindObjsAtScreenPt(X, Y: Integer; ATolerance: Integer;
+        AVisibleOnly: Boolean; AClass: TGPSObjClass = nil): TGPSObjArray;
       function IsActive: Boolean; inline;
       procedure MouseDown(Button: TMouseButton; Shift: TShiftState;
         X, Y: Integer); override;
@@ -3945,7 +3946,8 @@ begin
   Engine.Jobqueue.WaitAllJobTerminated(Engine);
 end;
 
-function TMapView.FindObjsAtScreenPt(X, Y: Integer; ATolerance: Integer; AVisibleOnly: Boolean): TGPSObjArray;
+function TMapView.FindObjsAtScreenPt(X, Y: Integer; ATolerance: Integer;
+  AVisibleOnly: Boolean; AClass: TGPSObjClass = nil): TGPSObjArray;
 const
   BLOCK_SIZE = 32;
 var
@@ -3964,7 +3966,7 @@ begin
   objsCount := 0;
   for J := 0 to 9 do
   begin
-    gpsList := FGPSItems[J].GetObjectsInArea(rArea);
+    gpsList := FGPSItems[J].GetObjectsInArea(rArea, AClass);
     try
       for i := 0 to gpsList.Count-1 do
         if gpsList[i] is TGPSPoint then
