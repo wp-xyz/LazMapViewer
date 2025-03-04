@@ -193,7 +193,7 @@ type
   public
     constructor Create(ACollection: TCollection); override;
     destructor Destroy; override;
-    function GetObjectsInArea(const Area: TRealArea; AClass: TMapItemClass = nil): TGPSObjList;
+    function GetObjectsInArea(const Area: TRealArea; AClass: TMapItemClass = Nil): TGPSObjList;
     function HitTest(constref Area: TRealArea): TMapObjectList; override;
     function AddPointOfInterest(APoint: TRealPoint; ACaption: String = ''): TMapPointOfInterest;
     procedure AssignFromGPSList(AList: TGPSObjectList);
@@ -713,8 +713,10 @@ type
       function LatLonToScreen(aPt: TRealPoint): TPoint;
       function LatLonToScreen(Lat, Lon: Double): TPoint; overload;
       function LonLatToScreen(aPt: TRealPoint): TPoint; deprecated 'Use LatLonToScreen';
-      function ObjsAtScreenPt(X, Y: Integer; ATolerance: Integer = -1): TGPSObjArray;
-      function VisibleObjsAtScreenPt(X, Y: Integer; ATolerance: Integer = -1): TGPSObjArray;
+      function ObjsAtScreenPt(X, Y: Integer; ATolerance: Integer = -1;
+        AClass: TGPSObjClass = nil): TGPSObjArray;
+      function VisibleObjsAtScreenPt(X, Y: Integer; ATolerance: Integer = -1;
+        AClass: TGPSObjClass = nil): TGPSObjArray;
       procedure SaveToFile(AClass: TRasterImageClass; const AFileName: String);
       function SaveToImage(AClass: TRasterImageClass): TRasterImage;
       procedure SaveToStream(AClass: TRasterImageClass; AStream: TStream);
@@ -3985,18 +3987,20 @@ begin
   end;
 end;
 
-function TMapView.ObjsAtScreenPt(X, Y: Integer; ATolerance: Integer = -1): TGPSObjArray;
+function TMapView.ObjsAtScreenPt(X, Y: Integer; ATolerance: Integer = -1;
+  AClass: TGPSObjClass = nil): TGPSObjArray;
 begin
   if ATolerance = -1 then
     ATolerance := POINT_DELTA;
-  Result := FindObjsAtScreenPt(X, Y, ATolerance, false);
+  Result := FindObjsAtScreenPt(X, Y, ATolerance, false, AClass);
 end;
 
-function TMapView.VisibleObjsAtScreenPt(X, Y: Integer; ATolerance: Integer = -1): TGPSObjArray;
+function TMapView.VisibleObjsAtScreenPt(X, Y: Integer; ATolerance: Integer = -1;
+  AClass: TGPSObjClass = nil): TGPSObjArray;
 begin
   if ATolerance = -1 then
     ATolerance := POINT_DELTA;
-  Result := FindObjsAtScreenPt(X, Y, ATolerance, true);
+  Result := FindObjsAtScreenPt(X, Y, ATolerance, true, AClass);
 end;
 
 procedure TMapView.CenterOnArea(const aArea: TRealArea);

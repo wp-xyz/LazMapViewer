@@ -219,7 +219,6 @@ type
     procedure FreePending;
     procedure DecRef;
     procedure CallModified(lst: TGPSObjList; Adding: boolean);
-//    property Items: TGPSObjList read FItems;
     procedure IdsToObj(const Ids: TIdArray; out objs: TGPSObjArray; AIdOwner: integer);
   public
     constructor Create;
@@ -229,9 +228,10 @@ type
     procedure ClearExcept(OwnedBy: integer; const ExceptLst: TIdArray;
       out Notfound: TIdArray);
     procedure GetArea(out Area: TRealArea); override;
-    procedure Draw({%H-}AView: TObject; {%H-}Area: TRealArea); override;
-    function GetObjectsInArea(const Area: TRealArea; AClass: TGPSObjClass = Nil): TGPSObjList;
-    function GetIdsArea(const Ids: TIdArray; AIdOwner: integer): TRealArea;
+    procedure Draw(AView: TObject; Area: TRealArea); override;
+    function GetObjectsInArea(const Area: TRealArea; AClass: TGPSObjClass = nil): TGPSObjList;
+    function GetIDsArea(const IDs: TIdArray; AIdOwner: integer): TRealArea; deprecated 'Use GetAreaOfIDs';
+    function GetAreaOfIDs(const IDs: TIdArray; AIdOwner: Integer): TRealArea;
 
     function Add(aItem: TGpsObj; AIdOwner: Integer; AZOrder: Integer = 0): Integer;
     function Delete(AItem: TGPSObj): Boolean;
@@ -608,12 +608,24 @@ begin
 end;
 
 procedure TGPSObjectList.Draw(AView: TObject; Area: TRealArea);
+var
+  I: Integer;
+  obj: TGPSObj;
 begin
-  //;
+  Lock;
+  try
+    for I := 0 to Pred(Count) do
+    begin
+      obj := Items[I];
+      obj.Draw(AView, Area);
+    end;
+  finally
+    Unlock;
+  end;
 end;
 
 function TGPSObjectList.GetObjectsInArea(const Area: TRealArea;
-  AClass: TGPSObjClass {= Nil}): TGPSObjList;
+  AClass: TGPSObjClass = Nil): TGPSObjList;
 var
   I: integer;
   ItemArea: TRealArea;
@@ -756,6 +768,11 @@ begin
 end;
 
 function TGPSObjectList.GetIdsArea(const Ids: TIdArray; AIdOwner: integer): TRealArea;
+begin
+  Result := GetAreaOfIDs(IDs, AIDOwner);
+end;
+
+function TGPSObjectList.GetAreaOfIDs(const IDs: TIdArray; AIdOwner: Integer): TRealArea;
 var
   Objs: TGPSObjarray;
   i: integer;
@@ -763,7 +780,7 @@ begin
   Result.Init(0, 0, 0, 0);
   Lock;
   try
-    IdsToObj(Ids, Objs, AIdOwner);
+    IdsToObj(IDs, Objs, AIdOwner);
     if Length(Objs) > 0 then
     begin
       Result := Objs[0].BoundingBox;

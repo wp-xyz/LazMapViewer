@@ -103,7 +103,7 @@ var
 implementation
 
 uses
-  Math, mvGeoMath;
+  mvGeoMath;
 
 const
   EditModeHints: array[TMapViewerPathEditMode] of String = (

@@ -27,7 +27,7 @@ type
 
   TMapViewComponentEditor = class(TComponentEditor)
   private
-    FOldDirtyHandler: TNotifyEvent;
+    //FOldDirtyHandler: TNotifyEvent;
   protected
     procedure DoShowPointsEditor;
     procedure DoShowLayerEditor;
@@ -123,8 +123,8 @@ type
 implementation
 
 uses
-  System.UITypes, Dialogs, IDEWindowIntf, LazIDEIntf, StrUtils, mvMapViewer,
-  mvGpsObj, mvLayersPropEditForm, mvEngine, mvGeoMath,
+  System.UITypes, Dialogs, IDEWindowIntf, LazIDEIntf,
+  mvMapViewer, mvGpsObj, mvLayersPropEditForm, mvEngine, mvGeoMath,
   mvMapViewerPathEditDsgForm, mvPluginCommon;
 
 const

@@ -1239,8 +1239,6 @@ begin
       end;
     end;
   SetLength(Tiles, iTile);
-//  if Length(Tiles) < 1 then
-//    Cache.CheckCacheSize(Nil)
 end;
 
 procedure TMapViewerEngine.RegisterProviders;

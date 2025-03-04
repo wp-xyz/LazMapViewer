@@ -188,7 +188,6 @@ var
   tracks, pois: TFPList;
   T: TMapTrack;
   P: TMapPoint;
-  V: TMapView;
 begin
   with TGpxReader.Create do
     try

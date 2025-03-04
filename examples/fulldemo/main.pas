@@ -8,14 +8,14 @@
 unit Main;
 
 {$mode objfpc}{$H+}
-
+{$WARN 6058 off : Call to subroutine "$1" marked as inline is not inlined}
 interface
 
 uses
   Classes, SysUtils, Types, Forms, Controls, Graphics, Dialogs, ExtCtrls,
   StdCtrls, ComCtrls, Buttons, IntfGraphics, PrintersDlgs,
   Grids, ExtDlgs,
-  mvGeoMath, mvGeoNames, mvMapViewer, mvTypes, mvGpsObj, mvDrawingEngine,
+  mvMapViewer, mvTypes, mvGpsObj, mvGeoNames, mvDrawingEngine,
   {$IFDEF WITH_ADDONS}ConfigFrame_with_Addons{$ELSE}ConfigFrame{$ENDIF};
 
 type
@@ -125,7 +125,7 @@ implementation
 uses
   LCLType, IniFiles, Math, FPCanvas, FPImage, GraphType,
   Printers, OSPrinters,
-  mvEngine, mvGPX,
+  mvEngine, mvGPX, mvGeoMath,
   globals, gpsPtForm, gpslistform;
 
 type
@@ -361,8 +361,6 @@ procedure TMainForm.FormCreate(Sender: TObject);
 var
   I: Integer;
 begin
-  MapView.Active := true;
-
   CfgFrame := {$IFDEF WITH_ADDONS}TCfgFrame_with_Addons{$ELSE}TCfgFrame{$ENDIF}.Create(self);
   CfgFrame.Parent := pgConfig;
   CfgFrame.Align := alClient;
@@ -517,8 +515,10 @@ begin
   end;
 
   // ... and font
-  with MapView.Font do
-    ADrawer.SetFont(Name, Size, Style, Color);
+  ADrawer.FontColor := MapView.Font.Color;
+  ADrawer.FontName := MapView.Font.Name;
+  ADrawer.FontSize := MapView.Font.Size;
+  ADrawer.FontStyle := MapView.Font.Style;
 
   // Write the POI text
   ADrawer.TextOut(P.X - extent.CX div 2, P.Y, APoint.Name);
