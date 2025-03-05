@@ -1611,7 +1611,7 @@ var
   I: Integer;
   Objs: TGPSObjList;
 begin
-  inherited Draw(AView, Area);
+  //inherited Draw(AView, Area);
   FTileLayer.Draw(AView, Area);
   Objs := GetObjectsInArea(Area);
   try
