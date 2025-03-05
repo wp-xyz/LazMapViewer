@@ -28,24 +28,24 @@ object MainForm: TMainForm
             Caption = 'Tour d´Eiffel, Paris'
             Longitude = 2.29455
             Latitude = 48.85823
-            ImageAnchorX = 0.5
-            ImageAnchorY = 1
+            ImageAnchorX = 50
+            ImageAnchorY = 100
             ImageIndex = 1
           end        
           item
             Caption = 'Brandenburger Tor, Berlin'
             Longitude = 13.377778
             Latitude = 52.516389
-            ImageAnchorX = 0.5
-            ImageAnchorY = 1
+            ImageAnchorX = 50
+            ImageAnchorY = 100
             ImageIndex = 1
           end        
           item
             Caption = 'Sydney Tower Skywalk, Sydney'
             Longitude = 151.20828
             Latitude = -33.8707
-            ImageAnchorX = 0.5
-            ImageAnchorY = 1
+            ImageAnchorX = 50
+            ImageAnchorY = 100
             ImageIndex = 1
           end>
         Areas = <>
@@ -78,24 +78,24 @@ object MainForm: TMainForm
             Caption = 'CN Tower, Toronto'
             Longitude = -79.3884
             Latitude = 43.64395
-            ImageAnchorX = 0.5
-            ImageAnchorY = 1
+            ImageAnchorX = 50
+            ImageAnchorY = 100
             ImageIndex = 1
           end        
           item
             Caption = 'Pirámide de Mayo, Buenos Aires'
             Longitude = -58.37224
             Latitude = -34.60847
-            ImageAnchorX = 0.5
-            ImageAnchorY = 1
+            ImageAnchorX = 50
+            ImageAnchorY = 100
             ImageIndex = 1
           end        
           item
             Caption = 'Meiji Jingu Shrine, Tokyo'
             Longitude = 139.70218
             Latitude = 35.67875
-            ImageAnchorX = 0.5
-            ImageAnchorY = 1
+            ImageAnchorX = 50
+            ImageAnchorY = 100
             ImageIndex = 1
           end>
         Areas = <>
