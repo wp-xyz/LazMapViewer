@@ -305,7 +305,7 @@ var
       begin
         Out1 := (P1.X >= Z) and (P2.X < Z); // 1st outside, 2nd inside
         ClipLineToRect(ARect, P1, P2);
-        if Out1 then;
+        if Out1 then
           Add(P1);
         Add(P2);
       end
