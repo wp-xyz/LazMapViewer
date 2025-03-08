@@ -947,17 +947,14 @@ begin
     Val := 1;
   if WheelDelta < 0 then
     Val := -1;
-  nZoom := Zoom + Val;
-  if (nZoom >= FZoomMin) and (nZoom <= FZoomMax) then
+  nZoom := EnsureRange(Zoom + Val, FZoomMin, FZoomMax);
+  if ZoomToCursor then
   begin
-    if ZoomToCursor then
-    begin
-      MapWin.ZoomCenter := ScreenToLatLon(MousePos);
-      MapWin.ZoomOffset := LatLonToScreen(Center).Subtract(MousePos);
-      bZoomToCursor := True;
-    end;
-    SetZoom(nZoom, bZoomToCursor);
+    MapWin.ZoomCenter := ScreenToLatLon(MousePos);
+    MapWin.ZoomOffset := LatLonToScreen(Center).Subtract(MousePos);
+    bZoomToCursor := True;
   end;
+  SetZoom(nZoom, bZoomToCursor);
   Handled := true;
 end;
 
@@ -1549,7 +1546,7 @@ begin
   tmpWin := MapWin;
   tmpWin.Center.Lon := (aArea.TopLeft.Lon + aArea.BottomRight.Lon) / 2;
   tmpWin.Center.Lat := (aArea.TopLeft.Lat + aArea.BottomRight.Lat) / 2;
-  tmpWin.Zoom := 18;
+  tmpWin.Zoom := FZoomMax; //18;
   TopLeft.X := 0;
   TopLeft.Y := 0;
   BottomRight.X := tmpWin.Width;
