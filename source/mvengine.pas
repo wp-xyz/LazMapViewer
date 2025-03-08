@@ -1546,7 +1546,7 @@ begin
   tmpWin := MapWin;
   tmpWin.Center.Lon := (aArea.TopLeft.Lon + aArea.BottomRight.Lon) / 2;
   tmpWin.Center.Lat := (aArea.TopLeft.Lat + aArea.BottomRight.Lat) / 2;
-  tmpWin.Zoom := FZoomMax; //18;
+  tmpWin.Zoom := FZoomMax;
   TopLeft.X := 0;
   TopLeft.Y := 0;
   BottomRight.X := tmpWin.Width;
