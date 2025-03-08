@@ -5,8 +5,8 @@ unit mvMapViewerPathEditForm;
 interface
 
 uses
-  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, ExtCtrls,
-  Buttons, ActnList, mvMapViewer, mvGpsObj, mvTypes, Types;
+  Classes, ComCtrls, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls,
+  ExtCtrls, Buttons, ActnList, mvMapViewer, mvGpsObj, mvTypes, Types;
 
 type
 
@@ -28,7 +28,11 @@ type
     cbSelectedLayer: TComboBox;
     cbSelectedPt: TEdit;
     cbLat: TEdit;
+    edCaption: TEdit;
     ilImages: TImageList;
+    lblInfoText: TLabel;
+    lblInfoTitle: TLabel;
+    lblCaption: TLabel;
     lblLat: TLabel;
     lblLon: TLabel;
     lblSelectedLayer: TLabel;
@@ -36,15 +40,17 @@ type
     pnlSel: TPanel;
     pnlInfo: TPanel;
     pnlFrame: TPanel;
-    pnlTools: TPanel;
-    btnSelect: TSpeedButton;
-    btnNewTP: TSpeedButton;
-    btnDelTP: TSpeedButton;
-    btnNewPOI: TSpeedButton;
-    btnNewArea: TSpeedButton;
-    btnNewTrack: TSpeedButton;
-    btnZoomIn: TSpeedButton;
-    btnZoomOut: TSpeedButton;
+    ToolBar: TToolBar;
+    tbSelect: TToolButton;
+    tbZoomIn: TToolButton;
+    tbZoomOut: TToolButton;
+    tbNewPOI: TToolButton;
+    tbNewArea: TToolButton;
+    tbNewTrack: TToolButton;
+    ToolButton6: TToolButton;
+    tbNewTrackPoint: TToolButton;
+    tbDeleteTrackPoint: TToolButton;
+    ToolButton9: TToolButton;
     procedure actDelTPExecute(Sender: TObject);
     procedure actNewAreaExecute(Sender: TObject);
     procedure actNewPOIExecute(Sender: TObject);
@@ -59,6 +65,8 @@ type
     procedure cbLonEnter(Sender: TObject);
     procedure cbSelectedLayerDropDown(Sender: TObject);
     procedure cbSelectedLayerSelect(Sender: TObject);
+    procedure edCaptionEditingDone(Sender: TObject);
+    procedure FormActivate(Sender: TObject);
     procedure FormShow(Sender: TObject);
   private
     FPointCnt: Integer;
@@ -82,6 +90,7 @@ type
     procedure DrawTempMark(AView: TMapView; APt: TRealPoint);
   protected
     procedure UpdateControls;
+    procedure UpdateInfoPanel;
     procedure UpdateLayerItems;
     function GetOwnerOfType(ANested: TPersistent; AClass: TClass): TPersistent;
     procedure PersistentAdded({%H-}APersistent: TPersistent; {%H-}Select: Boolean); virtual;
@@ -107,10 +116,10 @@ uses
 
 const
   EditModeHints: array[TMapViewerPathEditMode] of String = (
-    'Select/drag tool. Ctrl-click to add.', // pemSelect
-    'New POI: Click to add.',        // pemAddPOI
-    'New Track: Ctrl-click to end.', // pemAddTrack
-    'New Area: Ctrl-click to end.'   // pemAddArea
+    'Select/drag mode|Click point to select. CTRL-click to add to selection.',  // pemSelect
+    'POI mode|Click to add point.',                                             // pemAddPOI
+    'Track mode|Click to add point, CTRL-click to add last point.',             // pemAddTrack
+    'Area mode|Click to add point, CTRL-click to add last point.'               // pemAddArea
   );
 
 type
@@ -320,9 +329,41 @@ begin
   UpdateControls;
 end;
 
+procedure TMapViewerPathEditForm.edCaptionEditingDone(Sender: TObject);
+var
+  E: TEdit;
+  P: TMapPoint;
+begin
+  E := Sender as TEdit;
+  if not E.Modified then
+    Exit;
+  for P in MapView.EditMark.Selection.Points do
+  begin
+    if (P is TMapPointOfInterest) then
+    begin
+      P.Caption := edCaption.Text;
+      ObjectModified(P, '');
+    end;
+  end;
+end;
+
+procedure TMapViewerPathEditForm.FormActivate(Sender: TObject);
+begin
+  cbSelectedLayer.Left := cbSelectedPt.Left + pnlSel.Left;
+end;
+
 procedure TMapViewerPathEditForm.FormShow(Sender: TObject);
 begin
-  pnlInfo.Caption := EditModeHints[FEditMode];
+  UpdateInfoPanel;
+end;
+
+procedure TMapViewerPathEditForm.UpdateInfoPanel;
+var
+  sa: TStringArray;
+begin
+  sa := EditModeHints[FEditMode].Split('|');
+  lblInfoTitle.Caption := sa[0];
+  lblInfoText.Caption := sa[1];
 end;
 
 procedure TMapViewerPathEditForm.UpdateLayerItems;
@@ -381,6 +422,8 @@ begin
           OnDrawObj := @DrawTempTrack;
         end;
         MapView.EditMark.CursorShape := crCross;
+        edCaption.Enabled := false;
+        lblCaption.Enabled := false;
       end;
     pemAddArea:
       begin
@@ -395,6 +438,8 @@ begin
           OnDrawObj := @DrawTempArea;
         end;
         MapView.EditMark.CursorShape := crCross;
+        edCaption.Enabled := false;
+        lblCaption.Enabled := false;
       end;
     pemAddPOI:
       begin
@@ -402,10 +447,12 @@ begin
         RemoveTempLine;
         AddTempLine(TGPSTrack.Create);
         MapView.EditMark.CursorShape := crCross;
+        edCaption.Enabled := true;
+        lblCaption.Enabled := true;
       end;
   end;
   FEditMode := AValue;
-  pnlInfo.Caption := EditModeHints[FEditMode];
+  UpdateInfoPanel;
   MapView.Invalidate;
 end;
 
@@ -537,7 +584,6 @@ var
 
   procedure MapViewChanged;
   begin
-
     if Operation = ooFree then
     begin
       FMapView := Nil; // Too late to call anyhing
@@ -745,6 +791,8 @@ begin
       then cbLon.Caption := '(varying)'
       else cbLon.Caption := LonToStr(P0.Longitude, mvoLatLonInDMS in MapView.Options);
 
+    edCaption.Text := P0.Caption;
+
     FPointCnt := PtCnt;
     if PtCnt > 0 then
     begin
@@ -765,13 +813,18 @@ begin
     FPointCnt := 0;
     cbLat.Caption := '';
     cbLon.Caption := '';
+    edCaption.Text := '';
   end;
 
   cbSelectedPt.Text := PtTxt;
   cbSelectedPt.Hint := PtTxt;
 
   cbLat.Enabled := HavePt;
+  lblLat.Enabled := HavePt;
   cbLon.Enabled := HavePt;
+  lblLon.Enabled := HavePt;
+  edCaption.Enabled := HavePt and (P0 is TMapPointOfInterest);
+  lblCaption.Enabled := edCaption.Enabled;
 
   // Update actions
   actZoomIn.Enabled := HaveView and (MapView.Zoom < MapView.ZoomMax);
