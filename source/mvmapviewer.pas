@@ -39,7 +39,10 @@ Type
     ADrawer: TMvCustomDrawingEngine; APoint: TGpsPoint) of object;
 
   TDrawMissingTileEvent = procedure (Sender: TObject;
-    ADrawer: TMvCustomDrawingEngine; ATileID: TTileID; ARect: TRect) of object;
+    ADrawer: TMvCustomDrawingEngine; ATileID: TTileID; ARect: TRect) of object deprecated 'Use TDrawTileEvent';
+
+  TDrawTileEvent = procedure (Sender: TObject;
+    ADrawer: TMvCustomDrawingengine; ATileID: TTileID; ARect: TRect) of object;
 
   TMapViewOption =
   (
