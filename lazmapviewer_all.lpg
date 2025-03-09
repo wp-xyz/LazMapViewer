@@ -100,6 +100,11 @@
           <Mode Name="Release"/>
         </BuildModes>
       </Target>
+      <Target FileName="examples\plugin_demos\tileinfo_demo\tileinfo_demo.lpi">
+        <BuildModes>
+          <Mode Name="Default"/>
+        </BuildModes>
+      </Target>
       <Target FileName="examples\plugin_demos\userdefined_demo\UserdefinedPlugin_Demo.lpi">
         <BuildModes>
           <Mode Name="Default"/>

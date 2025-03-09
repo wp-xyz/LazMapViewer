@@ -60,6 +60,8 @@ begin
     TMvPluginManager, 'PluginList', TMvPluginListPropertyEditor);
   RegisterPropertyEditor(TypeInfo(TCaption),
     TLegalNoticePlugin, 'LegalNotice', TStringMultilinePropertyEditor);
+  RegisterPropertyEditor(TypeInfo(TCaption),
+    TTileInfoPlugin, 'InfoMask', TStringMultilinePropertyEditor);
 
   for i := 0 to PluginClassRegistry.Count - 1 do
     RegisterNoIcon([TMvCustomPluginClass(PluginClassRegistry.GetClass(i))]);

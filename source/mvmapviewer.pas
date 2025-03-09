@@ -38,11 +38,10 @@ Type
   TDrawGpsPointEvent = procedure (Sender: TObject;
     ADrawer: TMvCustomDrawingEngine; APoint: TGpsPoint) of object;
 
-  TDrawMissingTileEvent = procedure (Sender: TObject;
-    ADrawer: TMvCustomDrawingEngine; ATileID: TTileID; ARect: TRect) of object deprecated 'Use TDrawTileEvent';
-
   TDrawTileEvent = procedure (Sender: TObject;
-    ADrawer: TMvCustomDrawingengine; ATileID: TTileID; ARect: TRect) of object;
+    ADrawer: TMvCustomDrawingEngine; ATileID: TTileID; ARect: TRect) of object;
+
+  TDrawMissingTileEvent = TDrawTileEvent;  // deprecated
 
   TMapViewOption =
   (
@@ -503,6 +502,8 @@ type
     procedure RemoveMapView(AMapView: TMapView); virtual;
   protected
     function AfterDrawObjects(AMapView: TMapView): Boolean; virtual;
+    function AfterDrawTile(AMapView: TMapView; ADrawingEngine: TMvCustomDrawingEngine;
+      ATileID: TTileID; ARect: TRect): Boolean; virtual;
     function AfterPaint(AMapView: TMapView): Boolean; virtual;
     function BeforeDrawObjects(AMapView: TMapView): Boolean; virtual;
     function CenterMove(AMapView: TMapView): Boolean; virtual;
@@ -648,12 +649,12 @@ type
       AsyncInvalidate : boolean;
       procedure ActivateEngine;
       procedure DblClick; override;
+      procedure DoAfterDrawTile(ATileId: TTileId; ARect: TRect);
       procedure DoCenterMove(Sender: TObject);
       procedure DoCenterMoving(Sender: TObject; var NewCenter: TRealPoint; var Allow: Boolean);
       procedure DoDrawMissingTile(ATileID: TTileID; ARect: TRect);
       procedure DoDrawPoint(const Area: TRealArea; APt: TGPSPoint);
-      procedure DoDrawStretchedTile(const TileId: TTileID; X, Y: Integer;
-        TileImg: TPictureCacheItem; const R: TRect);
+      procedure DoDrawStretchedTile(const TileId: TTileID; X, Y: Integer; TileImg: TPictureCacheItem; const R: TRect);
       procedure DoDrawTile(const TileId: TTileId; X,Y: integer; TileImg: TPictureCacheItem);
       procedure DoTileAfterGetFromCache(const AMapProvider: TMapProvider;
                                         const ATileId: TTileId;
@@ -1614,7 +1615,7 @@ var
   I: Integer;
   Objs: TGPSObjList;
 begin
-  //inherited Draw(AView, Area);
+  // inherited Draw(AView, Area);   // removed to avoid duplicate drawing of objs
   FTileLayer.Draw(AView, Area);
   Objs := GetObjectsInArea(Area);
   try
@@ -3579,6 +3580,15 @@ begin
     end;
 end;
 
+procedure TMapView.DoAfterDrawTile(ATileID: TTileID; ARect: TRect);
+begin
+  GetPluginManager.AfterDrawTile(Self, DrawingEngine, ATileID, ARect);
+
+  // FDebugTiles is deprecated - DoDrawTileInfo will be removed.
+  if FDebugTiles then
+    DoDrawTileInfo(ATileID, ARect.Left, ARect.Top);
+end;
+
 procedure TMapView.DoAsyncInvalidate(Data: PtrInt);
 Begin
   Invalidate;
@@ -3602,23 +3612,30 @@ end;
 
 procedure TMapView.DoDrawStretchedTile(const TileId: TTileID; X, Y: Integer;
   TileImg: TPictureCacheItem; const R: TRect);
+var
+  tileRect: TRect;
 begin
+  tileRect := Rect(X, Y, X + TileSize.CX, Y + TileSize.CY);
   if Assigned(TileImg) then
-    DrawingEngine.DrawScaledCacheItem(Rect(X, Y, X + TileSize.CX, Y + TileSize.CY), R, TileImg)
+    DrawingEngine.DrawScaledCacheItem(tileRect, R, TileImg)
   else
-    DoDrawMissingTile(TileID, Rect(X, Y, X+TileSize.CX, Y+TileSize.CY));
+    DoDrawMissingTile(TileID, tileRect);
 
-  if FDebugTiles then
-    DoDrawTileInfo(TileID, X, Y);
+  DoAfterDrawTile(TileID, tileRect);
 end;
 
 procedure TMapView.DoDrawTile(const TileId: TTileId; X, Y: integer;
   TileImg: TPictureCacheItem);
+var
+  tileRect: TRect;
 begin
+  tileRect := Rect(X, Y, X + TileSize.CX, Y + TileSize.CY);
   if Assigned(TileImg) then
     DrawingEngine.DrawCacheItem(X, Y, TileImg)
   else
-    DoDrawMissingTile(TileID, Rect(X, Y, X+TileSize.CX, Y+TileSize.CY));
+    DoDrawMissingTile(TileID, tileRect);
+
+  DoAfterDrawTile(TileID, tileRect);
 
   if FDebugTiles then
     DoDrawTileInfo(TileID, X, Y);
@@ -4895,6 +4912,14 @@ function TMvCustomPluginManager.AfterDrawObjects(AMapView: TMapView): Boolean;
 begin
   Unused(AMapView);
   Result := False;
+end;
+
+function TMvCustomPluginManager.AfterDrawTile(AMapView: TMapView;
+  ADrawingEngine: TMvCustomDrawingEngine; ATileID: TTileID; ARect: TRect): Boolean;
+begin
+  Unused(AMapView);
+  Unused(ADrawingEngine, ATileID, ARect);
+  Result := false;
 end;
 
 function TMvCustomPluginManager.AfterPaint(AMapView: TMapView): Boolean;

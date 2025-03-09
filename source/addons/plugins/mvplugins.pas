@@ -30,6 +30,43 @@ type
   end;
 
 
+{ TileInfoPlugin - draws a grid corresponding to the tiles used. For debugging. }
+
+  TTileInfoPosition = (tipTopLeft, tipTopCenter, tipTopRight,
+    tipCenterLeft, tipCenter, tipCenterRight,
+    tipBottomLeft, tipBottomCenter, tipBottomRight);
+
+  TTileInfoPlugin = class(TMvDrawPlugin)
+  private
+    const
+      DEFAULT_TILEINFO_DISTANCE = 2;
+      DEFAULT_INFO_MASK = 'x=%0:d y=%1:d';
+  private
+    FDistance: Integer;
+    FPosition: TTileInfoPosition;
+    FInfoMask: TCaption;
+    function IsInfoMaskStored: Boolean;
+    procedure SetDistance(AValue: Integer);
+    procedure SetInfoMask(AValue: TCaption);
+    procedure SetPosition(AValue: TTileInfoPosition);
+  protected
+    procedure AfterDrawTile(AMapView: TMapView; ADrawingEngine: TMvCustomDrawingEngine;
+      ATileID: TTileID; ARect: TRect; var Handled: Boolean); override;
+  public
+    constructor Create(AOwner: TComponent); override;
+  published
+    property BackgroundColor;
+    property BackgroundOpacity;
+    property Distance: Integer read FDistance write SetDistance default DEFAULT_TILEINFO_DISTANCE;
+    property Font;
+    { Mask for Format(), accepting TileInfo elements in order 0..2.
+      Example: InfoMark := 'x=%0:d y=%1:d, zoom=%2:d' }
+    property InfoMask: TCaption read FInfoMask write SetInfoMask stored IsInfoMaskStored;
+    property Pen;
+    property Position: TTileInfoPosition read FPosition write SetPosition default tipCenter;
+  end;
+
+
   { TLinkedMapsPlugin - all linked maps use the same zoom and center point }
 
   TLinkedMapsPlugin = class(TMvPlugin)
@@ -149,9 +186,11 @@ type
   TMvPluginDrawGPSPointEvent = procedure (Sender: TObject; AMapView: TMapView;
     ADrawingEngine: TMvCustomDrawingEngine; APoint: TGPSPoint; var Handled: Boolean) of object;
 
-  TMvPluginDrawMissingTileEvent = procedure (Sender: TObject; AMapView: TMapView;
+  TMvPluginDrawTileEvent = procedure (Sender: TObject; AMapView: TMapView;
     ADrawingEngine: TMvCustomDrawingEngine; ATileID: TTileID; ARect: TRect;
     var Handled: Boolean) of object;
+
+  TMvPluginDrawMissingTileEvent = TMvPluginDrawTileEvent;       // deprecated
 
   TMvPluginGPSItemsModifiedEvent = procedure (Sender: TObject; AMapView: TMapView;
     ChangedList: TGPSObjectList; ActualObjs: TGPSObjList; Adding: Boolean;
@@ -177,12 +216,13 @@ type
   TUserDefinedPlugin = class(TMvCustomPlugin)
   private
     FAfterDrawObjectsEvent : TMvPluginNotifyEvent;
+    FAfterDrawTileEvent: TMvPluginDrawTileEvent;
     FAfterPaintEvent : TMvPluginNotifyEvent;
     FBeforeDrawObjectsEvent : TMvPluginNotifyEvent;
     FCenterMoveEvent : TMvPluginNotifyEvent;
     FCenterMovingEvent: TMvPluginCenterMovingEvent;
     FDrawGPSPointEvent: TMvPluginDrawGPSPointEvent;
-    FDrawMissingTileEvent: TMvPluginDrawMissingTileEvent;
+    FDrawMissingTileEvent: TMvPluginDrawTileEvent;
     FGPSItemsModifiedEvent : TMvPluginGPSItemsModifiedEvent;
     FMouseDownEvent : TMvPluginMouseEvent;
     FMouseEnterEvent : TMvPluginNotifyEvent;
@@ -195,6 +235,8 @@ type
     FZoomChangingEvent : TMvPluginZoomChangingEvent;
   protected
     procedure AfterDrawObjects(AMapView: TMapView; var Handled: Boolean); override;
+    procedure AfterDrawTile(AMapView: TMapView; ADrawingEngine: TMvCustomDrawingEngine;
+      ATileID: TTileID; ARect: TRect; var Handled: Boolean); override;
     procedure AfterPaint(AMapView: TMapView; var Handled: Boolean); override;
     procedure BeforeDrawObjects(AMapView: TMapView; var Handled: Boolean); override;
     procedure CenterMove(AMapView: TMapView; var Handled: Boolean); override;
@@ -222,6 +264,7 @@ type
   public
   published
     property OnAfterDrawObjects : TMvPluginNotifyEvent read FAfterDrawObjectsEvent write FAfterDrawObjectsEvent;
+    property OnAfterDrawTile: TMvPluginDrawTileEvent read FAfterDrawTileEvent write FAfterDrawTileEvent;
     property OnAfterPaint : TMvPluginNotifyEvent read FAfterPaintEvent write FAfterPaintEvent;
     property OnBeforeDrawObjects : TMvPluginNotifyEvent read FBeforeDrawObjectsEvent write FBeforeDrawObjectsEvent;
     property OnCenterMove : TMvPluginNotifyEvent read FCenterMoveEvent write FCenterMoveEvent;
@@ -281,6 +324,119 @@ begin
   if FSize <> AValue then
   begin
     FSize := AValue;
+    Update;
+  end;
+end;
+
+
+{ TTileInfoPlugin }
+
+constructor TTileInfoPlugin.Create(AOwner: TComponent);
+begin
+  inherited;
+  FDistance := DEFAULT_TILEINFO_DISTANCE;
+  FInfoMask := DEFAULT_INFO_MASK;
+  FPosition := tipCenter;
+end;
+
+procedure TTileInfoPlugin.AfterDrawTile(AMapView: TMapView;
+  ADrawingEngine: TMvCustomDrawingEngine; ATileID: TTileID; ARect: TRect;
+  var Handled: Boolean);
+var
+  mask, txt: String;
+  sz: TSize;
+  txtRect: TRect;
+  pw: Integer;
+  savedPen: TMvPen;
+  savedFont: TMvFont;
+  savedOpacity: Single;
+begin
+  savedPen := ADrawingEngine.GetPen;
+  savedFont := ADrawingEngine.GetFont;
+  savedOpacity := ADrawingEngine.Opacity;
+
+  ADrawingEngine.SetPen(Pen.Style, Pen.Width, Pen.Color);
+  ADrawingEngine.Line(ARect.Left, ARect.Top, ARect.Left, ARect.Bottom);
+  ADrawingEngine.Line(ARect.Left, ARect.Top, ARect.Right, ARect.Top);
+  ADrawingEngine.Line(ARect.Right, ARect.Top, ARect.Right, ARect.Bottom);
+  ADrawingEngine.Line(ARect.Left, ARect.Bottom, ARect.Right, ARect.Bottom);
+
+  if FInfoMask = '' then
+    mask := DEFAULT_INFO_MASK
+  else
+    mask := FInfoMask;
+  txt := Format(mask, [ATileID.X, ATileID.Y, ATileID.Z]);
+
+  ADrawingEngine.SetFont(Font.Name, Font.Size, Font.Style, Font.Color);
+  sz := ADrawingEngine.TextExtent(txt);
+  txtRect := Rect(0, 0, sz.CX, sz.CY);
+  pw := Pen.Width div 2 + FDistance;
+  case FPosition of
+    tipTopLeft:
+      OffsetRect(txtRect, ARect.Left + pw, ARect.Top + pw);
+    tipTopCenter:
+      OffsetRect(txtRect, (ARect.Left + ARect.Right - txtRect.Right) div 2, ARect.Top + pw);
+    tipTopRight:
+      OffsetRect(txtRect, ARect.Right - txtRect.Right - pw, ARect.Top + pw);
+    tipCenterLeft:
+      OffsetRect(txtRect, ARect.Left + pw, (ARect.Top + ARect.Bottom - txtRect.Bottom) div 2);
+    tipCenter:
+      OffsetRect(txtRect, (ARect.Left + ARect.Right - txtRect.Right) div 2, (ARect.Top + ARect.Bottom - txtRect.Bottom) div 2);
+    tipCenterRight:
+      OffsetRect(txtRect, ARect.Right - txtRect.Right - pw, (ARect.Top + ARect.Bottom - txtRect.Bottom) div 2);
+    tipBottomLeft:
+      OffsetRect(txtRect, ARect.Left + pw, ARect.Bottom - txtRect.Bottom - pw);
+    tipBottomCenter:
+      OffsetRect(txtRect, (ARect.Left + ARect.Right - txtRect.Right) div 2, ARect.Bottom - txtRect.Bottom - pw);
+    tipBottomRight:
+      OffsetRect(txtRect, ARect.Right - txtRect.Right - pw, ARect.Bottom - txtRect.Bottom - pw);
+  end;
+
+  if BackgroundColor <> clNone then
+  begin
+    ADrawingEngine.Opacity := BackgroundOpacity;
+    ADrawingEngine.BrushStyle := bsSolid;
+    ADrawingEngine.BrushColor := ColorToRGB(BackgroundColor);
+    with txtRect do
+      AMapView.DrawingEngine.FillRect(Left, Top, Right, Bottom);
+  end;
+
+  ADrawingEngine.BrushStyle := bsClear;
+  ADrawingEngine.TextOut(txtRect.Left, txtRect.Top, txt);
+
+  ADrawingEngine.Opacity := savedOpacity;
+  ADrawingEngine.SetPen(savedPen);
+  ADrawingEngine.SetFont(savedFont);
+end;
+
+function TTileInfoPlugin.isInfoMaskStored: Boolean;
+begin
+  Result := FInfoMask <> DEFAULT_INFO_MASK;
+end;
+
+procedure TTileInfoPlugin.SetDistance(AValue: Integer);
+begin
+  if FDistance <> AValue then
+  begin
+    FDistance := AValue;
+    Update;
+  end;
+end;
+
+procedure TTileInfoPlugin.SetInfoMask(AValue: TCaption);
+begin
+  if FInfoMask <> AValue then
+  begin
+    FInfoMask := AValue;
+    Update;
+  end;
+end;
+
+procedure TTileInfoPlugin.SetPosition(AValue: TTileInfoPosition);
+begin
+  if FPosition <> AValue then
+  begin
+    FPosition := AValue;
     Update;
   end;
 end;
@@ -768,7 +924,7 @@ begin
     gpsList.Free;
   end;
 
-  // Search in all layers for all map-type-of-points
+  // Search in all layers for all map-type points
   for i := AMapView.Layers.Count-1 downto 0 do
   begin
     layer := AMapView.Layers[i];
@@ -886,6 +1042,14 @@ begin
     FAfterDrawObjectsEvent(Self, AMapView, Handled);
 end;
 
+procedure TUserDefinedPlugin.AfterDrawTile(AMapView: TMapView;
+  ADrawingEngine: TMvCustomDrawingEngine; ATileID: TTileID; ARect: TRect;
+  var Handled: Boolean);
+begin
+  if Assigned(FAfterDrawTileEvent) then
+    FAfterDrawTileEvent(Self, AMapView, ADrawingEngine, ATileID, ARect, Handled);
+end;
+
 procedure TUserDefinedPlugin.AfterPaint(AMapView: TMapView; var Handled: Boolean);
 begin
   if Assigned(FAfterPaintEvent) then
@@ -997,6 +1161,7 @@ end;
 
 initialization
   RegisterPluginClass(TCenterMarkerPlugin, 'Center marker');
+  RegisterPluginClass(TTileInfoPlugin, 'Tile info');
   RegisterPluginClass(TLegalNoticePlugin, 'Legal notice');
   RegisterPluginClass(TLinkedMapsPlugin, 'Linked maps');
   RegisterPluginClass(TDraggableMarkerPlugin, 'Draggable marker');

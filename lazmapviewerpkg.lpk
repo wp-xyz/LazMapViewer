@@ -4,6 +4,7 @@
     <Name Value="lazMapViewerPkg"/>
     <Type Value="RunAndDesignTime"/>
     <Author Value="Maciej Kaczkowski, ti_dic, Werner Pamler, Ekkehard Domning, Yuliyan Ivanov"/>
+    <ExamplesDirectory Value="examples"/>
     <CompilerOptions>
       <Version Value="11"/>
       <SearchPaths>

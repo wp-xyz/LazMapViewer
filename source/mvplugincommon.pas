@@ -56,6 +56,8 @@ type
     procedure Update; virtual;
   protected
     procedure AfterDrawObjects(AMapView: TMapView; var Handled: Boolean); virtual;
+    procedure AfterDrawTile(AMapView: TMapView; ADrawingEngine: TMvCustomDrawingEngine;
+      ATileID: TTileID; ARect: TRect; var Handled: Boolean); virtual;
     procedure AfterPaint(AMapView: TMapView; var Handled: Boolean); virtual;
     procedure BeforeDrawObjects(AMapView: TMapView; var Handled: Boolean); virtual;
     procedure CenterMove(AMapView: TMapView; var Handled: Boolean); virtual;
@@ -234,7 +236,7 @@ type
     function Add(AItem: Pointer): Integer;
     procedure Clear;
     procedure Delete(AIndex: Integer);
-    procedure Insert(AIndex: Integer; AItem: Pointer);
+    procedure Insert({%H-}AIndex: Integer; {%H-}AItem: Pointer);
     procedure Remove(AItem: Pointer);
     property Items[AIndex: Integer]: TMvCustomPlugin read GetItem write SetItem; default;
   end;
@@ -269,6 +271,8 @@ type
   protected
     // Dispatching events to be handled by the plugins
     function AfterDrawObjects(AMapView: TMapView): Boolean; override;
+    function AfterDrawTile(AMapView: TMapView; ADrawingEngine: TMvCustomDrawingEngine;
+      ATileID: TTileID; ARect: TRect): Boolean; override;
     function AfterPaint(AMapView: TMapView): Boolean; override;
     function BeforeDrawObjects(AMapView: TMapView): Boolean; override;
     function CenterMove(AMapView: TMapView): Boolean; override;
@@ -378,6 +382,14 @@ end;
 procedure TMvCustomPlugin.AfterDrawObjects(AMapView: TMapView; var Handled: Boolean);
 begin
   Unused(AMapView, Handled);
+end;
+
+procedure TMvCustomPlugin.AfterDrawTile(AMapView: TMapView;
+  ADrawingEngine: TMvCustomDrawingEngine; ATileID: TTileID; ARect: TRect;
+  var Handled: Boolean);
+begin
+  Unused(AMapView, Handled);
+  Unused(ADrawingEngine, ATileID, ARect);
 end;
 
 procedure TMvCustomPlugin.BeforeDrawObjects(AMapView: TMapView; var Handled: Boolean);
@@ -1038,6 +1050,21 @@ begin
     plugin := Items[i];
     if HandlePlugin(plugin, AMapView) then
       plugin.AfterDrawObjects(AMapView, Result);
+  end;
+end;
+
+function TMvPluginManager.AfterDrawTile(AMapView: TMapView;
+  ADrawingEngine: TMvCustomDrawingEngine; ATileID: TTileID; ARect: TRect): Boolean;
+var
+  i: Integer;
+  plugin: TMvCustomPlugin;
+begin
+  Result := false;
+  for i := 0 to FPluginList.Count - 1 do
+  begin
+    plugin := Items[i];
+    if HandlePlugin(plugin, AMapView) then
+      plugin.AfterDrawTile(AMapView, ADrawingEngine, ATileID, ARect, Result);
   end;
 end;
 
