@@ -2989,7 +2989,8 @@ procedure TMapView.MouseMove(Shift: TShiftState; X, Y: Integer);
       Hits := Layers.HitTest(A);
       try
         FEditMark.UpdateFrom(Hits);
-        Screen.Cursor := FEditMark.CursorShape;
+        Cursor := FEditMark.CursorShape;
+//        Screen.Cursor := FEditMark.CursorShape;
       finally
         Hits.Free;
       end;

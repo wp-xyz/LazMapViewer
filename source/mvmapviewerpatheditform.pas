@@ -76,6 +76,7 @@ type
     FTempPolyLine: TGPSPolyLine;
     FEditMode: TMapViewerPathEditMode;
     FSkipAPoint: Boolean;
+    procedure AddTempPolylineOrRevert(ANewEditMode: TMapViewerPathEditMode);
     procedure SetEditMode(AValue: TMapViewerPathEditMode);
     procedure CancelAddMode;
     procedure AddTempPoint;
@@ -140,21 +141,29 @@ end;
 
 procedure TMapViewerPathEditForm.actSelectExecute(Sender: TObject);
 begin
+  if (FTempPolyLine <> nil) and (FTempPolyLine.Points.Count > 0) then
+    AddTempPolyLineOrRevert(pemSelect);
   EditMode := pemSelect;
 end;
 
 procedure TMapViewerPathEditForm.actNewPOIExecute(Sender: TObject);
 begin
+  if (FTempPolyLine <> nil) and (FTempPolyLine.Points.Count > 0) then
+    AddTempPolyLineOrRevert(pemAddPOI);
   EditMode := pemAddPOI;
 end;
 
 procedure TMapViewerPathEditForm.actNewTrackExecute(Sender: TObject);
 begin
+  if (FTempPolyLine <> nil) and (FTempPolyLine.Points.Count > 0) then
+    AddTempPolyLineOrRevert(pemAddTrack);
   EditMode := pemAddTrack;
 end;
 
 procedure TMapViewerPathEditForm.actNewAreaExecute(Sender: TObject);
 begin
+  if (FTempPolyLine <> nil) and (FTempPolyLine.Points.Count > 0) then
+    AddTempPolyLineOrRevert(pemAddArea);
   EditMode := pemAddArea;
 end;
 
@@ -272,6 +281,36 @@ procedure TMapViewerPathEditForm.actZoomOutExecute(Sender: TObject);
 begin
   MapView.Zoom := MapView.Zoom - 1;
   UpdateControls;
+end;
+
+{ When points for a new track or a new area are being added, but the user
+  selects another edit mode ("ANewEditMode"), the already prepared points
+  would be lost. --> We ask whether the track/area should be used or discarded. }
+procedure TMapViewerPathEditForm.AddTempPolylineOrRevert(ANewEditMode: TMapViewerPathEditMode);
+const
+  TRACK_AREA: array[boolean] of String = ('track', 'area');
+var
+  msg: String;
+begin
+  msg := Format(
+    'Click OK to really add the new %0:s.' + LineEnding +
+    'Click Cancel to discard the new %0:s.', [
+    TRACK_AREA[FEditMode = pemAddArea]
+  ]);
+  if MessageDlg(msg, mtConfirmation, [mbOK, mbCancel], 0) = mrOK then
+  begin
+    case FEditMode of
+      pemAddArea: NewAreaFromTemp;
+      pemAddTrack: NewTrackFromTemp;
+    end;
+    // Tool button checked state was changed in previous command --> restore it.
+    case ANewEditMode of
+      pemSelect: actSelect.Checked := true;
+      pemAddPOI: actNewPOI.Checked := true;
+      pemAddArea: actNewArea.Checked := true;
+      pemAddTrack: actNewTrack.Checked := true;
+    end;
+  end;
 end;
 
 procedure TMapViewerPathEditForm.cbLatLonEditingDone(Sender: TObject);
@@ -500,7 +539,8 @@ begin
   FTempPolyLine.Points.Add(TGPSPoint.CreateFrom(RealPt));
   if EditMode = pemAddPOI then
     NewPOIFromTemp
-  else if ssCtrl in GetKeyShiftState then
+  else
+  if ssCtrl in GetKeyShiftState then
     case EditMode of
       pemAddTrack: NewTrackFromTemp;
       pemAddArea: NewAreaFromTemp;
