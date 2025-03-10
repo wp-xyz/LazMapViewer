@@ -5,7 +5,7 @@ unit mvMapViewerPathEditForm;
 interface
 
 uses
-  Classes, ComCtrls, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls,
+  Classes, SysUtils, Math, Forms, Controls, Graphics, Dialogs, StdCtrls, ComCtrls,
   ExtCtrls, Buttons, ActnList, mvMapViewer, mvGpsObj, mvTypes, Types;
 
 type
@@ -24,6 +24,7 @@ type
     actZoomOut: TAction;
     actZoomIn: TAction;
     alEditActions: TActionList;
+    Bevel: TBevel;
     cbLon: TEdit;
     cbSelectedLayer: TComboBox;
     cbSelectedPt: TEdit;
@@ -76,6 +77,7 @@ type
     FTempPolyLine: TGPSPolyLine;
     FEditMode: TMapViewerPathEditMode;
     FSkipAPoint: Boolean;
+    FActivated: Boolean;
     procedure AddTempPolylineOrRevert(ANewEditMode: TMapViewerPathEditMode);
     procedure SetEditMode(AValue: TMapViewerPathEditMode);
     procedure CancelAddMode;
@@ -387,8 +389,18 @@ begin
 end;
 
 procedure TMapViewerPathEditForm.FormActivate(Sender: TObject);
+var
+  w: Integer;
 begin
-  cbSelectedLayer.Left := cbSelectedPt.Left + pnlSel.Left;
+  if not FActivated then
+  begin
+    AutoSize := false;
+    w := MaxValue([lblSelectedPt.Width, lblLat.Width, lblLon.Width, lblCaption.Width]);
+    cbSelectedPt.Left := w + lblSelectedPt.BorderSpacing.Left + lblSelectedPt.BorderSpacing.Right;
+    cbSelectedLayer.Left := cbSelectedPt.Left + pnlSel.Left;
+    AutoSize := true;
+    FActivated := true;
+  end;
 end;
 
 procedure TMapViewerPathEditForm.FormShow(Sender: TObject);

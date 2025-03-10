@@ -1,25 +1,25 @@
 object MapViewerPathEditForm: TMapViewerPathEditForm
-  Left = 749
+  Left = 1036
   Height = 227
-  Top = 324
-  Width = 324
+  Top = 315
+  Width = 413
   AutoSize = True
   BorderStyle = bsSizeToolWin
   Caption = 'MapViewer Path Editor'
   ClientHeight = 227
-  ClientWidth = 324
+  ClientWidth = 413
   LCLVersion = '4.99.0.0'
   OnActivate = FormActivate
   OnShow = FormShow
   object pnlFrame: TPanel
     Left = 0
-    Height = 161
+    Height = 157
     Top = 28
-    Width = 324
+    Width = 413
     Align = alClient
     BevelOuter = bvNone
-    ClientHeight = 161
-    ClientWidth = 324
+    ClientHeight = 157
+    ClientWidth = 413
     TabOrder = 0
     object lblSelectedLayer: TLabel
       AnchorSideTop.Control = cbSelectedLayer
@@ -27,7 +27,7 @@ object MapViewerPathEditForm: TMapViewerPathEditForm
       AnchorSideRight.Control = cbSelectedLayer
       Left = 32
       Height = 15
-      Top = 121
+      Top = 127
       Width = 31
       Alignment = taRightJustify
       Anchors = [akTop, akRight]
@@ -42,12 +42,12 @@ object MapViewerPathEditForm: TMapViewerPathEditForm
       AnchorSideRight.Side = asrBottom
       Left = 68
       Height = 23
-      Top = 117
-      Width = 253
+      Top = 123
+      Width = 342
       Anchors = [akTop, akLeft, akRight]
-      BorderSpacing.Top = 3
+      BorderSpacing.Top = 6
       BorderSpacing.Right = 3
-      BorderSpacing.Bottom = 3
+      BorderSpacing.Bottom = 6
       ItemHeight = 15
       ParentColor = True
       ParentShowHint = False
@@ -63,28 +63,28 @@ object MapViewerPathEditForm: TMapViewerPathEditForm
       AnchorSideRight.Control = pnlFrame
       AnchorSideRight.Side = asrBottom
       Left = 3
-      Height = 111
+      Height = 114
       Top = 3
-      Width = 318
+      Width = 407
       Anchors = [akTop, akLeft, akRight]
       AutoSize = True
       BorderSpacing.Around = 3
       BevelInner = bvRaised
       BevelOuter = bvLowered
-      ClientHeight = 111
-      ClientWidth = 318
+      ClientHeight = 114
+      ClientWidth = 407
       TabOrder = 1
       object lblSelectedPt: TLabel
         AnchorSideLeft.Control = pnlSel
         AnchorSideTop.Control = cbSelectedPt
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = cbSelectedPt
-        Left = 8
+        Left = 14
         Height = 15
         Top = 9
         Width = 51
         Alignment = taRightJustify
-        BorderSpacing.Left = 6
+        BorderSpacing.Left = 12
         BorderSpacing.Right = 6
         Caption = 'Selection:'
         ParentColor = False
@@ -95,10 +95,10 @@ object MapViewerPathEditForm: TMapViewerPathEditForm
         AnchorSideTop.Control = pnlSel
         AnchorSideRight.Control = pnlSel
         AnchorSideRight.Side = asrBottom
-        Left = 65
+        Left = 71
         Height = 23
         Top = 5
-        Width = 248
+        Width = 331
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Top = 3
         BorderSpacing.Right = 3
@@ -110,29 +110,30 @@ object MapViewerPathEditForm: TMapViewerPathEditForm
         TabOrder = 0
       end
       object lblLat: TLabel
+        AnchorSideLeft.Control = pnlSel
         AnchorSideTop.Control = cbLat
         AnchorSideTop.Side = asrCenter
-        AnchorSideRight.Control = cbLat
-        Left = 40
+        AnchorSideRight.Control = lblSelectedPt
+        AnchorSideRight.Side = asrBottom
+        Left = 19
         Height = 15
         Top = 35
-        Width = 19
+        Width = 46
         Alignment = taRightJustify
         Anchors = [akTop, akRight]
-        BorderSpacing.Right = 6
-        Caption = 'Lat:'
+        BorderSpacing.Left = 6
+        Caption = 'Latitude:'
         ParentColor = False
       end
       object cbLat: TEdit
         AnchorSideLeft.Control = cbSelectedPt
         AnchorSideTop.Control = cbSelectedPt
         AnchorSideTop.Side = asrBottom
-        AnchorSideRight.Control = pnlSel
         AnchorSideRight.Side = asrBottom
-        Left = 65
+        Left = 71
         Height = 23
         Top = 31
-        Width = 131
+        Width = 115
         BorderSpacing.Top = 3
         BorderSpacing.Right = 3
         BorderSpacing.Bottom = 3
@@ -146,15 +147,16 @@ object MapViewerPathEditForm: TMapViewerPathEditForm
       object lblLon: TLabel
         AnchorSideTop.Control = cbLon
         AnchorSideTop.Side = asrCenter
-        AnchorSideRight.Control = cbLon
-        Left = 36
+        AnchorSideRight.Control = lblSelectedPt
+        AnchorSideRight.Side = asrBottom
+        Left = 8
         Height = 15
         Top = 61
-        Width = 23
+        Width = 57
         Alignment = taRightJustify
         Anchors = [akTop, akRight]
-        BorderSpacing.Right = 6
-        Caption = 'Lon:'
+        BorderSpacing.Left = 6
+        Caption = 'Longitude:'
         ParentColor = False
       end
       object cbLon: TEdit
@@ -164,10 +166,10 @@ object MapViewerPathEditForm: TMapViewerPathEditForm
         AnchorSideTop.Side = asrBottom
         AnchorSideRight.Control = pnlSel
         AnchorSideRight.Side = asrBottom
-        Left = 65
+        Left = 71
         Height = 23
         Top = 57
-        Width = 131
+        Width = 115
         BorderSpacing.Right = 3
         BorderSpacing.Bottom = 3
         ParentShowHint = False
@@ -183,53 +185,56 @@ object MapViewerPathEditForm: TMapViewerPathEditForm
         AnchorSideTop.Side = asrBottom
         AnchorSideRight.Control = pnlSel
         AnchorSideRight.Side = asrBottom
-        Left = 65
+        Left = 71
         Height = 23
         Top = 83
-        Width = 248
+        Width = 331
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Top = 3
         BorderSpacing.Right = 3
-        BorderSpacing.Bottom = 3
+        BorderSpacing.Bottom = 6
         TabOrder = 3
         OnEditingDone = edCaptionEditingDone
       end
       object lblCaption: TLabel
         AnchorSideTop.Control = edCaption
         AnchorSideTop.Side = asrCenter
-        AnchorSideRight.Control = edCaption
-        Left = 17
+        AnchorSideRight.Control = lblSelectedPt
+        AnchorSideRight.Side = asrBottom
+        Left = 20
         Height = 15
         Top = 87
-        Width = 42
+        Width = 45
+        Alignment = taRightJustify
         Anchors = [akTop, akRight]
-        BorderSpacing.Right = 6
-        Caption = 'Caption'
+        BorderSpacing.Left = 6
+        Caption = 'Caption:'
       end
     end
   end
   object pnlInfo: TPanel
     Left = 0
-    Height = 38
-    Top = 189
-    Width = 324
+    Height = 39
+    Top = 188
+    Width = 413
     Align = alBottom
     AutoSize = True
-    ClientHeight = 38
-    ClientWidth = 324
+    BevelOuter = bvNone
+    ClientHeight = 39
+    ClientWidth = 413
     TabOrder = 1
     object lblInfoTitle: TLabel
       AnchorSideLeft.Control = pnlInfo
       AnchorSideTop.Control = pnlInfo
       AnchorSideRight.Side = asrBottom
       AnchorSideBottom.Side = asrBottom
-      Left = 4
+      Left = 6
       Height = 15
-      Top = 4
+      Top = 3
       Width = 59
-      BorderSpacing.Left = 3
+      BorderSpacing.Left = 6
       BorderSpacing.Top = 3
-      BorderSpacing.Right = 3
+      BorderSpacing.Right = 6
       Caption = 'lblInfotitle'
       Font.Style = [fsBold]
       Layout = tlCenter
@@ -239,11 +244,11 @@ object MapViewerPathEditForm: TMapViewerPathEditForm
       AnchorSideLeft.Control = lblInfoTitle
       AnchorSideTop.Control = lblInfoTitle
       AnchorSideTop.Side = asrBottom
-      Left = 4
+      Left = 6
       Height = 15
-      Top = 19
+      Top = 18
       Width = 55
-      BorderSpacing.Bottom = 3
+      BorderSpacing.Bottom = 6
       Caption = 'lblInfoText'
     end
   end
@@ -251,7 +256,7 @@ object MapViewerPathEditForm: TMapViewerPathEditForm
     Left = 0
     Height = 28
     Top = 0
-    Width = 324
+    Width = 413
     AutoSize = True
     ButtonHeight = 28
     ButtonWidth = 28
@@ -271,15 +276,15 @@ object MapViewerPathEditForm: TMapViewerPathEditForm
       Top = 0
       Action = actNewPOI
     end
-    object tbNewArea: TToolButton
+    object tbNewTrack: TToolButton
       Left = 57
       Top = 0
-      Action = actNewArea
+      Action = actNewTrack
     end
-    object tbNewTrack: TToolButton
+    object tbNewArea: TToolButton
       Left = 85
       Top = 0
-      Action = actNewTrack
+      Action = actNewArea
     end
     object ToolButton6: TToolButton
       Left = 113
@@ -316,10 +321,20 @@ object MapViewerPathEditForm: TMapViewerPathEditForm
       Action = actZoomOut
     end
   end
+  object Bevel: TBevel
+    Left = 3
+    Height = 3
+    Top = 185
+    Width = 407
+    Align = alBottom
+    BorderSpacing.Left = 3
+    BorderSpacing.Right = 3
+    Shape = bsTopLine
+  end
   object alEditActions: TActionList
     Images = ilImages
-    Left = 112
-    Top = 48
+    Left = 128
+    Top = 40
     object actZoomIn: TAction
       Caption = 'Zoom In'
       Hint = 'Zoom In'
@@ -380,8 +395,8 @@ object MapViewerPathEditForm: TMapViewerPathEditForm
   end
   object ilImages: TImageList
     Scaled = True
-    Left = 240
-    Top = 48
+    Left = 272
+    Top = 40
     Bitmap = {
       4C7A080000001000000010000000970800000000000078DAED987B5054F715C7
       31A689669C4E53AB12291A3133A2409DFCD1496C6C9B76D28E694D334D42C768
