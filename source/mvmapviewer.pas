@@ -683,6 +683,7 @@ type
       function CreateLayers: TMapLayers; virtual;
       procedure UpdateLayers;
 
+      function CreateEditMark: TMapEditMark; virtual;
       procedure CreateEditor;
 
       function EditingEnabled: Boolean; inline;
@@ -4111,12 +4112,17 @@ begin
     FLayers[I].ComboLayer.TileLayer.ParentViewChanged;
 end;
 
+function TMapView.CreateEditMark: TMapEditMark;
+begin
+  Result := TMapEditMark.Create(self);
+end;
+
 procedure TMapView.CreateEditor;
 begin
   if Assigned(FEditMark) then
     Exit;
 
-  FEditMark := TMapEditMark.Create(Self);
+  FEditMark := CreateEditMark;
   FEditMark.UpdateFrom(Nil);
   FGPSItems[High(FGPSItems)].Add(FEditMark, _MAPEDITOR_ID_, MaxInt);
   FEditMark.Visible := True;

@@ -295,8 +295,8 @@ var
   msg: String;
 begin
   msg := Format(
-    'Click OK to really add the new %0:s.' + LineEnding +
-    'Click Cancel to discard the new %0:s.', [
+    'Click on "OK" to add the new %s.' + LineEnding +
+    'Click on "Cancel" to discard it.', [
     TRACK_AREA[FEditMode = pemAddArea]
   ]);
   if MessageDlg(msg, mtConfirmation, [mbOK, mbCancel], 0) = mrOK then
