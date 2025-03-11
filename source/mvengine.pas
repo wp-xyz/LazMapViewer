@@ -1187,7 +1187,9 @@ begin
       Tiles[iTile].Z := AWin.Zoom;
 
       if Cache.InCache(AWin.MapProvider, Tiles[iTile]) then
-        DrawTileFromCache(Tiles[iTile], AWin)
+      begin
+        DrawTileFromCache(Tiles[iTile], AWin);
+      end
       else
       // Avoid tiling artefacts when a tile does not exist (lowest zoom) or
       // is not valid

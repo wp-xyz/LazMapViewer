@@ -889,14 +889,10 @@ type
     FOnSelectionCompleted: TNotifyEvent;
     FOnStartDrag: TNotifyEvent;
     FRealPt: TRealPoint;
-    FPt: TPoint;
     FSelection: TMapObjectList;
     FObservedColls: TMapObjectList;
-    FLit: TMapObjectList;
     FOrigins: TRealPointArray;
     FDragStarted: Boolean;
-    FMarquee: Boolean;
-    FMarqueeRect: TRect;
     FDirty: Boolean;
     FTruncSelection: Boolean;
     FClearSelection: Boolean;
@@ -916,6 +912,12 @@ type
     function AroundPt(X, Y: Integer; APt: TPoint): Boolean;
     procedure SelectFromMarquee;
     procedure MarkDirty;
+  protected
+    FList: TMapObjectList;
+    FMarquee: Boolean;
+    FMarqueeRect: TRect;
+    FPt: TPoint;
+
   public
     constructor Create(AMapView: TMapView);
     destructor Destroy; override;
@@ -4445,7 +4447,7 @@ end;
 
 function TMapEditMark.GetCursorShape: TCursor;
 begin
-  if (FCursorShape = crDefault) and Assigned(FLit)
+  if (FCursorShape = crDefault) and Assigned(FList)
     then Result := crHandPoint
     else Result := FCursorShape;
 end;
@@ -4650,7 +4652,7 @@ begin
   DE.BrushStyle := bsSolid;
   DE.Opacity := 1.0;
 
-  if Assigned(FLit) then
+  if Assigned(FList) then
     DE.Rectangle(FPt.X - 5, FPt.Y - 5, FPt.X + 5, FPt.Y + 5);
 
   if HasSelection then
@@ -4677,7 +4679,7 @@ begin
     DE.BrushColor := clLime;
     TrkPoint := (FSelection[0] as TMapPoint);
     with View.LatLonToScreen(TrkPoint.Latitude, TrkPoint.Longitude) do
-        DE.Rectangle(X - 5, Y - 5, X + 5, Y + 5);
+      DE.Rectangle(X - 5, Y - 5, X + 5, Y + 5);
   end;
 
   if FMarquee then
@@ -4697,17 +4699,17 @@ begin
   if Assigned(AObjs) and (AObjs.Count > 0) and (AObjs[0] is TMapPoint) then
   begin
     // Same point?
-    if Assigned(FLit) and (AObjs[0] = FLit[0]) then
+    if Assigned(FList) and (AObjs[0] = FList[0]) then
       Exit;
     Lat := TMapPoint(AObjs[0]).Latitude;
     Lon := TMapPoint(AObjs[0]).Longitude;
-    FLit.Free;
-    FLit := TMapObjectList.Create(AObjs);
+    FList.Free;
+    FList := TMapObjectList.Create(AObjs);
     FMapView.Invalidate;
   end
-  else if Assigned(FLit) then
+  else if Assigned(FList) then
   begin
-    FreeAndNil(FLit);
+    FreeAndNil(FList);
     FMapView.Invalidate;
   end;
 end;
@@ -4729,7 +4731,7 @@ var
     LeftOf: Boolean = False;
   begin
     Result := Nil;
-    for P in FLit.Points do
+    for P in FList.Points do
       if not LeftOf and not FSelection.IsPresent(P) and (Result = Nil) then
         Result := P
       else if (P = P0) then
@@ -4740,11 +4742,11 @@ var
 
 begin
   Result := True;
-  if Assigned(FLit) and AroundPt(X, Y, FPt) then
+  if Assigned(FList) and AroundPt(X, Y, FPt) then
   begin
     // Ctrl+click adds to selection
     FTruncSelection := not (ssCtrl in GetKeyShiftState);
-    for O in FLit.Points do
+    for O in FList.Points do
       if FSelection.IndexOfObj(O, I) then
       begin
         // Alt+click selects the point below
@@ -4763,15 +4765,15 @@ begin
         Exit;
       end;
 
-    H := FSelection.DelIfPresent(FLit[0]);
+    H := FSelection.DelIfPresent(FList[0]);
     FTruncSelection := not H and FTruncSelection;
-    FSelection.Insert(0, FLit[0]);
+    FSelection.Insert(0, FList[0]);
     if not H then
-      ObserveItemColl(FLit[0]);
-    for O in FLit do
+      ObserveItemColl(FList[0]);
+    for O in FList do
       if FSelection.AddIfNotPresent(O) then
         ObserveItemColl(O);
-    FreeAndNil(FLit);
+    FreeAndNil(FList);
   end
   else
     FClearSelection := not (ssCtrl in GetKeyShiftState);
@@ -4788,7 +4790,7 @@ var
   I: Integer = 0;
   P: TMapPoint;
 begin
-  FLit := Nil;
+  FList := Nil;
   CompleteSelection;
   SetLength(FOrigins, FSelection.Count);
   for P in FSelection.Points do

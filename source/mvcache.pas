@@ -63,7 +63,6 @@ Type
      procedure AddItem(const Item: TPictureCacheItem; const AIDString: String);
      procedure DeleteItem(const AItemIndex : Integer);
      function DiskCached(const aFileName: String): Boolean;
-     function GetFileName(MapProvider: TMapProvider; const TileId: TTileId): String;
      procedure LoadFromDisk(const aFileName: String; out Item: TPictureCacheItem);
      function MapProvider2FileName(MapProvider: TMapProvider): String;
    public
@@ -73,6 +72,7 @@ Type
      procedure CheckCacheSize;
      procedure CheckCacheSize(Sender: TObject); deprecated 'Use CheckCacheSize without parameters!';
      procedure ClearCache;
+     function GetFileName(MapProvider: TMapProvider; const TileId: TTileId): String;
      procedure GetFromCache(const MapProvider: TMapProvider; const TileId: TTileId; out Item: TPictureCacheItem);
      function GetPreviewFromCache(const MapProvider: TMapProvider; var TileId: TTileId; out ARect: TRect): boolean;
      function InCache(const MapProvider: TMapProvider; const TileId: TTileId): Boolean;
